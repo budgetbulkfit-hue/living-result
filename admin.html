@@ -321,6 +321,13 @@
                 <div class="form-group"><label>Nutritional Facts (One per line)</label><textarea id="prodNutrition"
                         rows="3" placeholder="Calories: 1200 kcal&#10;Protein: 50g"></textarea></div>
 
+                <div class="form-group">
+                    <label>Additional Images (JSON Array) - <span
+                            style="color:var(--text-muted);">Optional</span></label>
+                    <textarea id="prodImages" rows="2" style="font-family: monospace;"
+                        placeholder='[&#10;  "https://...",&#10;  "https://..."&#10;]'></textarea>
+                </div>
+
                 <!-- IMAGE UPLOAD HELPER -->
                 <div class="form-group"
                     style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; border: 1px dashed var(--border); margin-bottom: 15px;">
@@ -487,6 +494,7 @@
             document.getElementById('prodSizes').value = '[\n  {\n    "weight": "1 kg",\n    "price": 1500,\n    "oldPrice": 2000,\n    "allowedFlavors": ["Chocolate"]\n  }\n]';
             document.getElementById('prodBestSeller').checked = false;
             document.getElementById('prodGlutenFree').checked = false;
+            document.getElementById('prodImages').value = '[]';
             document.getElementById('productModal').classList.add('active');
         }
         function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
@@ -511,6 +519,7 @@
             document.getElementById('prodNutrition').value = p.nutritionalFacts ? p.nutritionalFacts.join('\n') : '';
             document.getElementById('prodFlavors').value = JSON.stringify(p.flavors, null, 2);
             document.getElementById('prodSizes').value = JSON.stringify(p.sizes || [], null, 2);
+            document.getElementById('prodImages').value = JSON.stringify(p.images || [], null, 2);
             document.getElementById('productModal').classList.add('active');
         }
 
@@ -526,6 +535,10 @@
             let sizes = [];
             try { if (document.getElementById('prodSizes').value.trim() !== '') sizes = JSON.parse(document.getElementById('prodSizes').value); }
             catch (err) { return alert('Invalid JSON in Sizes field!'); }
+
+            let images = [];
+            try { if (document.getElementById('prodImages').value.trim() !== '') images = JSON.parse(document.getElementById('prodImages').value); }
+            catch (err) { return alert('Invalid JSON in Additional Images field!'); }
 
             const oldPriceVal = document.getElementById('prodOldPrice').value;
             const discountVal = document.getElementById('prodDiscount').value;
@@ -547,7 +560,8 @@
                 ingredients: document.getElementById('prodIngredients').value,
                 nutritionalFacts: document.getElementById('prodNutrition').value.split('\n').filter(line => line.trim() !== ''),
                 flavors: flavors,
-                sizes: sizes
+                sizes: sizes,
+                images: images
             };
 
             if (oldPriceVal) productData.oldPrice = Number(oldPriceVal);
