@@ -242,7 +242,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:5000/api';
+        const API_URL = 'https://living-result-backend.onrender.com/api';
         let products = [];
 
         // Auth Check
@@ -421,7 +421,7 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    const fullUrl = `http://localhost:5000${data.imageUrl}`;
+                    const fullUrl = `https://living-result-backend.onrender.com${data.imageUrl}`;
                     resultDiv.innerHTML = `<span style="color: #2ecc71;">✅ Uploaded! Copy this URL into the JSON below:</span><br><b style="color:white; user-select: all;">${fullUrl}</b>`;
                     fileInput.value = '';
                 } else { resultDiv.innerHTML = `<span style="color: #e74c3c;">Error: ${data.message}</span>`; }

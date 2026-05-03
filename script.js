@@ -625,7 +625,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://living-result-backend.onrender.com/api';
 
 // ===== AUTH UI LOGIC =====
 function toggleAuthModal() {
