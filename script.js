@@ -851,6 +851,13 @@ async function fetchProducts() {
           p.glutenFree = true;
           p.description = p.description.replace(/ ?<!--\[GF\]-->/g, '');
         }
+        if (p.description && p.description.includes('<!--[IMAGES:')) {
+          const match = p.description.match(/ ?<!--\[IMAGES:(.*?)\]-->/);
+          if (match && match[1]) {
+            try { p.images = JSON.parse(match[1]); } catch (e) { }
+            p.description = p.description.replace(match[0], '');
+          }
+        }
         return p;
       });
       if (!window.location.pathname.includes('product.html')) {
@@ -877,6 +884,13 @@ async function loadSingleProductPage() {
       if (currentProductData.description && currentProductData.description.includes('<!--[GF]-->')) {
         currentProductData.glutenFree = true;
         currentProductData.description = currentProductData.description.replace(/ ?<!--\[GF\]-->/g, '');
+      }
+      if (currentProductData.description && currentProductData.description.includes('<!--[IMAGES:')) {
+        const match = currentProductData.description.match(/ ?<!--\[IMAGES:(.*?)\]-->/);
+        if (match && match[1]) {
+          try { currentProductData.images = JSON.parse(match[1]); } catch (e) { }
+          currentProductData.description = currentProductData.description.replace(match[0], '');
+        }
       }
       currentSelectedFlavorIndex = 0;
       currentSelectedSizeIndex = 0;

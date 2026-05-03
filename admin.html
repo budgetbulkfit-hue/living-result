@@ -459,6 +459,13 @@
                             p.glutenFree = true;
                             p.description = p.description.replace(/ ?<!--\[GF\]-->/g, '');
                         }
+                        if (p.description && p.description.includes('<!--[IMAGES:')) {
+                            const match = p.description.match(/ ?<!--\[IMAGES:(.*?)\]-->/);
+                            if (match && match[1]) {
+                                try { p.images = JSON.parse(match[1]); } catch (e) { }
+                                p.description = p.description.replace(match[0], '');
+                            }
+                        }
                         return p;
                     });
                     const tbody = document.getElementById('adminProductTable');
@@ -546,6 +553,9 @@
             let descriptionVal = document.getElementById('prodDesc').value;
             if (document.getElementById('prodGlutenFree').checked) {
                 descriptionVal += ' <!--[GF]-->';
+            }
+            if (images && images.length > 0) {
+                descriptionVal += ` <!--[IMAGES:${JSON.stringify(images)}]-->`;
             }
 
             const productData = {
