@@ -98,6 +98,55 @@
             color: white;
             border-radius: 6px;
         }
+
+        /* Toggle Switch Styles */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--text-muted);
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked+.toggle-slider {
+            background-color: rgba(46, 204, 64, 0.2);
+            border-color: #2ecc71;
+        }
+
+        input:checked+.toggle-slider:before {
+            transform: translateX(22px);
+            background-color: #2ecc71;
+        }
     </style>
 </head>
 
@@ -173,6 +222,7 @@
                         <th>Category</th>
                         <th>Price</th>
                         <th>Stock</th>
+                        <th>Badges</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -245,17 +295,23 @@
                     </div>
                     <div class="form-group" style="flex: 1;"><label>Stock Left</label><input type="number"
                             id="prodStock" value="10"></div>
-                    <div class="form-group" style="flex: 1;"><label>Best Seller</label>
-                        <select id="prodBestSeller">
-                            <option value="false">No</option>
-                            <option value="true">Yes</option>
-                        </select>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Best Seller</label>
+                        <div style="display: flex; align-items: center; height: 42px;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="prodBestSeller">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
                     </div>
-                    <div class="form-group" style="flex: 1;"><label>Gluten Free</label>
-                        <select id="prodGlutenFree">
-                            <option value="false">No</option>
-                            <option value="true">Yes</option>
-                        </select>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Gluten Free</label>
+                        <div style="display: flex; align-items: center; height: 42px;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="prodGlutenFree">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -401,6 +457,11 @@
               <td style="color: var(--accent); font-weight: bold;">₹${p.price.toLocaleString()}</td>
               <td>${p.stockLeft}</td>
               <td>
+                ${p.bestSeller ? '<span style="background: rgba(255, 106, 0, 0.2); color: var(--accent); padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: inline-block;">Best Seller</span><br>' : ''}
+                ${p.glutenFree ? '<span style="background: rgba(46, 204, 64, 0.2); color: #2ecc71; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; display: inline-block;">Gluten Free</span>' : ''}
+                ${!p.bestSeller && !p.glutenFree ? '<span style="color: var(--text-muted); font-size: 12px;">None</span>' : ''}
+              </td>
+              <td>
                 <button class="action-btn btn-edit" onclick="editProduct('${p._id}')">Edit</button>
                 <button class="action-btn btn-outline" style="color: #f39c12; border-color: #f39c12; margin-left: 8px;" onclick="manageReviews('${p._id}')">Reviews (${p.numReviews || p.reviews || 0})</button>
                 <button class="action-btn btn-delete" onclick="deleteProduct('${p._id}')">Delete</button>
@@ -418,7 +479,8 @@
             document.getElementById('modalTitle').textContent = 'Add New Product';
             document.getElementById('prodFlavors').value = '[\n  {\n    "name": "Chocolate",\n    "image": "images/hulk-mass-gainer.png",\n    "inStock": true\n  }\n]';
             document.getElementById('prodSizes').value = '[\n  {\n    "weight": "1 kg",\n    "price": 1500,\n    "oldPrice": 2000,\n    "allowedFlavors": ["Chocolate"]\n  }\n]';
-            document.getElementById('prodGlutenFree').value = 'false';
+            document.getElementById('prodBestSeller').checked = false;
+            document.getElementById('prodGlutenFree').checked = false;
             document.getElementById('productModal').classList.add('active');
         }
         function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
@@ -436,8 +498,8 @@
             document.getElementById('prodDiscount').value = p.discount || '';
             document.getElementById('prodCategory').value = p.category;
             document.getElementById('prodStock').value = p.stockLeft;
-            document.getElementById('prodBestSeller').value = p.bestSeller ? 'true' : 'false';
-            document.getElementById('prodGlutenFree').value = p.glutenFree ? 'true' : 'false';
+            document.getElementById('prodBestSeller').checked = p.bestSeller ? true : false;
+            document.getElementById('prodGlutenFree').checked = p.glutenFree ? true : false;
             document.getElementById('prodDesc').value = p.description || '';
             document.getElementById('prodIngredients').value = p.ingredients || '';
             document.getElementById('prodNutrition').value = p.nutritionalFacts ? p.nutritionalFacts.join('\n') : '';
@@ -469,8 +531,8 @@
                 price: Number(document.getElementById('prodPrice').value),
                 category: document.getElementById('prodCategory').value,
                 stockLeft: Number(document.getElementById('prodStock').value),
-                bestSeller: document.getElementById('prodBestSeller').value === 'true',
-                glutenFree: document.getElementById('prodGlutenFree').value === 'true',
+                bestSeller: document.getElementById('prodBestSeller').checked,
+                glutenFree: document.getElementById('prodGlutenFree').checked,
                 description: document.getElementById('prodDesc').value,
                 ingredients: document.getElementById('prodIngredients').value,
                 nutritionalFacts: document.getElementById('prodNutrition').value.split('\n').filter(line => line.trim() !== ''),
