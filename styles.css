@@ -1958,6 +1958,16 @@ section {
   .thumbnail-gallery::-webkit-scrollbar {
     display: none;
   }
+
+  /* Stack product view: Image on top, details on bottom */
+  .modal-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .modal-image-col {
+    padding: 30px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1985,7 +1995,6 @@ section {
 
   /* Even smaller for phones */
   .modal-grid {
-    grid-template-columns: 1fr;
     gap: 24px;
     padding: 24px;
   }

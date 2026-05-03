@@ -985,7 +985,7 @@ function renderSingleProductPage() {
         Back to Shop
       </a>
     </div>
-    <div class="modal-grid" style="position: relative; background: var(--bg-secondary); padding: 40px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+    <div class="modal-grid" style="position: relative; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
       <button class="modal-close" onclick="window.location.href='index.html#products'" title="Go Back">&times;</button>
       <div class="modal-image-col">
         <div class="main-image-wrapper" onmousemove="handleImageZoom(event, this)" onmouseleave="resetImageZoom(this)" style="position: relative;">
