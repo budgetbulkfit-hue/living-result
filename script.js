@@ -988,7 +988,7 @@ function renderSingleProductPage() {
     <div class="modal-grid" style="position: relative; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
       <button class="modal-close" onclick="window.location.href='index.html#products'" title="Go Back">&times;</button>
       <div class="modal-image-col">
-        <div class="main-image-wrapper" onmousemove="handleImageZoom(event, this)" onmouseleave="resetImageZoom(this)" style="position: relative;">
+        <div class="main-image-wrapper" onmousemove="handleImageZoom(event, this)" onmouseleave="resetImageZoom(this)" ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)" style="position: relative;">
           ${galleryArrows}
           <img id="mainModalImage" src="${flavor.image}" alt="${product.name}" onclick="openImageLightbox(this.src)" style="cursor: zoom-in;" title="Click to zoom">
         </div>
@@ -1067,6 +1067,29 @@ function setGalleryImage(index) {
   const thumbnails = document.querySelectorAll('.thumbnail-img');
   thumbnails.forEach((el, idx) => el.style.borderColor = idx === index ? 'var(--accent)' : 'transparent');
   if (thumbnails[index]) thumbnails[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+}
+
+// ===== GALLERY SWIPE LOGIC =====
+let touchStartX = 0;
+let touchEndX = 0;
+
+function handleTouchStart(e) {
+  touchStartX = e.changedTouches[0].screenX;
+}
+
+function handleTouchEnd(e) {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipeGesture();
+}
+
+function handleSwipeGesture() {
+  if (currentGalleryImages.length <= 1) return; // Skip if only 1 image
+
+  const threshold = 50; // Minimum distance required to trigger a swipe
+
+  // Calculate the swipe direction
+  if (touchStartX - touchEndX > threshold) navigateGallery(1); // Swipe Left -> Next Image
+  if (touchEndX - touchStartX > threshold) navigateGallery(-1); // Swipe Right -> Prev Image
 }
 
 function addToCartFromPage() {
