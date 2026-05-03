@@ -1747,6 +1747,21 @@ section {
   z-index: 2;
 }
 
+.gluten-free-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(46, 204, 64, 0.2);
+  color: var(--green);
+  border: 1px solid var(--green);
+  z-index: 2;
+}
 
 @media (max-width: 1024px) {
   .products-grid {

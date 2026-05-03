@@ -28,6 +28,7 @@ function renderProductCard(product) {
           ${defaultFlavor.inStock ? 'In Stock' : 'Out of Stock'}
         </span>
         ${product.bestSeller ? '<span class="best-seller-badge">🔥 Best Seller</span>' : ''}
+        ${product.glutenFree ? '<span class="gluten-free-badge">🌾 Gluten Free</span>' : ''}
       </div>
       <div class="product-info">
         <h3 class="product-name">${product.name}</h3>
@@ -927,6 +928,7 @@ function renderSingleProductPage() {
       </div>
       <div class="modal-info-col">
         <h1 style="font-family: var(--font-heading); font-size: 32px; margin-bottom: 10px; color: var(--text-primary); text-transform: uppercase;">${product.name}</h1>
+        ${product.glutenFree ? `<span style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(46, 204, 64, 0.2); color: var(--green); border: 1px solid var(--green); margin-bottom: 15px;">🌾 Gluten Free</span>` : ''}
           <div class="modal-price" style="margin-bottom: 5px;">₹${currentPrice.toLocaleString()} ${currentOldPrice > currentPrice ? `<span style="font-size: 14px; text-decoration: line-through; color: var(--text-muted); font-weight: normal; margin-left: 10px;">₹${currentOldPrice.toLocaleString()}</span>` : ''}</div>
           ${currentWeight ? `<div class="modal-weight" style="color: var(--accent); font-weight: 600; font-size: 14px; margin-bottom: 20px;">Weight: ${currentWeight}</div>` : ''}
           ${sizePills ? `<div class="flavor-selector" style="margin-bottom:15px;"><span class="flavor-label">Select Size:</span><div class="flavor-pills">${sizePills}</div></div>` : ''}
