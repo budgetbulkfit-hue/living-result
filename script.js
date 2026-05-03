@@ -15,6 +15,11 @@ function renderProductCard(product) {
   // Use the first flavor as default display
   const defaultFlavor = product.flavors[0];
 
+  const displayPrice = product.sizes && product.sizes.length > 0 ? product.sizes[0].price : product.price;
+  const displayOldPrice = product.sizes && product.sizes.length > 0 && product.sizes[0].oldPrice ? product.sizes[0].oldPrice : (product.oldPrice || displayPrice);
+  const displayWeight = product.sizes && product.sizes.length > 0 ? product.sizes[0].weight : '';
+  const discountText = displayOldPrice > displayPrice ? Math.round(((displayOldPrice - displayPrice) / displayOldPrice) * 100) + '% OFF' : (product.discount ? product.discount + '% OFF' : '');
+
   return `
     <div class="product-card" id="product-${product.slug}" onclick="window.location.href='product.html?slug=${product.slug}'" style="cursor: pointer;">
       <div class="product-image">
@@ -28,13 +33,12 @@ function renderProductCard(product) {
         <h3 class="product-name">${product.name}</h3>
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
           <span class="product-flavor" style="margin-bottom: 0;">${product.flavors.length} Flavor${product.flavors.length > 1 ? 's' : ''}</span>
-          <span style="color: var(--text-muted); opacity: 0.5;">|</span>
-          <span class="product-weight" style="font-size: 13px; color: var(--accent); font-weight: 600;">${product.weight}</span>
+          ${displayWeight ? `<span style="color: var(--text-muted); opacity: 0.5;">|</span><span class="product-weight" style="font-size: 13px; color: var(--accent); font-weight: 600;">${displayWeight}</span>` : ''}
         </div>
         <div class="product-pricing">
-          <span class="current-price">₹${product.price.toLocaleString()}</span>
-          <span class="old-price">₹${product.oldPrice.toLocaleString()}</span>
-          <span class="discount">${product.discount}% OFF</span>
+          <span class="current-price">₹${displayPrice.toLocaleString()}</span>
+          ${displayOldPrice > displayPrice ? `<span class="old-price">₹${displayOldPrice.toLocaleString()}</span>` : ''}
+          ${discountText ? `<span class="discount">${discountText}</span>` : ''}
         </div>
         <div class="product-rating">
           <span class="stars">${stars}</span>
@@ -124,6 +128,7 @@ function toggleViewAll() {
 
 // ===== PRODUCT MODAL LOGIC =====
 let currentSelectedFlavorIndex = 0;
+let currentSelectedSizeIndex = 0;
 
 // ===== PRIVACY POLICY MODAL =====
 function openPrivacyModal(e) {
@@ -213,12 +218,14 @@ function handleSearch(query) {
 
   resultsEl.innerHTML = filtered.map(p => {
     const firstFlavor = p.flavors[0];
+    const sPrice = p.sizes && p.sizes.length > 0 ? p.sizes[0].price : p.price;
+    const sWeight = p.sizes && p.sizes.length > 0 ? p.sizes[0].weight : '';
     return `
       <a href="product.html?slug=${p.slug}" class="search-result-item">
         <img src="${firstFlavor.image}" alt="${p.name}">
         <div>
           <div class="search-result-name">${p.name}</div>
-          <div class="search-result-price">₹${p.price.toLocaleString()} · ${p.weight}</div>
+          <div class="search-result-price">₹${sPrice.toLocaleString()}${sWeight ? ' · ' + sWeight : ''}</div>
         </div>
       </a>
     `;
@@ -404,7 +411,7 @@ function updateCartUI() {
       <img src="${item.image}" style="width:60px;height:60px;object-fit:contain;background:#0e0e0e;border-radius:6px;padding:4px;" alt="${item.name}">
       <div style="flex:1;">
         <div style="font-weight:600;font-size:13px;margin-bottom:2px;">${item.name}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">${item.flavorName}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">${item.flavorName}${item.weight ? ' | ' + item.weight : ''}</div>
         <div style="display:flex;align-items:center;gap:10px;">
           <div class="qty-control" style="border-color:var(--border);">
             <button class="qty-btn" onclick="changeCartQty('${item.key}', -1)" style="width:28px;height:28px;font-size:15px;">−</button>
@@ -447,7 +454,7 @@ function startCartCheckout() {
     if (summaryEl) {
       const itemsList = cart.map(i => `
         <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-          <span style="color:var(--text-primary);font-size:13px;">${i.name} × ${i.qty}</span>
+          <span style="color:var(--text-primary);font-size:13px;">${i.name} (${i.weight || ''}) × ${i.qty}</span>
           <span style="color:var(--accent);font-weight:bold;font-size:13px;">₹${(i.price * i.qty).toLocaleString()}</span>
         </div>`).join('');
       summaryEl.innerHTML = `
@@ -499,7 +506,8 @@ async function processCheckout(e) {
     message += `📦 *Items:*\n`;
 
     cart.forEach(item => {
-      message += `• ${item.name} (${item.flavorName}) × ${item.qty} — ₹${(item.price * item.qty).toLocaleString()}\n`;
+      const details = [item.flavorName, item.weight].filter(Boolean).join(', ');
+      message += `• ${item.name} (${details}) × ${item.qty} — ₹${(item.price * item.qty).toLocaleString()}\n`;
     });
 
     message += `\n💰 *Total: ₹${pendingOrderAmount.toLocaleString()}*\n\n`;
@@ -625,7 +633,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-const API_URL = 'https://living-result-backend.onrender.com/api';
+const API_URL = 'http://localhost:5000/api'; // <-- UNCOMMENT THIS FOR LOCAL TESTING
+// const API_URL = 'https://living-result-backend.onrender.com/api'; // <-- UNCOMMENT THIS FOR LIVE DEPLOYMENT
 
 // ===== AUTH UI LOGIC =====
 function toggleAuthModal() {
@@ -778,6 +787,7 @@ async function loadSingleProductPage() {
     if (data.success) {
       currentProductData = data.data;
       currentSelectedFlavorIndex = 0;
+      currentSelectedSizeIndex = 0;
       renderSingleProductPage();
     } else {
       document.getElementById('singleProductContainer').innerHTML = '<div style="text-align: center; color: white; padding: 100px 0;"><h2>Product not found.</h2><a href="index.html" class="btn-primary" style="margin-top: 20px; display: inline-flex;">Go Back Home</a></div>';
@@ -792,6 +802,24 @@ function selectPageFlavor(index) {
   renderSingleProductPage();
 }
 
+function selectPageSize(index) {
+  currentSelectedSizeIndex = index;
+
+  // If the new size has restricted flavors, ensure a valid flavor is selected
+  const size = currentProductData.sizes[index];
+  if (size && size.allowedFlavors && size.allowedFlavors.length > 0) {
+    const currentFlavor = currentProductData.flavors[currentSelectedFlavorIndex];
+    if (!currentFlavor || !size.allowedFlavors.includes(currentFlavor.name)) {
+      const firstAllowedIndex = currentProductData.flavors.findIndex(f => size.allowedFlavors.includes(f.name));
+      if (firstAllowedIndex !== -1) {
+        currentSelectedFlavorIndex = firstAllowedIndex;
+      }
+    }
+  }
+
+  renderSingleProductPage();
+}
+
 function renderSingleProductPage() {
   const container = document.getElementById("singleProductContainer");
   if (!container || !currentProductData) return;
@@ -799,11 +827,25 @@ function renderSingleProductPage() {
   const product = currentProductData;
   const flavor = product.flavors[currentSelectedFlavorIndex];
 
-  const flavorPills = product.flavors.map((f, i) => `
-    <button class="flavor-pill ${i === currentSelectedFlavorIndex ? 'active' : ''}" onclick="selectPageFlavor(${i})">
+  const size = (product.sizes && product.sizes.length > 0) ? product.sizes[currentSelectedSizeIndex] : null;
+  const currentPrice = size ? size.price : product.price;
+  const currentOldPrice = size && size.oldPrice ? size.oldPrice : (product.oldPrice || currentPrice);
+  const currentWeight = size ? size.weight : '';
+
+  const allowedFlavors = (size && size.allowedFlavors && size.allowedFlavors.length > 0) ? size.allowedFlavors : null;
+
+  const flavorPills = product.flavors.map((f, i) => {
+    if (allowedFlavors && !allowedFlavors.includes(f.name)) return ''; // Hide flavor if not allowed for this size
+    return `<button class="flavor-pill ${i === currentSelectedFlavorIndex ? 'active' : ''}" onclick="selectPageFlavor(${i})">
       ${f.name}
+    </button>`;
+  }).join("");
+
+  const sizePills = (product.sizes && product.sizes.length > 0) ? product.sizes.map((s, i) => `
+    <button class="flavor-pill ${i === currentSelectedSizeIndex ? 'active' : ''}" onclick="selectPageSize(${i})">
+      ${s.weight}
     </button>
-  `).join("");
+  `).join("") : "";
 
   const nutritionList = product.nutritionalFacts.map(fact => `<li>${fact}</li>`).join("");
   document.title = `${product.name} | Living Result`;
@@ -819,12 +861,16 @@ function renderSingleProductPage() {
       <button class="modal-close" onclick="window.location.href='index.html#products'" title="Go Back">&times;</button>
       <div class="modal-image-col">
         <img src="${flavor.image}" alt="${product.name}" onclick="openImageLightbox('${flavor.image}')" style="cursor: zoom-in;" title="Click to zoom">
+        <div class="image-disclaimer">
+          All images are AI-generated and inspired. The actual product tub may not look exactly the same.
+        </div>
         <span class="stock-badge ${flavor.inStock ? 'in-stock' : 'out-of-stock'}">${flavor.inStock ? 'In Stock' : 'Out of Stock'}</span>
       </div>
       <div class="modal-info-col">
         <h1 style="font-family: var(--font-heading); font-size: 32px; margin-bottom: 10px; color: var(--text-primary); text-transform: uppercase;">${product.name}</h1>
-        <div class="modal-price" style="margin-bottom: 5px;">₹${product.price.toLocaleString()} <span style="font-size: 14px; text-decoration: line-through; color: var(--text-muted); font-weight: normal; margin-left: 10px;">₹${product.oldPrice.toLocaleString()}</span></div>
-        <div class="modal-weight" style="color: var(--accent); font-weight: 600; font-size: 14px; margin-bottom: 20px;">Weight: ${product.weight}</div>
+          <div class="modal-price" style="margin-bottom: 5px;">₹${currentPrice.toLocaleString()} ${currentOldPrice > currentPrice ? `<span style="font-size: 14px; text-decoration: line-through; color: var(--text-muted); font-weight: normal; margin-left: 10px;">₹${currentOldPrice.toLocaleString()}</span>` : ''}</div>
+          ${currentWeight ? `<div class="modal-weight" style="color: var(--accent); font-weight: 600; font-size: 14px; margin-bottom: 20px;">Weight: ${currentWeight}</div>` : ''}
+          ${sizePills ? `<div class="flavor-selector" style="margin-bottom:15px;"><span class="flavor-label">Select Size:</span><div class="flavor-pills">${sizePills}</div></div>` : ''}
         <div class="flavor-selector"><span class="flavor-label">Select Flavor:</span><div class="flavor-pills">${flavorPills}</div></div>
         <div style="margin: 30px 0; display: flex; flex-direction: column; gap: 12px;">
           ${flavor.inStock
@@ -856,12 +902,17 @@ function addToCartFromPage() {
   const qty = qtyEl ? parseInt(qtyEl.textContent) : 1;
   const product = currentProductData;
   const flavorIndex = currentSelectedFlavorIndex;
-  const flavor = product.flavors[flavorIndex];
+  const flavor = product.flavors && product.flavors.length > 0 ? product.flavors[flavorIndex] : { name: '', image: '' };
 
-  const key = `${product.id}-${flavorIndex}`;
+  const sizeIndex = currentSelectedSizeIndex || 0;
+  const size = product.sizes && product.sizes.length > 0 ? product.sizes[sizeIndex] : null;
+  const price = size ? size.price : product.price;
+  const weight = size ? size.weight : '';
+
+  const key = `${product.id}-${flavorIndex}-${sizeIndex}`;
   const existing = cart.find(i => i.key === key);
   if (existing) { existing.qty += qty; }
-  else { cart.push({ key, productId: product.id, flavorIndex, name: product.name, flavorName: flavor.name, price: product.price, image: flavor.image, qty }); }
+  else { cart.push({ key, productId: product.id, flavorIndex, sizeIndex, name: product.name, flavorName: flavor.name, weight: weight, price: price, image: flavor.image, qty }); }
 
   saveCart();
   updateCartUI();
