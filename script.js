@@ -130,6 +130,8 @@ function toggleViewAll() {
 // ===== PRODUCT MODAL LOGIC =====
 let currentSelectedFlavorIndex = 0;
 let currentSelectedSizeIndex = 0;
+let currentGalleryImages = [];
+let currentGalleryIndex = 0;
 
 // ===== PRIVACY POLICY MODAL =====
 function openPrivacyModal(e) {
@@ -925,13 +927,22 @@ function renderSingleProductPage() {
   const allowedFlavors = (size && size.allowedFlavors && size.allowedFlavors.length > 0) ? size.allowedFlavors : null;
 
   // Combine active flavor image with any additional product images
-  const allGalleryImages = [flavor.image, ...(product.images || [])].filter(Boolean);
+  currentGalleryImages = [flavor.image, ...(product.images || [])].filter(Boolean);
+  currentGalleryIndex = 0;
 
-  const galleryHTML = allGalleryImages.length > 1 ? `
+  let galleryArrows = '';
+  if (currentGalleryImages.length > 1) {
+    galleryArrows = `
+      <button class="gallery-arrow left" onclick="navigateGallery(-1, event)">&#10094;</button>
+      <button class="gallery-arrow right" onclick="navigateGallery(1, event)">&#10095;</button>
+    `;
+  }
+
+  const galleryHTML = currentGalleryImages.length > 1 ? `
     <div class="thumbnail-gallery">
-      ${allGalleryImages.map((img, idx) => `
+      ${currentGalleryImages.map((img, idx) => `
         <img src="${img}" class="thumbnail-img" 
-             onclick="updateMainImage('${img}', this)" 
+             onclick="setGalleryImage(${idx})" 
              style="width: 70px; height: 70px; object-fit: contain; background: #0e0e0e; border-radius: 6px; cursor: pointer; border: 2px solid ${idx === 0 ? 'var(--accent)' : 'transparent'};">
       `).join('')}
     </div>
@@ -963,7 +974,8 @@ function renderSingleProductPage() {
     <div class="modal-grid" style="position: relative; background: var(--bg-secondary); padding: 40px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
       <button class="modal-close" onclick="window.location.href='index.html#products'" title="Go Back">&times;</button>
       <div class="modal-image-col">
-        <div class="main-image-wrapper" onmousemove="handleImageZoom(event, this)" onmouseleave="resetImageZoom(this)">
+        <div class="main-image-wrapper" onmousemove="handleImageZoom(event, this)" onmouseleave="resetImageZoom(this)" style="position: relative;">
+          ${galleryArrows}
           <img id="mainModalImage" src="${flavor.image}" alt="${product.name}" onclick="openImageLightbox(this.src)" style="cursor: zoom-in;" title="Click to zoom">
         </div>
         ${galleryHTML}
@@ -1025,13 +1037,22 @@ function renderSingleProductPage() {
   `;
 }
 
-// Function to swap main image when a thumbnail is clicked
-function updateMainImage(src, element) {
-  document.getElementById('mainModalImage').src = src;
-  // Reset all thumbnail borders
-  document.querySelectorAll('.thumbnail-img').forEach(el => el.style.borderColor = 'transparent');
-  // Highlight clicked thumbnail
-  element.style.borderColor = 'var(--accent)';
+// Function to navigate gallery with arrows
+function navigateGallery(direction, event) {
+  if (event) event.stopPropagation();
+  currentGalleryIndex += direction;
+  if (currentGalleryIndex < 0) currentGalleryIndex = currentGalleryImages.length - 1;
+  if (currentGalleryIndex >= currentGalleryImages.length) currentGalleryIndex = 0;
+  setGalleryImage(currentGalleryIndex);
+}
+
+// Function to swap main image when a thumbnail or arrow is clicked
+function setGalleryImage(index) {
+  currentGalleryIndex = index;
+  document.getElementById('mainModalImage').src = currentGalleryImages[index];
+  const thumbnails = document.querySelectorAll('.thumbnail-img');
+  thumbnails.forEach((el, idx) => el.style.borderColor = idx === index ? 'var(--accent)' : 'transparent');
+  if (thumbnails[index]) thumbnails[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 }
 
 function addToCartFromPage() {
