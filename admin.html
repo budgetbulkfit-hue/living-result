@@ -174,6 +174,12 @@
                             placeholder="e.g. hulk-gainer" required></div>
                 </div>
 
+                <div class="form-group">
+                    <label>Sizes / Weights (JSON Array) - <span style="color:var(--accent);">NEW!</span></label>
+                    <textarea id="prodSizes" rows="5" style="font-family: monospace;"
+                        placeholder='[\n  {\n    "weight": "1 kg",\n    "price": 2499,\n    "allowedFlavors": ["Chocolate", "Vanilla"]\n  }\n]'></textarea>
+                </div>
+
                 <div style="display: flex; gap: 15px;">
                     <div class="form-group" style="flex: 1;"><label>Price (₹)</label><input type="number" id="prodPrice"
                             required></div>
@@ -184,8 +190,6 @@
                 </div>
 
                 <div style="display: flex; gap: 15px;">
-                    <div class="form-group" style="flex: 1;"><label>Weight (e.g. 2 lbs)</label><input type="text"
-                            id="prodWeight"></div>
                     <div class="form-group" style="flex: 1;">
                         <label>Category</label>
                         <select id="prodCategory">
@@ -242,7 +246,8 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:5000/api';
+        // const API_URL = 'http://localhost:5000/api'; // <-- UNCOMMENT THIS FOR LOCAL TESTING
+        const API_URL = 'https://living-result-backend.onrender.com/api'; // <-- UNCOMMENT THIS FOR LIVE DEPLOYMENT
         let products = [];
 
         // Auth Check
@@ -312,6 +317,7 @@
             document.getElementById('prodId').value = '';
             document.getElementById('modalTitle').textContent = 'Add New Product';
             document.getElementById('prodFlavors').value = '[\n  {\n    "name": "Chocolate",\n    "image": "images/hulk-mass-gainer.png",\n    "inStock": true\n  }\n]';
+            document.getElementById('prodSizes').value = '[\n  {\n    "weight": "1 kg",\n    "price": 1500,\n    "oldPrice": 2000,\n    "allowedFlavors": ["Chocolate"]\n  }\n]';
             document.getElementById('productModal').classList.add('active');
         }
         function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
@@ -327,7 +333,6 @@
             document.getElementById('prodPrice').value = p.price;
             document.getElementById('prodOldPrice').value = p.oldPrice || '';
             document.getElementById('prodDiscount').value = p.discount || '';
-            document.getElementById('prodWeight').value = p.weight || '';
             document.getElementById('prodCategory').value = p.category;
             document.getElementById('prodStock').value = p.stockLeft;
             document.getElementById('prodBestSeller').value = p.bestSeller ? 'true' : 'false';
@@ -335,6 +340,7 @@
             document.getElementById('prodIngredients').value = p.ingredients || '';
             document.getElementById('prodNutrition').value = p.nutritionalFacts ? p.nutritionalFacts.join('\n') : '';
             document.getElementById('prodFlavors').value = JSON.stringify(p.flavors, null, 2);
+            document.getElementById('prodSizes').value = JSON.stringify(p.sizes || [], null, 2);
             document.getElementById('productModal').classList.add('active');
         }
 
@@ -347,6 +353,10 @@
             try { flavors = JSON.parse(document.getElementById('prodFlavors').value); }
             catch (err) { return alert('Invalid JSON in Flavors field!'); }
 
+            let sizes = [];
+            try { if (document.getElementById('prodSizes').value.trim() !== '') sizes = JSON.parse(document.getElementById('prodSizes').value); }
+            catch (err) { return alert('Invalid JSON in Sizes field!'); }
+
             const oldPriceVal = document.getElementById('prodOldPrice').value;
             const discountVal = document.getElementById('prodDiscount').value;
 
@@ -355,14 +365,14 @@
                 name: document.getElementById('prodName').value,
                 slug: document.getElementById('prodSlug').value,
                 price: Number(document.getElementById('prodPrice').value),
-                weight: document.getElementById('prodWeight').value,
                 category: document.getElementById('prodCategory').value,
                 stockLeft: Number(document.getElementById('prodStock').value),
                 bestSeller: document.getElementById('prodBestSeller').value === 'true',
                 description: document.getElementById('prodDesc').value,
                 ingredients: document.getElementById('prodIngredients').value,
                 nutritionalFacts: document.getElementById('prodNutrition').value.split('\n').filter(line => line.trim() !== ''),
-                flavors: flavors
+                flavors: flavors,
+                sizes: sizes
             };
 
             if (oldPriceVal) productData.oldPrice = Number(oldPriceVal);
@@ -421,7 +431,7 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    const fullUrl = `http://localhost:5000${data.imageUrl}`;
+                    const fullUrl = data.imageUrl; // Cloudinary provides the complete secure URL
                     resultDiv.innerHTML = `<span style="color: #2ecc71;">✅ Uploaded! Copy this URL into the JSON below:</span><br><b style="color:white; user-select: all;">${fullUrl}</b>`;
                     fileInput.value = '';
                 } else { resultDiv.innerHTML = `<span style="color: #e74c3c;">Error: ${data.message}</span>`; }
