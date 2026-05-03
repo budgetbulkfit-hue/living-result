@@ -1,0 +1,10 @@
+# Ignore the backend folder
+backend/
+
+# Ignore sensitive credentials and personal documents
+admin id pass*
+data base user id pass*
+DEPLOYMENT_GUIDE*
+razorpay_test_api_keys*
+ROADMAP*
+URL QR Code*

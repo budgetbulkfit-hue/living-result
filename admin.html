@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Living Result | Admin Panel</title>
+    <link rel="icon" type="image/png" href="images/favicon.png">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            padding: 40px 24px;
+            background: var(--bg-primary);
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: #1a1a1a;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+
+        .action-btn {
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+            border: none;
+        }
+
+        .btn-edit {
+            background: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+        }
+
+        .btn-edit:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-delete {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+            margin-left: 8px;
+        }
+
+        .btn-delete:hover {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- LOGIN PANEL (Visible if not logged in) -->
+        <div id="loginPanel"
+            style="display: none; max-width: 400px; margin: 100px auto; background: var(--bg-card); padding: 40px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <img src="images/logo.png" alt="Logo" style="height: 60px; margin-bottom: 15px;">
+                <h2 style="font-family: var(--font-heading); color: var(--accent); text-transform: uppercase;">Admin
+                    Portal</h2>
+            </div>
+            <form onsubmit="adminLogin(event)">
+                <div class="form-group"><label>Email</label><input type="email" id="adminEmail" required></div>
+                <div class="form-group"><label>Password</label><input type="password" id="adminPass" required></div>
+                <button type="submit" class="btn-primary"
+                    style="width: 100%; justify-content: center; margin-top: 10px;">Secure Login</button>
+            </form>
+        </div>
+
+        <!-- ADMIN DASHBOARD (Visible if logged in) -->
+        <div id="adminPanel" style="display: none;">
+            <div class="admin-header">
+                <h1 style="font-family: var(--font-heading); font-size: 32px; text-transform: uppercase;">Product
+                    Inventory</h1>
+                <div style="display: flex; gap: 15px;">
+                    <button class="btn-primary" onclick="openProductModal()"
+                        style="background: #2ecc71; border-color: #2ecc71;">+ Add Product</button>
+                    <a href="index.html" class="btn-outline">View Live Site</a>
+                    <button class="btn-outline" style="border-color: #e74c3c; color: #e74c3c;"
+                        onclick="adminLogout()">Logout</button>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="adminProductTable">
+                    <tr>
+                        <td colspan="6" style="text-align: center;">Loading products...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ADD/EDIT PRODUCT MODAL -->
+    <div class="modal-overlay" id="productModal">
+        <div class="modal-content" style="max-width: 900px; padding: 30px; overflow-y: auto; max-height: 90vh;">
+            <button class="modal-close" type="button" onclick="closeProductModal()">&times;</button>
+            <h2 id="modalTitle"
+                style="font-family: var(--font-heading); font-size: 24px; text-transform: uppercase; margin-bottom: 20px; color: var(--accent);">
+                Add New Product</h2>
+
+            <form id="productForm" onsubmit="saveProduct(event)">
+                <input type="hidden" id="prodId">
+
+                <div style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;"><label>Cart ID (Number)</label><input type="number"
+                            id="prodNumericId" required></div>
+                    <div class="form-group" style="flex: 2;"><label>Product Name</label><input type="text" id="prodName"
+                            required></div>
+                    <div class="form-group" style="flex: 1;"><label>URL Slug</label><input type="text" id="prodSlug"
+                            placeholder="e.g. hulk-gainer" required></div>
+                </div>
+
+                <div style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;"><label>Price (₹)</label><input type="number" id="prodPrice"
+                            required></div>
+                    <div class="form-group" style="flex: 1;"><label>Old Price (₹)</label><input type="number"
+                            id="prodOldPrice"></div>
+                    <div class="form-group" style="flex: 1;"><label>Discount (%)</label><input type="number"
+                            id="prodDiscount"></div>
+                </div>
+
+                <div style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;"><label>Weight (e.g. 2 lbs)</label><input type="text"
+                            id="prodWeight"></div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Category</label>
+                        <select id="prodCategory">
+                            <option value="common">Everyday Essentials</option>
+                            <option value="unique">Unique Collection</option>
+                            <option value="combos">Combos</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;"><label>Stock Left</label><input type="number"
+                            id="prodStock" value="10"></div>
+                    <div class="form-group" style="flex: 1;"><label>Best Seller</label>
+                        <select id="prodBestSeller">
+                            <option value="false">No</option>
+                            <option value="true">Yes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group"><label>Description</label><textarea id="prodDesc" rows="3"></textarea></div>
+                <div class="form-group"><label>Ingredients</label><textarea id="prodIngredients" rows="2"></textarea>
+                </div>
+                <div class="form-group"><label>Nutritional Facts (One per line)</label><textarea id="prodNutrition"
+                        rows="3" placeholder="Calories: 1200 kcal&#10;Protein: 50g"></textarea></div>
+
+                <!-- IMAGE UPLOAD HELPER -->
+                <div class="form-group"
+                    style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; border: 1px dashed var(--border); margin-bottom: 15px;">
+                    <label style="color: var(--accent);">Image Upload Helper</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="file" id="imageUploadInput" accept="image/*" style="flex: 2; padding: 8px;">
+                        <button type="button" class="btn-outline"
+                            style="flex: 1; border-color: var(--accent); color: var(--accent);"
+                            onclick="uploadImage()">Upload & Get URL</button>
+                    </div>
+                    <div id="uploadResult"
+                        style="margin-top: 10px; font-size: 13px; color: var(--text-muted); word-break: break-all;">
+                        Select an image to generate a URL you can paste into the JSON below.</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Flavors (JSON Array)</label>
+                    <textarea id="prodFlavors" rows="5" style="font-family: monospace;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 15px; margin-top: 25px;">
+                    <button type="submit" class="btn-primary"
+                        style="flex: 1; justify-content: center; background: #2ecc71; border-color: #2ecc71;">Save
+                        Product</button>
+                    <button type="button" class="btn-outline" style="flex: 1; justify-content: center;"
+                        onclick="closeProductModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        let products = [];
+
+        // Auth Check
+        function checkAdminAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                document.getElementById('adminPanel').style.display = 'none';
+                document.getElementById('loginPanel').style.display = 'block';
+            } else {
+                document.getElementById('loginPanel').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                fetchAdminProducts();
+            }
+        }
+
+        async function adminLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPass').value;
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    checkAdminAuth();
+                } else { alert(data.message || 'Login failed!'); }
+            } catch (err) { alert('Network Error'); }
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('token');
+            checkAdminAuth();
+        }
+
+        // Fetch and Render Products
+        async function fetchAdminProducts() {
+            try {
+                const res = await fetch(`${API_URL}/products`);
+                const data = await res.json();
+                if (data.success) {
+                    products = data.data;
+                    const tbody = document.getElementById('adminProductTable');
+                    tbody.innerHTML = products.map(p => `
+            <tr>
+              <td><img src="${p.flavors && p.flavors.length > 0 ? p.flavors[0].image : ''}" width="40" style="border-radius:4px; background:#fff;"></td>
+              <td style="font-weight: bold;">${p.name}</td>
+              <td><span style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase;">${p.category}</span></td>
+              <td style="color: var(--accent); font-weight: bold;">₹${p.price.toLocaleString()}</td>
+              <td>${p.stockLeft}</td>
+              <td>
+                <button class="action-btn btn-edit" onclick="editProduct('${p._id}')">Edit</button>
+                <button class="action-btn btn-delete" onclick="deleteProduct('${p._id}')">Delete</button>
+              </td>
+            </tr>
+          `).join('');
+                }
+            } catch (err) { console.error('Error fetching products:', err); }
+        }
+
+        // Form Logic
+        function openProductModal() {
+            document.getElementById('productForm').reset();
+            document.getElementById('prodId').value = '';
+            document.getElementById('modalTitle').textContent = 'Add New Product';
+            document.getElementById('prodFlavors').value = '[\n  {\n    "name": "Chocolate",\n    "image": "images/hulk-mass-gainer.png",\n    "inStock": true\n  }\n]';
+            document.getElementById('productModal').classList.add('active');
+        }
+        function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
+
+        function editProduct(id) {
+            const p = products.find(prod => prod._id === id);
+            if (!p) return;
+            document.getElementById('modalTitle').textContent = 'Edit Product';
+            document.getElementById('prodId').value = p._id;
+            document.getElementById('prodNumericId').value = p.id || '';
+            document.getElementById('prodName').value = p.name;
+            document.getElementById('prodSlug').value = p.slug;
+            document.getElementById('prodPrice').value = p.price;
+            document.getElementById('prodOldPrice').value = p.oldPrice || '';
+            document.getElementById('prodDiscount').value = p.discount || '';
+            document.getElementById('prodWeight').value = p.weight || '';
+            document.getElementById('prodCategory').value = p.category;
+            document.getElementById('prodStock').value = p.stockLeft;
+            document.getElementById('prodBestSeller').value = p.bestSeller ? 'true' : 'false';
+            document.getElementById('prodDesc').value = p.description || '';
+            document.getElementById('prodIngredients').value = p.ingredients || '';
+            document.getElementById('prodNutrition').value = p.nutritionalFacts ? p.nutritionalFacts.join('\n') : '';
+            document.getElementById('prodFlavors').value = JSON.stringify(p.flavors, null, 2);
+            document.getElementById('productModal').classList.add('active');
+        }
+
+        async function saveProduct(e) {
+            e.preventDefault();
+            const id = document.getElementById('prodId').value;
+            const token = localStorage.getItem('token');
+
+            let flavors = [];
+            try { flavors = JSON.parse(document.getElementById('prodFlavors').value); }
+            catch (err) { return alert('Invalid JSON in Flavors field!'); }
+
+            const oldPriceVal = document.getElementById('prodOldPrice').value;
+            const discountVal = document.getElementById('prodDiscount').value;
+
+            const productData = {
+                id: Number(document.getElementById('prodNumericId').value),
+                name: document.getElementById('prodName').value,
+                slug: document.getElementById('prodSlug').value,
+                price: Number(document.getElementById('prodPrice').value),
+                weight: document.getElementById('prodWeight').value,
+                category: document.getElementById('prodCategory').value,
+                stockLeft: Number(document.getElementById('prodStock').value),
+                bestSeller: document.getElementById('prodBestSeller').value === 'true',
+                description: document.getElementById('prodDesc').value,
+                ingredients: document.getElementById('prodIngredients').value,
+                nutritionalFacts: document.getElementById('prodNutrition').value.split('\n').filter(line => line.trim() !== ''),
+                flavors: flavors
+            };
+
+            if (oldPriceVal) productData.oldPrice = Number(oldPriceVal);
+            if (discountVal) productData.discount = Number(discountVal);
+
+            try {
+                const res = await fetch(id ? `${API_URL}/products/${id}` : `${API_URL}/products`, {
+                    method: id ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(productData)
+                });
+
+                const text = await res.text();
+                try {
+                    const data = JSON.parse(text);
+                    if (data.success) { closeProductModal(); fetchAdminProducts(); }
+                    else { alert('Database Error: ' + data.message); }
+                } catch (e) {
+                    alert('Server Error: Did you remember to restart your Node.js backend?');
+                    console.error('Server returned:', text);
+                }
+            } catch (err) {
+                alert('Network Error: Make sure your backend server is running!');
+                console.error(err);
+            }
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm('Are you sure you want to permanently delete this product?')) return;
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_URL}/products/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                if (data.success) { fetchAdminProducts(); }
+                else { alert('Error: ' + data.message); }
+            } catch (err) { alert('Network Error'); }
+        }
+
+        // Upload Image Helper
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageUploadInput');
+            const resultDiv = document.getElementById('uploadResult');
+            if (!fileInput.files[0]) return alert('Please select an image first.');
+
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+
+            const token = localStorage.getItem('token');
+            resultDiv.innerHTML = 'Uploading...';
+
+            try {
+                const res = await fetch(`${API_URL}/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const fullUrl = `http://localhost:5000${data.imageUrl}`;
+                    resultDiv.innerHTML = `<span style="color: #2ecc71;">✅ Uploaded! Copy this URL into the JSON below:</span><br><b style="color:white; user-select: all;">${fullUrl}</b>`;
+                    fileInput.value = '';
+                } else { resultDiv.innerHTML = `<span style="color: #e74c3c;">Error: ${data.message}</span>`; }
+            } catch (err) { resultDiv.innerHTML = `<span style="color: #e74c3c;">Network Error</span>`; }
+        }
+
+        // Init
+        checkAdminAuth();
+    </script>
+</body>
+
+</html>
