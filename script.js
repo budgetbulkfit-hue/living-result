@@ -42,7 +42,7 @@ function renderProductCard(product) {
         </div>
         <div class="product-rating">
           <span class="stars">${stars}</span>
-          <span class="rating-count">(${product.reviews})</span>
+          <span class="rating-count">(${product.numReviews || product.reviews || 0})</span>
         </div>
         <div class="scarcity-text" style="color: var(--accent); font-size: 12px; font-weight: 600; margin-top: 8px;">
            🔥 Hurry, only ${product.stockLeft} left!
@@ -296,6 +296,7 @@ document.querySelectorAll(".nav-menu a").forEach(link => {
 // ===== NAVBAR SCROLL EFFECT =====
 window.addEventListener("scroll", () => {
   const navbar = document.getElementById("navbar");
+  const noticeStrip = document.getElementById("noticeStrip");
   const scrollY = window.scrollY;
   if (scrollY > 80) {
     navbar.style.background = "rgba(10,10,10,0.97)";
@@ -303,6 +304,18 @@ window.addEventListener("scroll", () => {
   } else {
     navbar.style.background = "rgba(10,10,10,0.92)";
     navbar.style.boxShadow = "none";
+  }
+
+  // Smooth sticky transition when Notice Strip is active
+  if (noticeStrip && noticeStrip.style.display === 'block') {
+    const stripHeight = noticeStrip.offsetHeight;
+    if (scrollY > stripHeight) {
+      navbar.style.top = "0px";
+    } else {
+      navbar.style.top = `${stripHeight - scrollY}px`;
+    }
+  } else {
+    navbar.style.top = "0px";
   }
 });
 
@@ -623,6 +636,8 @@ document.addEventListener("DOMContentLoaded", () => {
   checkAuthStatus(); // Check if user is logged in
   updateCartUI();
   updateFloatingCart();
+  fetchAndDisplaySettings();
+  startGlobalRefreshPolling();
 
   fetchProducts().then(() => {
     if (window.location.pathname.includes('product.html')) {
@@ -635,6 +650,50 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // const API_URL = 'http://localhost:5000/api'; // <-- UNCOMMENT THIS FOR LOCAL TESTING
 const API_URL = 'https://living-result-backend.onrender.com/api'; // <-- UNCOMMENT THIS FOR LIVE DEPLOYMENT
+
+// ===== GLOBAL REFRESH POLLING =====
+let currentSiteVersion = null;
+async function checkSiteVersion() {
+  try {
+    const res = await fetch(`${API_URL}/settings/version`);
+    const data = await res.json();
+    if (data.success) {
+      if (currentSiteVersion === null) {
+        currentSiteVersion = data.version; // Set initial version instantly
+      } else if (data.version > currentSiteVersion) {
+        window.location.reload(true); // Force reload from server if version increased
+      }
+    }
+  } catch (e) { }
+}
+
+async function startGlobalRefreshPolling() {
+  await checkSiteVersion(); // Check instantly on page load
+  setInterval(checkSiteVersion, 30000); // Then check every 30 seconds
+}
+
+async function fetchAndDisplaySettings() {
+  try {
+    const res = await fetch(`${API_URL}/settings`);
+    const data = await res.json();
+    if (data.success && data.data.noticeStrip) {
+      const noticeStrip = data.data.noticeStrip;
+      if (noticeStrip.enabled && noticeStrip.text) {
+        document.getElementById('noticeStripText').textContent = noticeStrip.text;
+        const strip = document.getElementById('noticeStrip');
+        strip.style.display = 'block';
+
+        // Set initial navbar position based on scroll
+        const scrollY = window.scrollY;
+        if (scrollY <= strip.offsetHeight) {
+          document.getElementById('navbar').style.top = `${strip.offsetHeight - scrollY}px`;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+  }
+}
 
 // ===== AUTH UI LOGIC =====
 function toggleAuthModal() {
@@ -888,10 +947,31 @@ function renderSingleProductPage() {
           <div class="modal-tab active" onclick="switchModalTab('desc')">About</div>
           <div class="modal-tab" onclick="switchModalTab('nutrition')">Nutritional Facts</div>
           <div class="modal-tab" onclick="switchModalTab('ingredients')">Ingredients</div>
+        <div class="modal-tab" onclick="switchModalTab('reviews')">Reviews (${product.numReviews || product.reviews || 0})</div>
         </div>
         <div class="modal-tab-content active" id="tab-desc"><p>${product.description}</p></div>
         <div class="modal-tab-content" id="tab-nutrition"><ul>${nutritionList}</ul></div>
         <div class="modal-tab-content" id="tab-ingredients"><p>${product.ingredients}</p></div>
+      <div class="modal-tab-content" id="tab-reviews">
+        <div class="reviews-container">
+          ${renderReviews(product)}
+          <div style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px;">
+            <h4 style="margin-bottom: 15px; color: var(--text-primary); font-family: var(--font-heading); text-transform: uppercase;">Write a Review</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <select id="reviewRating" style="padding: 12px; background: var(--bg-primary); border: 1px solid var(--border); color: white; border-radius: 6px;">
+                <option value="5">5 - Excellent (★★★★★)</option>
+                <option value="4">4 - Very Good (★★★★☆)</option>
+                <option value="3">3 - Average (★★★☆☆)</option>
+                <option value="2">2 - Poor (★★☆☆☆)</option>
+                <option value="1">1 - Terrible (★☆☆☆☆)</option>
+              </select>
+              <input type="text" id="reviewName" placeholder="Your Name" style="padding: 12px; background: var(--bg-primary); border: 1px solid var(--border); color: white; border-radius: 6px;">
+              <textarea id="reviewComment" rows="3" placeholder="Your Review..." style="padding: 12px; background: var(--bg-primary); border: 1px solid var(--border); color: white; border-radius: 6px;"></textarea>
+              <button onclick="submitReview('${product._id || product.id}')" class="btn-primary" style="justify-content: center; margin-top: 5px;">Submit Review</button>
+            </div>
+          </div>
+        </div>
+      </div>
       </div>
     </div>
   `;
@@ -918,4 +998,45 @@ function addToCartFromPage() {
   updateCartUI();
   updateFloatingCart();
   toggleCart();
+}
+
+// ===== REVIEWS LOGIC =====
+function renderReviews(product) {
+  if (!product.reviewList || product.reviewList.length === 0) {
+    return `<p style="color: var(--text-muted); font-style: italic;">No reviews yet. Be the first to review!</p>`;
+  }
+  return product.reviewList.map(r => `
+    <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <strong style="color: var(--text-primary);">${r.name}</strong>
+        <span style="color: #f5a623; letter-spacing: 2px;">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</span>
+      </div>
+      <p style="font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.5;">${r.comment}</p>
+    </div>
+  `).join("");
+}
+
+async function submitReview(productId) {
+  const rating = document.getElementById('reviewRating').value;
+  const name = document.getElementById('reviewName').value;
+  const comment = document.getElementById('reviewComment').value;
+
+  if (!name || !comment) return alert("Please fill in your name and review.");
+
+  try {
+    const res = await fetch(`${API_URL}/products/${productId}/reviews`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, rating: Number(rating), comment })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert("Review submitted successfully!");
+      loadSingleProductPage(); // Reload the product
+    } else {
+      alert("Error: " + data.message);
+    }
+  } catch (err) {
+    alert("Network Error");
+  }
 }

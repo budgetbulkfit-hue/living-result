@@ -134,6 +134,37 @@
                 </div>
             </div>
 
+            <!-- GLOBAL SETTINGS -->
+            <div id="globalSettingsPanel" style="margin-bottom: 40px;">
+                <div class="admin-header" style="margin-bottom: 20px;">
+                    <h1 style="font-family: var(--font-heading); font-size: 24px; text-transform: uppercase;">Global
+                        Site
+                        Settings</h1>
+                </div>
+                <div
+                    style="background: var(--bg-secondary); padding: 24px; border-radius: 8px; border: 1px solid var(--border);">
+                    <form onsubmit="saveGlobalSettings(event)">
+                        <div class="form-group">
+                            <label>Top Notice Strip</label>
+                            <input type="text" id="noticeStripText"
+                                placeholder="e.g. Free Shipping on orders above ₹999">
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="noticeStripEnabled" style="width: auto;">
+                            <label for="noticeStripEnabled" style="margin: 0;">Enable Notice Strip</label>
+                        </div>
+                        <button type="submit" class="btn-primary">Save Global Settings</button>
+
+                        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+                        <label
+                            style="display: block; margin-bottom: 10px; font-size: 13px; color: var(--text-muted); text-transform: uppercase;">Global
+                            Refresh</label>
+                        <button type="button" class="btn-outline" style="border-color: #e74c3c; color: #e74c3c;"
+                            onclick="forceGlobalRefresh()">Force Refresh Website For All Users</button>
+                    </form>
+                </div>
+            </div>
+
             <table>
                 <thead>
                     <tr>
@@ -151,6 +182,20 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+    </div>
+
+    <!-- MANAGE REVIEWS MODAL -->
+    <div class="modal-overlay" id="reviewsModal">
+        <div class="modal-content" style="max-width: 600px; padding: 30px;">
+            <button class="modal-close" type="button" onclick="closeReviewsModal()">&times;</button>
+            <h2
+                style="font-family: var(--font-heading); font-size: 24px; text-transform: uppercase; margin-bottom: 20px; color: var(--accent);">
+                Manage Reviews</h2>
+            <div id="adminReviewsList">
+                <!-- Injected by JS -->
+            </div>
         </div>
     </div>
 
@@ -260,6 +305,7 @@
                 document.getElementById('loginPanel').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
                 fetchAdminProducts();
+                fetchGlobalSettings();
             }
         }
 
@@ -286,6 +332,53 @@
             checkAdminAuth();
         }
 
+        // Global Settings
+        async function fetchGlobalSettings() {
+            try {
+                const res = await fetch(`${API_URL}/settings`);
+                const data = await res.json();
+                if (data.success && data.data.noticeStrip) {
+                    document.getElementById('noticeStripText').value = data.data.noticeStrip.text || '';
+                    document.getElementById('noticeStripEnabled').checked = data.data.noticeStrip.enabled || false;
+                }
+            } catch (err) {
+                console.error('Error fetching settings:', err);
+            }
+        }
+
+        async function saveGlobalSettings(e) {
+            e.preventDefault();
+            const token = localStorage.getItem('token');
+            const settingsData = {
+                noticeStrip: {
+                    text: document.getElementById('noticeStripText').value,
+                    enabled: document.getElementById('noticeStripEnabled').checked
+                }
+            };
+            try {
+                const res = await fetch(`${API_URL}/settings`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(settingsData)
+                });
+                const data = await res.json();
+                if (data.success) { alert('Global settings saved!'); } else { alert('Error: ' + data.message); }
+            } catch (err) { alert('Network Error'); }
+        }
+
+        async function forceGlobalRefresh() {
+            if (!confirm("Are you sure? This will instantly refresh the website for every user currently browsing it.")) return;
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_URL}/settings/version/increment`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) { alert('Global Refresh Triggered! All active users will reload within 30 seconds.'); } else { alert('Error: ' + data.message); }
+            } catch (err) { alert('Network Error'); }
+        }
+
         // Fetch and Render Products
         async function fetchAdminProducts() {
             try {
@@ -303,6 +396,7 @@
               <td>${p.stockLeft}</td>
               <td>
                 <button class="action-btn btn-edit" onclick="editProduct('${p._id}')">Edit</button>
+                <button class="action-btn btn-outline" style="color: #f39c12; border-color: #f39c12; margin-left: 8px;" onclick="manageReviews('${p._id}')">Reviews (${p.numReviews || p.reviews || 0})</button>
                 <button class="action-btn btn-delete" onclick="deleteProduct('${p._id}')">Delete</button>
               </td>
             </tr>
@@ -409,6 +503,49 @@
                 if (data.success) { fetchAdminProducts(); }
                 else { alert('Error: ' + data.message); }
             } catch (err) { alert('Network Error'); }
+        }
+
+        // Review Management Logic
+        let currentReviewProductId = null;
+        function manageReviews(id) {
+            const p = products.find(prod => prod._id === id);
+            if (!p) return;
+            currentReviewProductId = id;
+
+            const container = document.getElementById('adminReviewsList');
+            if (!p.reviewList || p.reviewList.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">No reviews for this product yet.</p>';
+            } else {
+                container.innerHTML = p.reviewList.map(r => `
+                    <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <strong style="color: white;">${r.name}</strong>
+                            <span style="color: #f5a623;">${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</span>
+                        </div>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.5;">${r.comment}</p>
+                        <button class="btn-outline" style="border-color: #e74c3c; color: #e74c3c; font-size: 12px; padding: 6px 12px;" onclick="deleteReview('${r._id}')">Delete Review</button>
+                    </div>
+                `).join('');
+            }
+            document.getElementById('reviewsModal').classList.add('active');
+        }
+
+        function closeReviewsModal() {
+            document.getElementById('reviewsModal').classList.remove('active');
+        }
+
+        async function deleteReview(reviewId) {
+            if (!confirm('Are you sure you want to permanently delete this review?')) return;
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_URL}/products/${currentReviewProductId}/reviews/${reviewId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) { fetchAdminProducts().then(() => manageReviews(currentReviewProductId)); }
+                else { alert('Error: ' + data.message); }
+            } catch (e) { alert('Network Error'); }
         }
 
         // Upload Image Helper

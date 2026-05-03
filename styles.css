@@ -96,6 +96,18 @@ body::after {
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   transition: var(--transition);
+  top: 0;
+  /* Default position */
+}
+
+/* ===== NOTICE STRIP ===== */
+.notice-strip {
+  background: var(--accent);
+  color: #fff;
+  text-align: center;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .navbar .container {
@@ -288,6 +300,22 @@ body::after {
 .hero-content {
   padding: 60px 0;
   max-width: 560px;
+}
+
+.hero-benefits {
+  list-style: none;
+  margin-bottom: 36px;
+  display: flex;
+  gap: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.hero-cta-group {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .hero-tagline {
@@ -712,6 +740,53 @@ section {
 .why-content .section-title {
   margin-bottom: 20px;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== WHY US DETAILED ===== */
+.why-us-detailed {
+  background: var(--bg-secondary);
+}
+
+.why-us-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  align-items: center;
+  gap: 60px;
+}
+
+.why-us-image img {
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+.why-us-content .section-title {
+  margin-bottom: 30px;
+}
+
+.why-us-points {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.why-us-point {
+  padding-left: 20px;
+  border-left: 3px solid var(--accent);
+}
+
+.why-us-point h4 {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.why-us-point p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.7;
 }
 
 .why-content p {
@@ -1731,6 +1806,11 @@ section {
     align-items: center;
   }
 
+  .hero-cta-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   section {
     padding: 60px 0;
   }
@@ -1768,6 +1848,11 @@ section {
     display: flex;
     flex-direction: column;
     align-items: center;
+  }
+
+  .why-us-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
   }
 }
 
