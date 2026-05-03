@@ -824,7 +824,13 @@ async function fetchProducts() {
     const res = await fetch(`${API_URL}/products`);
     const data = await res.json();
     if (data.success) {
-      allProducts = data.data;
+      allProducts = data.data.map(p => {
+        if (p.description && p.description.includes('<!--[GF]-->')) {
+          p.glutenFree = true;
+          p.description = p.description.replace(/ ?<!--\[GF\]-->/g, '');
+        }
+        return p;
+      });
       if (!window.location.pathname.includes('product.html')) {
         renderProducts();
       }
@@ -846,6 +852,10 @@ async function loadSingleProductPage() {
     const data = await res.json();
     if (data.success) {
       currentProductData = data.data;
+      if (currentProductData.description && currentProductData.description.includes('<!--[GF]-->')) {
+        currentProductData.glutenFree = true;
+        currentProductData.description = currentProductData.description.replace(/ ?<!--\[GF\]-->/g, '');
+      }
       currentSelectedFlavorIndex = 0;
       currentSelectedSizeIndex = 0;
       renderSingleProductPage();

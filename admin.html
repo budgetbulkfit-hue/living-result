@@ -447,7 +447,13 @@
                 const res = await fetch(`${API_URL}/products`);
                 const data = await res.json();
                 if (data.success) {
-                    products = data.data;
+                    products = data.data.map(p => {
+                        if (p.description && p.description.includes('<!--[GF]-->')) {
+                            p.glutenFree = true;
+                            p.description = p.description.replace(/ ?<!--\[GF\]-->/g, '');
+                        }
+                        return p;
+                    });
                     const tbody = document.getElementById('adminProductTable');
                     tbody.innerHTML = products.map(p => `
             <tr>
@@ -524,6 +530,11 @@
             const oldPriceVal = document.getElementById('prodOldPrice').value;
             const discountVal = document.getElementById('prodDiscount').value;
 
+            let descriptionVal = document.getElementById('prodDesc').value;
+            if (document.getElementById('prodGlutenFree').checked) {
+                descriptionVal += ' <!--[GF]-->';
+            }
+
             const productData = {
                 id: Number(document.getElementById('prodNumericId').value),
                 name: document.getElementById('prodName').value,
@@ -532,8 +543,7 @@
                 category: document.getElementById('prodCategory').value,
                 stockLeft: Number(document.getElementById('prodStock').value),
                 bestSeller: document.getElementById('prodBestSeller').checked,
-                glutenFree: document.getElementById('prodGlutenFree').checked,
-                description: document.getElementById('prodDesc').value,
+                description: descriptionVal,
                 ingredients: document.getElementById('prodIngredients').value,
                 nutritionalFacts: document.getElementById('prodNutrition').value.split('\n').filter(line => line.trim() !== ''),
                 flavors: flavors,
