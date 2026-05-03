@@ -185,6 +185,26 @@ function toggleZoom(e) {
   }
 }
 
+// ===== MAGNIFYING GLASS HOVER ZOOM =====
+function handleImageZoom(e, wrapper) {
+  if (window.innerWidth <= 768) return; // Disable on touch/mobile devices
+  const img = wrapper.querySelector('img');
+  if (!img) return;
+  const { left, top, width, height } = wrapper.getBoundingClientRect();
+  const x = ((e.clientX - left) / width) * 100;
+  const y = ((e.clientY - top) / height) * 100;
+  img.style.transformOrigin = `${x}% ${y}%`;
+  img.style.transform = 'scale(2.2)'; // Zoom level
+}
+
+function resetImageZoom(wrapper) {
+  if (window.innerWidth <= 768) return;
+  const img = wrapper.querySelector('img');
+  if (!img) return;
+  img.style.transformOrigin = 'center center';
+  img.style.transform = 'scale(1)';
+}
+
 // ===== SEARCH OVERLAY =====
 function toggleSearch() {
   const overlay = document.getElementById("searchOverlay");
@@ -904,6 +924,19 @@ function renderSingleProductPage() {
 
   const allowedFlavors = (size && size.allowedFlavors && size.allowedFlavors.length > 0) ? size.allowedFlavors : null;
 
+  // Combine active flavor image with any additional product images
+  const allGalleryImages = [flavor.image, ...(product.images || [])].filter(Boolean);
+
+  const galleryHTML = allGalleryImages.length > 1 ? `
+    <div class="thumbnail-gallery">
+      ${allGalleryImages.map((img, idx) => `
+        <img src="${img}" class="thumbnail-img" 
+             onclick="updateMainImage('${img}', this)" 
+             style="width: 70px; height: 70px; object-fit: contain; background: #0e0e0e; border-radius: 6px; cursor: pointer; border: 2px solid ${idx === 0 ? 'var(--accent)' : 'transparent'};">
+      `).join('')}
+    </div>
+  ` : '';
+
   const flavorPills = product.flavors.map((f, i) => {
     if (allowedFlavors && !allowedFlavors.includes(f.name)) return ''; // Hide flavor if not allowed for this size
     return `<button class="flavor-pill ${i === currentSelectedFlavorIndex ? 'active' : ''}" onclick="selectPageFlavor(${i})">
@@ -930,7 +963,10 @@ function renderSingleProductPage() {
     <div class="modal-grid" style="position: relative; background: var(--bg-secondary); padding: 40px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
       <button class="modal-close" onclick="window.location.href='index.html#products'" title="Go Back">&times;</button>
       <div class="modal-image-col">
-        <img src="${flavor.image}" alt="${product.name}" onclick="openImageLightbox('${flavor.image}')" style="cursor: zoom-in;" title="Click to zoom">
+        <div class="main-image-wrapper" onmousemove="handleImageZoom(event, this)" onmouseleave="resetImageZoom(this)">
+          <img id="mainModalImage" src="${flavor.image}" alt="${product.name}" onclick="openImageLightbox(this.src)" style="cursor: zoom-in;" title="Click to zoom">
+        </div>
+        ${galleryHTML}
         <div class="image-disclaimer">
           All images are AI-generated and inspired. The actual product tub may not look exactly the same.
         </div>
@@ -987,6 +1023,15 @@ function renderSingleProductPage() {
       </div>
     </div>
   `;
+}
+
+// Function to swap main image when a thumbnail is clicked
+function updateMainImage(src, element) {
+  document.getElementById('mainModalImage').src = src;
+  // Reset all thumbnail borders
+  document.querySelectorAll('.thumbnail-img').forEach(el => el.style.borderColor = 'transparent');
+  // Highlight clicked thumbnail
+  element.style.borderColor = 'var(--accent)';
 }
 
 function addToCartFromPage() {

@@ -1133,6 +1133,20 @@ section {
   object-fit: contain;
 }
 
+.main-image-wrapper {
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.main-image-wrapper img {
+  transition: transform 0.15s ease-out;
+  will-change: transform;
+}
+
 .image-disclaimer {
   font-size: 11px;
   color: var(--text-muted);
@@ -1763,6 +1777,39 @@ section {
   z-index: 2;
 }
 
+/* ===== PRODUCT GALLERY ===== */
+.thumbnail-gallery {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--bg-primary);
+  width: 100%;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+}
+
+.thumbnail-gallery::-webkit-scrollbar {
+  height: 4px;
+}
+
+.thumbnail-gallery::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 4px;
+}
+
+.thumbnail-gallery .thumbnail-img {
+  flex-shrink: 0;
+  transition: var(--transition);
+  scroll-snap-align: start;
+}
+
+.thumbnail-gallery .thumbnail-img:hover {
+  transform: translateY(-2px);
+}
+
 @media (max-width: 1024px) {
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1868,6 +1915,15 @@ section {
   .why-us-grid {
     grid-template-columns: 1fr;
     gap: 40px;
+  }
+
+  /* Hide scrollbar on mobile for a cleaner carousel look */
+  .thumbnail-gallery {
+    scrollbar-width: none;
+  }
+
+  .thumbnail-gallery::-webkit-scrollbar {
+    display: none;
   }
 }
 
