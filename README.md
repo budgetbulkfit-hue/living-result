@@ -6,7 +6,7 @@ Welcome to the frontend repository for **Living Result**, a premium fitness supp
 > **#WEARETHELIVINGRESULT**
 
 ## 🌐 Live Demo
-**[Insert your live Vercel URL here - e.g., https://living-result.vercel.app]**
+**https://living-resultm.vercel.app/**
 
 ## 📖 Overview
 This repository contains the client-side user interface for the Living Result store. It is a fully responsive, modern web application built to provide a seamless shopping experience for fitness enthusiasts. 
