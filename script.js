@@ -633,8 +633,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-const API_URL = 'http://localhost:5000/api'; // <-- UNCOMMENT THIS FOR LOCAL TESTING
-// const API_URL = 'https://living-result-backend.onrender.com/api'; // <-- UNCOMMENT THIS FOR LIVE DEPLOYMENT
+// const API_URL = 'http://localhost:5000/api'; // <-- UNCOMMENT THIS FOR LOCAL TESTING
+const API_URL = 'https://living-result-backend.onrender.com/api'; // <-- UNCOMMENT THIS FOR LIVE DEPLOYMENT
 
 // ===== AUTH UI LOGIC =====
 function toggleAuthModal() {
