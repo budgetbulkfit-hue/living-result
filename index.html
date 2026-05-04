@@ -569,7 +569,13 @@
         <div style="margin-bottom: 15px;">
           <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">Phone
             Number</label>
-          <input type="tel" id="checkoutPhone" required
+          <input type="tel" id="checkoutPhone" required pattern="[0-9]{10}" title="Please enter a valid 10-digit phone number"
+            style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: #fff;">
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">Email
+            Address</label>
+          <input type="email" id="checkoutEmail" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Please enter a valid email address (e.g. name@domain.com)"
             style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: #fff;">
         </div>
         <div style="margin-bottom: 20px;">
@@ -688,11 +694,6 @@
           <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">Email</label>
           <input type="email" id="loginEmail" required
             style="width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; color: #fff;">
-        </div>
-        <div style="margin-bottom: 15px;">
-          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">Email Address</label>
-          <input type="email" id="checkoutEmail" required
-            style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: #fff;">
         </div>
         <div style="margin-bottom: 20px;">
           <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">Password</label>

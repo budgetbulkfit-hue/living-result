@@ -122,7 +122,11 @@
                         style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: #fff;">
                 </div>
                 <div style="margin-bottom: 15px;"><input type="tel" id="checkoutPhone" placeholder="Phone Number"
-                        required
+                        required pattern="[0-9]{10}" title="Please enter a valid 10-digit phone number"
+                        style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: #fff;">
+                </div>
+                <div style="margin-bottom: 15px;"><input type="email" id="checkoutEmail" placeholder="Email Address"
+                        required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Please enter a valid email address (e.g. name@domain.com)"
                         style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: #fff;">
                 </div>
                 <div style="margin-bottom: 20px;"><textarea id="checkoutAddress" placeholder="Delivery Address" required
