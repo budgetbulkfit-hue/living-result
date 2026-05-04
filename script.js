@@ -568,6 +568,7 @@ async function processCheckout(e) {
 
   const name = document.getElementById("checkoutName").value;
   const phone = document.getElementById("checkoutPhone").value;
+  const email = document.getElementById("checkoutEmail").value;
   const address = document.getElementById("checkoutAddress").value;
 
   // Close checkout modal
@@ -581,7 +582,7 @@ async function processCheckout(e) {
   try {
     // --- NEW: PHASE 3 - CREATE PENDING ORDER ON BACKEND ---
     const orderPayload = {
-      customerDetails: { name, phone, address },
+      customerDetails: { name, phone, email, address },
       products: cart.map(item => ({
         productId: item.productId,
         name: item.name,
@@ -620,6 +621,7 @@ async function processCheckout(e) {
     message += `\n💰 *Total: ₹${pendingOrderAmount.toLocaleString()}*\n\n`;
     message += `👤 *Name:* ${name}\n`;
     message += `📞 *Phone:* ${phone}\n`;
+    message += `✉️ *Email:* ${email}\n`;
     message += `📍 *Address:* ${address}\n\n`;
     message += `Please confirm my order! 🙏`;
 
@@ -682,6 +684,7 @@ async function processCheckout(e) {
         timestamp: new Date().toLocaleString(),
         name: name,
         phone: phone,
+        email: email,
         address: address,
         total: pendingOrderAmount,
         items: cart.map(i => `${i.name} (${i.flavorName}) x${i.qty}`).join(' | ')
