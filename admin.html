@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Living Result admin portal for inventory, settings, and order management.">
     <title>Living Result | Admin Panel</title>
     <link rel="icon" type="image/png" href="images/favicon.png">
     <link rel="stylesheet" href="styles.css">
@@ -147,6 +149,73 @@
             transform: translateX(22px);
             background-color: #2ecc71;
         }
+
+        .panel-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .toolbar-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .toolbar-row input,
+        .toolbar-row select {
+            min-width: 180px;
+            padding: 10px 12px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: #fff;
+        }
+
+        .toast-wrap {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 30000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            min-width: 280px;
+            max-width: 380px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #1d1d1d;
+            color: #fff;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            font-size: 13px;
+        }
+
+        .toast.success { border-color: #2ecc71; }
+        .toast.error { border-color: #e74c3c; }
+        .toast.info { border-color: var(--accent); }
+
+        .pagination-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .pagination-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
     </style>
 </head>
 
@@ -226,6 +295,27 @@
                     </div>
                 </div>
 
+                <div class="panel-card">
+                    <div class="toolbar-row">
+                        <input id="productSearchInput" type="text" placeholder="Search product name / slug"
+                            oninput="applyProductFilters()">
+                        <select id="productCategoryFilter" onchange="applyProductFilters()">
+                            <option value="all">All Categories</option>
+                            <option value="common">Everyday Essentials</option>
+                            <option value="unique">Unique Collection</option>
+                            <option value="combos">Combos</option>
+                        </select>
+                        <select id="productSortBy" onchange="applyProductFilters()">
+                            <option value="nameAsc">Name (A-Z)</option>
+                            <option value="priceDesc">Price (High-Low)</option>
+                            <option value="priceAsc">Price (Low-High)</option>
+                            <option value="stockAsc">Stock (Low-High)</option>
+                            <option value="stockDesc">Stock (High-Low)</option>
+                        </select>
+                        <button class="btn-outline" type="button" onclick="resetProductFilters()">Clear Filters</button>
+                    </div>
+                </div>
+
                 <table>
                     <thead>
                         <tr>
@@ -244,6 +334,40 @@
                         </tr>
                     </tbody>
                 </table>
+                <div class="pagination-row">
+                    <span id="productPageInfo" style="font-size: 12px; color: var(--text-muted);">Page 1</span>
+                    <div class="pagination-actions">
+                        <button id="productPrevBtn" class="btn-outline" type="button"
+                            onclick="changeProductPage(-1)">Previous</button>
+                        <button id="productNextBtn" class="btn-outline" type="button"
+                            onclick="changeProductPage(1)">Next</button>
+                    </div>
+                </div>
+
+                <div class="panel-card" style="margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="margin: 0; font-family: var(--font-heading); text-transform: uppercase; color: var(--accent);">
+                            Product Performance
+                        </h3>
+                        <span style="font-size: 12px; color: var(--text-muted);">Views vs Confirmed Sales</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Views</th>
+                                <th>Confirmed Sales</th>
+                                <th>Revenue (₹)</th>
+                                <th>Conversion Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productPerformanceTable">
+                            <tr>
+                                <td colspan="5" style="text-align:center; color: var(--text-muted);">Loading analytics...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- ORDERS VIEW -->
@@ -252,6 +376,20 @@
                     <h2 style="font-family: var(--font-heading); text-transform: uppercase; color: var(--accent);">
                         Recent Orders</h2>
                     <button class="btn-outline" onclick="fetchOrders()">⟳ Refresh</button>
+                </div>
+                <div class="panel-card">
+                    <div class="toolbar-row">
+                        <input id="orderSearchInput" type="text" placeholder="Search order id / name / phone"
+                            oninput="applyOrderFilters()">
+                        <select id="orderStatusFilter" onchange="applyOrderFilters()">
+                            <option value="all">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <input id="orderDateFilter" type="date" onchange="applyOrderFilters()">
+                        <button class="btn-outline" type="button" onclick="resetOrderFilters()">Clear Filters</button>
+                    </div>
                 </div>
                 <table>
                     <thead>
@@ -274,6 +412,18 @@
             </div>
         </div>
 
+    </div>
+    <div id="toastWrap" class="toast-wrap"></div>
+
+    <!-- ORDER DETAILS MODAL -->
+    <div class="modal-overlay" id="orderDetailsModal">
+        <div class="modal-content" style="max-width: 760px; padding: 24px; max-height: 85vh; overflow-y: auto;">
+            <button class="modal-close" type="button" onclick="closeOrderDetailsModal()">&times;</button>
+            <h2 style="font-family: var(--font-heading); color: var(--accent); text-transform: uppercase; margin-bottom: 18px;">
+                Order Details
+            </h2>
+            <div id="orderDetailsBody"></div>
+        </div>
     </div>
 
     <!-- MANAGE REVIEWS MODAL -->
@@ -399,22 +549,175 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
     <script>
-        // const API_URL = 'http://localhost:5000/api'; // <-- UNCOMMENT THIS FOR LOCAL TESTING
-        const API_URL = 'https://living-result-backend.onrender.com/api'; // <-- UNCOMMENT THIS FOR LIVE DEPLOYMENT
+        const API_URL = (window.APP_CONFIG && window.APP_CONFIG.apiUrl) || 'https://living-result-backend.onrender.com/api';
         let products = [];
+        let filteredProducts = [];
+        let productPage = 1;
+        const PRODUCTS_PER_PAGE = 8;
+        let adminToken = localStorage.getItem('adminToken') || '';
+        let allOrders = [];
+
+        function authFetch(url, options = {}) {
+            const headers = { ...(options.headers || {}) };
+            if (adminToken) headers.Authorization = `Bearer ${adminToken}`;
+            return fetch(url, { ...options, credentials: 'include', headers });
+        }
+
+        function showToast(message, type = 'info') {
+            const wrap = document.getElementById('toastWrap');
+            if (!wrap) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            wrap.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 3500);
+        }
+
+        function setTableState(tableId, colSpan, text, color = 'var(--text-muted)') {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            table.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center;color:${color};">${text}</td></tr>`;
+        }
+
+        function getProductFilterValues() {
+            return {
+                search: (document.getElementById('productSearchInput')?.value || '').toLowerCase().trim(),
+                category: document.getElementById('productCategoryFilter')?.value || 'all',
+                sortBy: document.getElementById('productSortBy')?.value || 'nameAsc'
+            };
+        }
+
+        function applyProductFilters() {
+            const { search, category, sortBy } = getProductFilterValues();
+            filteredProducts = products.filter((product) => {
+                const categoryOk = category === 'all' || product.category === category;
+                const haystack = `${product.name || ''} ${product.slug || ''}`.toLowerCase();
+                const searchOk = !search || haystack.includes(search);
+                return categoryOk && searchOk;
+            });
+
+            filteredProducts.sort((a, b) => {
+                if (sortBy === 'priceDesc') return (b.price || 0) - (a.price || 0);
+                if (sortBy === 'priceAsc') return (a.price || 0) - (b.price || 0);
+                if (sortBy === 'stockAsc') return (a.stockLeft || 0) - (b.stockLeft || 0);
+                if (sortBy === 'stockDesc') return (b.stockLeft || 0) - (a.stockLeft || 0);
+                return (a.name || '').localeCompare(b.name || '');
+            });
+
+            productPage = 1;
+            renderProductTable();
+        }
+
+        function resetProductFilters() {
+            document.getElementById('productSearchInput').value = '';
+            document.getElementById('productCategoryFilter').value = 'all';
+            document.getElementById('productSortBy').value = 'nameAsc';
+            applyProductFilters();
+        }
+
+        function changeProductPage(delta) {
+            const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+            productPage = Math.min(totalPages, Math.max(1, productPage + delta));
+            renderProductTable();
+        }
+
+        function renderProductTable() {
+            const total = filteredProducts.length;
+            if (!total) {
+                setTableState('adminProductTable', 7, 'No products found');
+                document.getElementById('productPageInfo').textContent = 'No products';
+                document.getElementById('productPrevBtn').disabled = true;
+                document.getElementById('productNextBtn').disabled = true;
+                return;
+            }
+
+            const totalPages = Math.max(1, Math.ceil(total / PRODUCTS_PER_PAGE));
+            if (productPage > totalPages) productPage = totalPages;
+            const start = (productPage - 1) * PRODUCTS_PER_PAGE;
+            const pageItems = filteredProducts.slice(start, start + PRODUCTS_PER_PAGE);
+
+            const tbody = document.getElementById('adminProductTable');
+            tbody.innerHTML = pageItems.map(p => `
+            <tr>
+              <td><img src="${p.flavors && p.flavors.length > 0 ? p.flavors[0].image : ''}" width="40" style="border-radius:4px; background:#fff;"></td>
+              <td style="font-weight: bold;">${p.name}</td>
+              <td><span style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase;">${p.category}</span></td>
+              <td style="color: var(--accent); font-weight: bold;">₹${Number(p.price || 0).toLocaleString()}</td>
+              <td>${Number(p.stockLeft || 0)}</td>
+              <td>
+                ${p.bestSeller ? '<span style="background: rgba(255, 106, 0, 0.2); color: var(--accent); padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: inline-block;">Best Seller</span><br>' : ''}
+                ${p.glutenFree ? '<span style="background: rgba(46, 204, 64, 0.2); color: #2ecc71; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; display: inline-block;">Gluten Free</span>' : ''}
+                ${!p.bestSeller && !p.glutenFree ? '<span style="color: var(--text-muted); font-size: 12px;">None</span>' : ''}
+              </td>
+              <td>
+                <button class="action-btn btn-edit" onclick="editProduct('${p._id}')">Edit</button>
+                <button class="action-btn btn-outline" style="color: #f39c12; border-color: #f39c12; margin-left: 8px;" onclick="manageReviews('${p._id}')">Reviews (${p.numReviews || p.reviews || 0})</button>
+                <button class="action-btn btn-delete" onclick="deleteProduct('${p._id}')">Delete</button>
+              </td>
+            </tr>
+          `).join('');
+
+            document.getElementById('productPageInfo').textContent = `Page ${productPage} of ${totalPages} (${total} products)`;
+            document.getElementById('productPrevBtn').disabled = productPage === 1;
+            document.getElementById('productNextBtn').disabled = productPage === totalPages;
+        }
+
+        function getConversionBadge(rate) {
+            if (rate < 1) return { color: '#e74c3c', label: 'Low' };
+            if (rate <= 3) return { color: '#f39c12', label: 'Medium' };
+            return { color: '#2ecc71', label: 'High' };
+        }
+
+        function renderProductPerformance(productsData) {
+            const table = document.getElementById('productPerformanceTable');
+            if (!table) return;
+            if (!productsData || productsData.length === 0) {
+                table.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No analytics data yet</td></tr>`;
+                return;
+            }
+
+            const sorted = [...productsData].sort((a, b) => Number(b.viewCount || 0) - Number(a.viewCount || 0));
+            table.innerHTML = sorted.map((product) => {
+                const views = Number(product.viewCount || 0);
+                const sales = Number(product.confirmedSales || 0);
+                const revenue = Number(product.confirmedRevenue || 0);
+                const conversionRate = views > 0 ? (sales / views) * 100 : 0;
+                const badge = getConversionBadge(conversionRate);
+                return `
+                    <tr>
+                        <td style="font-weight:600;">${product.name}</td>
+                        <td>${views.toLocaleString()}</td>
+                        <td>${sales.toLocaleString()}</td>
+                        <td>₹${revenue.toLocaleString()}</td>
+                        <td>
+                            <span style="background:${badge.color}22;color:${badge.color};padding:4px 8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;">
+                                ${conversionRate.toFixed(2)}% · ${badge.label}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
 
         // Auth Check
-        function checkAdminAuth() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                document.getElementById('adminPanel').style.display = 'none';
-                document.getElementById('loginPanel').style.display = 'block';
-            } else {
+        async function checkAdminAuth() {
+            try {
+                const res = await authFetch(`${API_URL}/auth/me`);
+                const data = await res.json();
+                if (!data.success) {
+                    throw new Error('Admin session not found');
+                }
                 document.getElementById('loginPanel').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
                 fetchAdminProducts();
                 fetchGlobalSettings();
+            } catch (err) {
+                document.getElementById('adminPanel').style.display = 'none';
+                document.getElementById('loginPanel').style.display = 'block';
             }
         }
 
@@ -426,19 +729,30 @@
                 const res = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify({ email, password })
                 });
                 const data = await res.json();
                 if (data.success) {
-                    localStorage.setItem('token', data.token);
+                    adminToken = data.token || '';
+                    if (adminToken) localStorage.setItem('adminToken', adminToken);
+                    showToast('Login successful', 'success');
                     checkAdminAuth();
-                } else { alert(data.message || 'Login failed!'); }
-            } catch (err) { alert('Network Error'); }
+                } else { showToast(data.message || 'Login failed', 'error'); }
+            } catch (err) { showToast('Network error during login', 'error'); }
         }
 
-        function adminLogout() {
-            localStorage.removeItem('token');
-            checkAdminAuth();
+        async function adminLogout() {
+            try {
+                await authFetch(`${API_URL}/auth/logout`, { method: 'POST' });
+            } catch (err) {
+                console.error('Logout failed:', err);
+            } finally {
+                adminToken = '';
+                localStorage.removeItem('adminToken');
+                showToast('Logged out', 'info');
+                checkAdminAuth();
+            }
         }
 
         // Global Settings
@@ -457,7 +771,6 @@
 
         async function saveGlobalSettings(e) {
             e.preventDefault();
-            const token = localStorage.getItem('token');
             const settingsData = {
                 noticeStrip: {
                     text: document.getElementById('noticeStripText').value,
@@ -465,31 +778,38 @@
                 }
             };
             try {
-                const res = await fetch(`${API_URL}/settings`, {
+                const res = await authFetch(`${API_URL}/settings`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(settingsData)
                 });
                 const data = await res.json();
-                if (data.success) { alert('Global settings saved!'); } else { alert('Error: ' + data.message); }
-            } catch (err) { alert('Network Error'); }
+                if (data.success) {
+                    showToast('Global settings saved', 'success');
+                } else {
+                    showToast(data.message || 'Failed to save settings', 'error');
+                }
+            } catch (err) { showToast('Network error while saving settings', 'error'); }
         }
 
         async function forceGlobalRefresh() {
             if (!confirm("Are you sure? This will instantly refresh the website for every user currently browsing it.")) return;
-            const token = localStorage.getItem('token');
             try {
-                const res = await fetch(`${API_URL}/settings/version/increment`, {
+                const res = await authFetch(`${API_URL}/settings/version/increment`, {
                     method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
-                if (data.success) { alert('Global Refresh Triggered! All active users will reload within 30 seconds.'); } else { alert('Error: ' + data.message); }
-            } catch (err) { alert('Network Error'); }
+                if (data.success) {
+                    showToast('Global refresh triggered for active users', 'success');
+                } else {
+                    showToast(data.message || 'Failed to trigger refresh', 'error');
+                }
+            } catch (err) { showToast('Network error while triggering refresh', 'error'); }
         }
 
         // Fetch and Render Products
         async function fetchAdminProducts() {
+            setTableState('adminProductTable', 7, 'Loading products...');
             try {
                 const res = await fetch(`${API_URL}/products`);
                 const data = await res.json();
@@ -508,28 +828,13 @@
                         }
                         return p;
                     });
-                    const tbody = document.getElementById('adminProductTable');
-                    tbody.innerHTML = products.map(p => `
-            <tr>
-              <td><img src="${p.flavors && p.flavors.length > 0 ? p.flavors[0].image : ''}" width="40" style="border-radius:4px; background:#fff;"></td>
-              <td style="font-weight: bold;">${p.name}</td>
-              <td><span style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase;">${p.category}</span></td>
-              <td style="color: var(--accent); font-weight: bold;">₹${p.price.toLocaleString()}</td>
-              <td>${p.stockLeft}</td>
-              <td>
-                ${p.bestSeller ? '<span style="background: rgba(255, 106, 0, 0.2); color: var(--accent); padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: inline-block;">Best Seller</span><br>' : ''}
-                ${p.glutenFree ? '<span style="background: rgba(46, 204, 64, 0.2); color: #2ecc71; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; display: inline-block;">Gluten Free</span>' : ''}
-                ${!p.bestSeller && !p.glutenFree ? '<span style="color: var(--text-muted); font-size: 12px;">None</span>' : ''}
-              </td>
-              <td>
-                <button class="action-btn btn-edit" onclick="editProduct('${p._id}')">Edit</button>
-                <button class="action-btn btn-outline" style="color: #f39c12; border-color: #f39c12; margin-left: 8px;" onclick="manageReviews('${p._id}')">Reviews (${p.numReviews || p.reviews || 0})</button>
-                <button class="action-btn btn-delete" onclick="deleteProduct('${p._id}')">Delete</button>
-              </td>
-            </tr>
-          `).join('');
+                    renderProductPerformance(products);
+                    applyProductFilters();
                 }
-            } catch (err) { console.error('Error fetching products:', err); }
+            } catch (err) {
+                console.error('Error fetching products:', err);
+                setTableState('adminProductTable', 7, 'Failed to load products', '#e74c3c');
+            }
         }
 
         // Form Logic
@@ -573,19 +878,18 @@
         async function saveProduct(e) {
             e.preventDefault();
             const id = document.getElementById('prodId').value;
-            const token = localStorage.getItem('token');
 
             let flavors = [];
             try { flavors = JSON.parse(document.getElementById('prodFlavors').value); }
-            catch (err) { return alert('Invalid JSON in Flavors field!'); }
+            catch (err) { showToast('Invalid JSON in Flavors field', 'error'); return; }
 
             let sizes = [];
             try { if (document.getElementById('prodSizes').value.trim() !== '') sizes = JSON.parse(document.getElementById('prodSizes').value); }
-            catch (err) { return alert('Invalid JSON in Sizes field!'); }
+            catch (err) { showToast('Invalid JSON in Sizes field', 'error'); return; }
 
             let images = [];
             try { if (document.getElementById('prodImages').value.trim() !== '') images = JSON.parse(document.getElementById('prodImages').value); }
-            catch (err) { return alert('Invalid JSON in Additional Images field!'); }
+            catch (err) { showToast('Invalid JSON in Additional Images field', 'error'); return; }
 
             const oldPriceVal = document.getElementById('prodOldPrice').value;
             const discountVal = document.getElementById('prodDiscount').value;
@@ -618,36 +922,42 @@
             if (discountVal) productData.discount = Number(discountVal);
 
             try {
-                const res = await fetch(id ? `${API_URL}/products/${id}` : `${API_URL}/products`, {
+                const res = await authFetch(id ? `${API_URL}/products/${id}` : `${API_URL}/products`, {
                     method: id ? 'PUT' : 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(productData)
                 });
 
                 const text = await res.text();
                 try {
                     const data = JSON.parse(text);
-                    if (data.success) { closeProductModal(); fetchAdminProducts(); }
-                    else { alert('Database Error: ' + data.message); }
+                    if (data.success) {
+                        closeProductModal();
+                        fetchAdminProducts();
+                        showToast('Product saved successfully', 'success');
+                    } else {
+                        showToast(data.message || 'Database error while saving product', 'error');
+                    }
                 } catch (e) {
-                    alert('Server Error: Did you remember to restart your Node.js backend?');
+                    showToast('Server error while saving product', 'error');
                     console.error('Server returned:', text);
                 }
             } catch (err) {
-                alert('Network Error: Make sure your backend server is running!');
+                showToast('Network error: backend may be offline', 'error');
                 console.error(err);
             }
         }
 
         async function deleteProduct(id) {
             if (!confirm('Are you sure you want to permanently delete this product?')) return;
-            const token = localStorage.getItem('token');
             try {
-                const res = await fetch(`${API_URL}/products/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                const res = await authFetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
                 const data = await res.json();
-                if (data.success) { fetchAdminProducts(); }
-                else { alert('Error: ' + data.message); }
-            } catch (err) { alert('Network Error'); }
+                if (data.success) {
+                    fetchAdminProducts();
+                    showToast('Product deleted', 'success');
+                } else { showToast(data.message || 'Failed to delete product', 'error'); }
+            } catch (err) { showToast('Network error while deleting product', 'error'); }
         }
 
         // Review Management Logic
@@ -681,34 +991,32 @@
 
         async function deleteReview(reviewId) {
             if (!confirm('Are you sure you want to permanently delete this review?')) return;
-            const token = localStorage.getItem('token');
             try {
-                const res = await fetch(`${API_URL}/products/${currentReviewProductId}/reviews/${reviewId}`, {
+                const res = await authFetch(`${API_URL}/products/${currentReviewProductId}/reviews/${reviewId}`, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
-                if (data.success) { fetchAdminProducts().then(() => manageReviews(currentReviewProductId)); }
-                else { alert('Error: ' + data.message); }
-            } catch (e) { alert('Network Error'); }
+                if (data.success) {
+                    showToast('Review deleted', 'success');
+                    fetchAdminProducts().then(() => manageReviews(currentReviewProductId));
+                } else { showToast(data.message || 'Failed to delete review', 'error'); }
+            } catch (e) { showToast('Network error while deleting review', 'error'); }
         }
 
         // Upload Image Helper
         async function uploadImage() {
             const fileInput = document.getElementById('imageUploadInput');
             const resultDiv = document.getElementById('uploadResult');
-            if (!fileInput.files[0]) return alert('Please select an image first.');
+            if (!fileInput.files[0]) { showToast('Please select an image first', 'info'); return; }
 
             const formData = new FormData();
             formData.append('image', fileInput.files[0]);
 
-            const token = localStorage.getItem('token');
             resultDiv.innerHTML = 'Uploading...';
 
             try {
-                const res = await fetch(`${API_URL}/upload`, {
+                const res = await authFetch(`${API_URL}/upload`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
                 });
                 const data = await res.json();
@@ -739,19 +1047,44 @@
         }
 
         async function fetchOrders() {
-            const token = localStorage.getItem('token');
+            setTableState('adminOrdersTable', 7, 'Loading orders...');
             try {
-                const res = await fetch(`${API_URL}/orders`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const res = await authFetch(`${API_URL}/orders`);
                 const data = await res.json();
                 if (data.success) {
-                    renderOrders(data.data);
+                    allOrders = data.data || [];
+                    applyOrderFilters();
                 } else {
-                    document.getElementById('adminOrdersTable').innerHTML = `<tr><td colspan="7" style="text-align:center;color:red;">Error: ${data.message}</td></tr>`;
+                    setTableState('adminOrdersTable', 7, `Error: ${data.message}`, '#e74c3c');
                 }
             } catch (err) {
                 console.error(err);
-                document.getElementById('adminOrdersTable').innerHTML = `<tr><td colspan="7" style="text-align:center;color:red;">Network Error</td></tr>`;
+                setTableState('adminOrdersTable', 7, 'Network Error', '#e74c3c');
             }
+        }
+
+        function applyOrderFilters() {
+            const search = (document.getElementById('orderSearchInput')?.value || '').toLowerCase().trim();
+            const status = document.getElementById('orderStatusFilter')?.value || 'all';
+            const date = document.getElementById('orderDateFilter')?.value || '';
+
+            const filtered = allOrders.filter((order) => {
+                const statusOk = status === 'all' || order.status === status;
+                const haystack = `${order.orderId || ''} ${order.customerDetails?.name || ''} ${order.customerDetails?.phone || ''}`.toLowerCase();
+                const searchOk = !search || haystack.includes(search);
+                const orderDate = order.createdAt ? new Date(order.createdAt).toISOString().slice(0, 10) : '';
+                const dateOk = !date || date === orderDate;
+                return statusOk && searchOk && dateOk;
+            });
+
+            renderOrders(filtered);
+        }
+
+        function resetOrderFilters() {
+            document.getElementById('orderSearchInput').value = '';
+            document.getElementById('orderStatusFilter').value = 'all';
+            document.getElementById('orderDateFilter').value = '';
+            renderOrders(allOrders);
         }
 
         function renderOrders(ordersData) {
@@ -782,48 +1115,98 @@
                     <td style="font-size: 13px; line-height: 1.5;">${itemsList}</td>
                     <td style="font-weight: bold; color: #fff;">₹${o.totalAmount.toLocaleString()}</td>
                     <td><span style="background: ${statusColor}22; color: ${statusColor}; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 11px;">${o.status}</span></td>
-                    <td>${actions}</td>
+                    <td>
+                        <button class="action-btn btn-edit" style="margin-bottom: 6px;" onclick="openOrderDetailsModal('${o._id}')">Details</button><br>
+                        ${actions}
+                    </td>
                 </tr>
                 `;
             }).join('');
         }
 
+        function openOrderDetailsModal(orderId) {
+            const order = allOrders.find((o) => o._id === orderId);
+            if (!order) {
+                showToast('Order details not found', 'error');
+                return;
+            }
+            const items = (order.products || []).map((p) => `
+                <tr>
+                    <td style="padding: 8px 6px;">${p.name}</td>
+                    <td style="padding: 8px 6px;">${p.flavor || '-'}</td>
+                    <td style="padding: 8px 6px;">${p.weight || '-'}</td>
+                    <td style="padding: 8px 6px;">x${p.quantity}</td>
+                    <td style="padding: 8px 6px;">₹${Number(p.price || 0).toLocaleString()}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('orderDetailsBody').innerHTML = `
+                <div class="panel-card">
+                    <p><b>Order ID:</b> ${order.orderId}</p>
+                    <p><b>Status:</b> ${order.status}</p>
+                    <p><b>Created:</b> ${new Date(order.createdAt).toLocaleString()}</p>
+                </div>
+                <div class="panel-card">
+                    <p><b>Customer:</b> ${order.customerDetails?.name || '-'}</p>
+                    <p><b>Phone:</b> ${order.customerDetails?.phone || '-'}</p>
+                    <p><b>Address:</b> ${order.customerDetails?.address || '-'}</p>
+                </div>
+                <div class="panel-card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Flavor</th>
+                                <th>Weight</th>
+                                <th>Qty</th>
+                                <th>Unit Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>${items}</tbody>
+                    </table>
+                    <p style="margin-top: 10px; text-align: right; font-weight: bold;">Total: ₹${Number(order.totalAmount || 0).toLocaleString()}</p>
+                </div>
+            `;
+            document.getElementById('orderDetailsModal').classList.add('active');
+        }
+
+        function closeOrderDetailsModal() {
+            document.getElementById('orderDetailsModal').classList.remove('active');
+        }
+
         async function confirmOrder(id) {
             if (!confirm('Confirming this order will deduct stock from the inventory. Are you sure?')) return;
-            const token = localStorage.getItem('token');
             try {
-                const res = await fetch(`${API_URL}/orders/${id}/confirm`, {
+                const res = await authFetch(`${API_URL}/orders/${id}/confirm`, {
                     method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
                 if (data.success) {
-                    alert('✅ Order Confirmed! Stock has been deducted.');
+                    showToast('Order confirmed and stock deducted', 'success');
                     fetchOrders();
                     forceGlobalRefreshSilently(); // Instantly update active users' screens
                 } else {
-                    alert('❌ Failed: ' + data.message);
+                    showToast(data.message || 'Failed to confirm order', 'error');
                 }
-            } catch (err) { alert('Network Error'); }
+            } catch (err) { showToast('Network error while confirming order', 'error'); }
         }
 
         async function cancelOrder(id) {
             if (!confirm('Are you sure you want to cancel this order? Stock will NOT be deducted.')) return;
-            const token = localStorage.getItem('token');
             try {
-                const res = await fetch(`${API_URL}/orders/${id}/cancel`, {
+                const res = await authFetch(`${API_URL}/orders/${id}/cancel`, {
                     method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
-                if (data.success) { fetchOrders(); }
-                else { alert('Failed: ' + data.message); }
-            } catch (err) { alert('Network Error'); }
+                if (data.success) {
+                    showToast('Order cancelled', 'success');
+                    fetchOrders();
+                } else { showToast(data.message || 'Failed to cancel order', 'error'); }
+            } catch (err) { showToast('Network error while cancelling order', 'error'); }
         }
 
         async function forceGlobalRefreshSilently() {
-            const token = localStorage.getItem('token');
-            try { await fetch(`${API_URL}/settings/version/increment`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } }); } catch (err) { }
+            try { await authFetch(`${API_URL}/settings/version/increment`, { method: 'PUT' }); } catch (err) { }
         }
 
         // Init

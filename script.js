@@ -21,7 +21,7 @@ function renderProductCard(product) {
   const discountText = displayOldPrice > displayPrice ? Math.round(((displayOldPrice - displayPrice) / displayOldPrice) * 100) + '% OFF' : (product.discount ? product.discount + '% OFF' : '');
 
   return `
-    <div class="product-card" id="product-${product.slug}" onclick="window.location.href='product.html?slug=${product.slug}'" style="cursor: pointer;">
+    <div class="product-card" id="product-${product.slug}" onclick="handleProductCardClick('${product.slug}', '${product._id || ''}')" style="cursor: pointer;">
       <div class="product-image">
         <img src="${defaultFlavor.image}" alt="${product.name}" loading="lazy">
         <span class="stock-badge ${defaultFlavor.inStock ? 'in-stock' : 'out-of-stock'}">
@@ -51,6 +51,27 @@ function renderProductCard(product) {
       </div>
     </div>
   `;
+}
+
+function trackProductViewEvent(productId, source = "unknown") {
+  if (!productId) return;
+  try {
+    fetch(`${API_URL}/products/${productId}/view`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({ source, ts: Date.now() })
+    }).catch(() => { });
+
+    if (typeof window.gtag === "function") {
+      window.gtag("event", "product_view", { product_id: productId, source });
+    }
+  } catch (_) { }
+}
+
+function handleProductCardClick(slug, productId) {
+  trackProductViewEvent(productId, "card_click");
+  window.location.href = `product.html?slug=${slug}`;
 }
 
 // ===== STATE FOR PRODUCT CATEGORY =====
@@ -643,7 +664,7 @@ async function processCheckout(e) {
 
     // --- NEW: LOG INTENT TO GOOGLE SHEETS ---
     // Replace the URL below with your Google Apps Script Web App URL
-    const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwWTolkQqA0LXgLwTYj8vnWMoEHQeonlhCc7-8RDEXgnGzZG6C22wK_RInl6Gkh0t3o8A/exec";
+    const GOOGLE_WEB_APP_URL = (window.APP_CONFIG && window.APP_CONFIG.googleWebAppUrl) || "";
 
     if (GOOGLE_WEB_APP_URL) {
       const sheetPayload = {
@@ -742,8 +763,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// const API_URL = 'http://localhost:5000/api'; // <-- UNCOMMENT THIS FOR LOCAL TESTING
-const API_URL = 'https://living-result-backend.onrender.com/api'; // <-- UNCOMMENT THIS FOR LIVE DEPLOYMENT
+const API_URL = (window.APP_CONFIG && window.APP_CONFIG.apiUrl) || 'https://living-result-backend.onrender.com/api';
 
 // ===== GLOBAL REFRESH POLLING =====
 let currentSiteVersion = null;
@@ -841,13 +861,13 @@ async function handleLogin(e) {
     const res = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ email, password })
     });
 
     const data = await res.json();
 
     if (data.success) {
-      localStorage.setItem('token', data.token);
       document.getElementById('loginForm').reset();
       closeAuthModal();
       checkAuthStatus();
@@ -861,27 +881,15 @@ async function handleLogin(e) {
 }
 
 async function checkAuthStatus() {
-  const token = localStorage.getItem('token');
   const authTabs = document.getElementById('authTabs');
   const loginForm = document.getElementById('loginForm');
   const loggedInState = document.getElementById('loggedInState');
   const userNameDisplay = document.getElementById('userNameDisplay');
 
-  if (!token) {
-    // Show login/signup state
-    if (authTabs) authTabs.style.display = 'flex';
-    if (loggedInState) loggedInState.style.display = 'none';
-    switchAuthTab('login');
-    return;
-  }
-
   try {
-    // Verify token with backend
     const res = await fetch(`${API_URL}/auth/me`, {
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      credentials: 'include'
     });
 
     const data = await res.json();
@@ -896,19 +904,29 @@ async function checkAuthStatus() {
         userNameDisplay.innerText = data.data.name;
       }
     } else {
-      // Token is invalid
-      localStorage.removeItem('token');
-      checkAuthStatus();
+      if (authTabs) authTabs.style.display = 'flex';
+      if (loggedInState) loggedInState.style.display = 'none';
+      switchAuthTab('login');
     }
   } catch (error) {
     console.error('Error fetching auth status:', error);
+    if (authTabs) authTabs.style.display = 'flex';
+    if (loggedInState) loggedInState.style.display = 'none';
   }
 }
 
-function handleLogout() {
-  localStorage.removeItem('token');
-  closeAuthModal();
-  checkAuthStatus();
+async function handleLogout() {
+  try {
+    await fetch(`${API_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Error logging out:', error);
+  } finally {
+    closeAuthModal();
+    checkAuthStatus();
+  }
 }
 
 // ===== DATABASE / API LOGIC =====
@@ -952,6 +970,7 @@ async function loadSingleProductPage() {
     const data = await res.json();
     if (data.success) {
       currentProductData = data.data;
+      trackProductViewEvent(currentProductData._id, "product_page");
       if (currentProductData.description && currentProductData.description.includes('<!--[GF]-->')) {
         currentProductData.glutenFree = true;
         currentProductData.description = currentProductData.description.replace(/ ?<!--\[GF\]-->/g, '');
