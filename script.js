@@ -659,11 +659,9 @@ async function processCheckout(e) {
       }).catch(err => console.error("Sheet logging failed:", err));
     }
 
-    // OPEN WHATSAPP
-    window.open(whatsappLink, '_blank');
-
     // SUCCESS ACTIONS
     cart = [];
+    saveCart(); // <--- FIX: Saves the empty cart to LocalStorage permanently
     updateCartUI();
     updateFloatingCart();
 
@@ -674,6 +672,11 @@ async function processCheckout(e) {
     // Show success modal
     const successOverlay = document.getElementById("successModalOverlay");
     if (successOverlay) successOverlay.classList.add("active");
+
+    // OPEN WHATSAPP (Delayed slightly to ensure the UI updates and modal shows before redirecting)
+    setTimeout(() => {
+      window.open(whatsappLink, '_blank');
+    }, 600);
 
   } catch (error) {
     console.error('Checkout error:', error);
