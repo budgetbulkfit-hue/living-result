@@ -53,7 +53,7 @@ function renderProductCard(product) {
   `;
 }
 
-function trackProductViewEvent(productId, source = "unknown") {
+function trackProductViewEvent(productId, productName = "Unknown Product", source = "unknown", price = 0) {
   if (!productId) return;
   try {
     fetch(`${API_URL}/products/${productId}/view`, {
@@ -64,13 +64,24 @@ function trackProductViewEvent(productId, source = "unknown") {
     }).catch(() => { });
 
     if (typeof window.gtag === "function") {
-      window.gtag("event", "product_view", { product_id: productId, source });
+      // Standard GA4 Ecommerce Event
+      window.gtag("event", "view_item", {
+        currency: "INR",
+        value: price,
+        items: [{
+          item_id: productId,
+          item_name: productName
+        }]
+      });
     }
   } catch (_) { }
 }
 
 function handleProductCardClick(slug, productId) {
-  trackProductViewEvent(productId, "card_click");
+  const product = allProducts.find(p => p._id === productId || p.slug === slug);
+  const productName = product ? product.name : "Unknown Product";
+  const price = product ? (product.sizes && product.sizes.length > 0 ? product.sizes[0].price : product.price) : 0;
+  trackProductViewEvent(productId, productName, "card_click", price);
   window.location.href = `product.html?slug=${slug}`;
 }
 
@@ -970,7 +981,8 @@ async function loadSingleProductPage() {
     const data = await res.json();
     if (data.success) {
       currentProductData = data.data;
-      trackProductViewEvent(currentProductData._id, "product_page");
+      const displayPrice = (currentProductData.sizes && currentProductData.sizes.length > 0) ? currentProductData.sizes[0].price : currentProductData.price;
+      trackProductViewEvent(currentProductData._id, currentProductData.name, "product_page", displayPrice);
       if (currentProductData.description && currentProductData.description.includes('<!--[GF]-->')) {
         currentProductData.glutenFree = true;
         currentProductData.description = currentProductData.description.replace(/ ?<!--\[GF\]-->/g, '');
@@ -1206,6 +1218,20 @@ function addToCartFromPage() {
   updateCartUI();
   updateFloatingCart();
   toggleCart();
+
+  // Add GA4 standard add_to_cart event
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "add_to_cart", {
+      currency: "INR",
+      value: price * qty,
+      items: [{
+        item_id: product._id,
+        item_name: product.name,
+        price: price,
+        quantity: qty
+      }]
+    });
+  }
 }
 
 // ===== REVIEWS LOGIC =====
