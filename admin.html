@@ -98,6 +98,55 @@
             color: white;
             border-radius: 6px;
         }
+
+        /* Toggle Switch Styles */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--text-muted);
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked+.toggle-slider {
+            background-color: rgba(46, 204, 64, 0.2);
+            border-color: #2ecc71;
+        }
+
+        input:checked+.toggle-slider:before {
+            transform: translateX(22px);
+            background-color: #2ecc71;
+        }
     </style>
 </head>
 
@@ -123,65 +172,106 @@
         <!-- ADMIN DASHBOARD (Visible if logged in) -->
         <div id="adminPanel" style="display: none;">
             <div class="admin-header">
-                <h1 style="font-family: var(--font-heading); font-size: 32px; text-transform: uppercase;">Product
-                    Inventory</h1>
+                <h1 style="font-family: var(--font-heading); font-size: 32px; text-transform: uppercase;">Admin Portal
+                </h1>
                 <div style="display: flex; gap: 15px;">
-                    <button class="btn-primary" onclick="openProductModal()"
-                        style="background: #2ecc71; border-color: #2ecc71;">+ Add Product</button>
                     <a href="index.html" class="btn-outline">View Live Site</a>
                     <button class="btn-outline" style="border-color: #e74c3c; color: #e74c3c;"
                         onclick="adminLogout()">Logout</button>
                 </div>
             </div>
 
-            <!-- GLOBAL SETTINGS -->
-            <div id="globalSettingsPanel" style="margin-bottom: 40px;">
-                <div class="admin-header" style="margin-bottom: 20px;">
-                    <h1 style="font-family: var(--font-heading); font-size: 24px; text-transform: uppercase;">Global
-                        Site
-                        Settings</h1>
-                </div>
-                <div
-                    style="background: var(--bg-secondary); padding: 24px; border-radius: 8px; border: 1px solid var(--border);">
-                    <form onsubmit="saveGlobalSettings(event)">
-                        <div class="form-group">
-                            <label>Top Notice Strip</label>
-                            <input type="text" id="noticeStripText"
-                                placeholder="e.g. Free Shipping on orders above ₹999">
-                        </div>
-                        <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
-                            <input type="checkbox" id="noticeStripEnabled" style="width: auto;">
-                            <label for="noticeStripEnabled" style="margin: 0;">Enable Notice Strip</label>
-                        </div>
-                        <button type="submit" class="btn-primary">Save Global Settings</button>
-
-                        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
-                        <label
-                            style="display: block; margin-bottom: 10px; font-size: 13px; color: var(--text-muted); text-transform: uppercase;">Global
-                            Refresh</label>
-                        <button type="button" class="btn-outline" style="border-color: #e74c3c; color: #e74c3c;"
-                            onclick="forceGlobalRefresh()">Force Refresh Website For All Users</button>
-                    </form>
-                </div>
+            <div class="admin-tabs"
+                style="margin-bottom: 30px; display: flex; gap: 15px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+                <button class="btn-primary" id="tabProductsBtn" onclick="switchAdminTab('products')">Inventory &
+                    Settings</button>
+                <button class="btn-outline" id="tabOrdersBtn" onclick="switchAdminTab('orders')">Order
+                    Management</button>
             </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Image</th>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Price</th>
-                        <th>Stock</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="adminProductTable">
-                    <tr>
-                        <td colspan="6" style="text-align: center;">Loading products...</td>
-                    </tr>
-                </tbody>
-            </table>
+            <!-- PRODUCTS & SETTINGS VIEW -->
+            <div id="productsView">
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                    <button class="btn-primary" onclick="openProductModal()"
+                        style="background: #2ecc71; border-color: #2ecc71;">+ Add Product</button>
+                </div>
+                <!-- GLOBAL SETTINGS -->
+                <div id="globalSettingsPanel" style="margin-bottom: 40px;">
+                    <div class="admin-header" style="margin-bottom: 20px;">
+                        <h1 style="font-family: var(--font-heading); font-size: 24px; text-transform: uppercase;">Global
+                            Site
+                            Settings</h1>
+                    </div>
+                    <div
+                        style="background: var(--bg-secondary); padding: 24px; border-radius: 8px; border: 1px solid var(--border);">
+                        <form onsubmit="saveGlobalSettings(event)">
+                            <div class="form-group">
+                                <label>Top Notice Strip</label>
+                                <input type="text" id="noticeStripText"
+                                    placeholder="e.g. Free Shipping on orders above ₹999">
+                            </div>
+                            <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="noticeStripEnabled" style="width: auto;">
+                                <label for="noticeStripEnabled" style="margin: 0;">Enable Notice Strip</label>
+                            </div>
+                            <button type="submit" class="btn-primary">Save Global Settings</button>
+
+                            <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+                            <label
+                                style="display: block; margin-bottom: 10px; font-size: 13px; color: var(--text-muted); text-transform: uppercase;">Global
+                                Refresh</label>
+                            <button type="button" class="btn-outline" style="border-color: #e74c3c; color: #e74c3c;"
+                                onclick="forceGlobalRefresh()">Force Refresh Website For All Users</button>
+                        </form>
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Badges</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminProductTable">
+                        <tr>
+                            <td colspan="6" style="text-align: center;">Loading products...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ORDERS VIEW -->
+            <div id="ordersView" style="display: none;">
+                <div class="admin-header" style="margin-bottom: 20px; border: none; padding: 0;">
+                    <h2 style="font-family: var(--font-heading); text-transform: uppercase; color: var(--accent);">
+                        Recent Orders</h2>
+                    <button class="btn-outline" onclick="fetchOrders()">⟳ Refresh</button>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminOrdersTable">
+                        <tr>
+                            <td colspan="7" style="text-align: center;">Loading orders...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
     </div>
@@ -245,11 +335,23 @@
                     </div>
                     <div class="form-group" style="flex: 1;"><label>Stock Left</label><input type="number"
                             id="prodStock" value="10"></div>
-                    <div class="form-group" style="flex: 1;"><label>Best Seller</label>
-                        <select id="prodBestSeller">
-                            <option value="false">No</option>
-                            <option value="true">Yes</option>
-                        </select>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Best Seller</label>
+                        <div style="display: flex; align-items: center; height: 42px;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="prodBestSeller">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Gluten Free</label>
+                        <div style="display: flex; align-items: center; height: 42px;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="prodGlutenFree">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -258,6 +360,13 @@
                 </div>
                 <div class="form-group"><label>Nutritional Facts (One per line)</label><textarea id="prodNutrition"
                         rows="3" placeholder="Calories: 1200 kcal&#10;Protein: 50g"></textarea></div>
+
+                <div class="form-group">
+                    <label>Additional Images (JSON Array) - <span
+                            style="color:var(--text-muted);">Optional</span></label>
+                    <textarea id="prodImages" rows="2" style="font-family: monospace;"
+                        placeholder='[&#10;  "https://...",&#10;  "https://..."&#10;]'></textarea>
+                </div>
 
                 <!-- IMAGE UPLOAD HELPER -->
                 <div class="form-group"
@@ -385,7 +494,20 @@
                 const res = await fetch(`${API_URL}/products`);
                 const data = await res.json();
                 if (data.success) {
-                    products = data.data;
+                    products = data.data.map(p => {
+                        if (p.description && p.description.includes('<!--[GF]-->')) {
+                            p.glutenFree = true;
+                            p.description = p.description.replace(/ ?<!--\[GF\]-->/g, '');
+                        }
+                        if (p.description && p.description.includes('<!--[IMAGES:')) {
+                            const match = p.description.match(/ ?<!--\[IMAGES:(.*?)\]-->/);
+                            if (match && match[1]) {
+                                try { p.images = JSON.parse(match[1]); } catch (e) { }
+                                p.description = p.description.replace(match[0], '');
+                            }
+                        }
+                        return p;
+                    });
                     const tbody = document.getElementById('adminProductTable');
                     tbody.innerHTML = products.map(p => `
             <tr>
@@ -394,6 +516,11 @@
               <td><span style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase;">${p.category}</span></td>
               <td style="color: var(--accent); font-weight: bold;">₹${p.price.toLocaleString()}</td>
               <td>${p.stockLeft}</td>
+              <td>
+                ${p.bestSeller ? '<span style="background: rgba(255, 106, 0, 0.2); color: var(--accent); padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-bottom: 4px; display: inline-block;">Best Seller</span><br>' : ''}
+                ${p.glutenFree ? '<span style="background: rgba(46, 204, 64, 0.2); color: #2ecc71; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; display: inline-block;">Gluten Free</span>' : ''}
+                ${!p.bestSeller && !p.glutenFree ? '<span style="color: var(--text-muted); font-size: 12px;">None</span>' : ''}
+              </td>
               <td>
                 <button class="action-btn btn-edit" onclick="editProduct('${p._id}')">Edit</button>
                 <button class="action-btn btn-outline" style="color: #f39c12; border-color: #f39c12; margin-left: 8px;" onclick="manageReviews('${p._id}')">Reviews (${p.numReviews || p.reviews || 0})</button>
@@ -412,6 +539,9 @@
             document.getElementById('modalTitle').textContent = 'Add New Product';
             document.getElementById('prodFlavors').value = '[\n  {\n    "name": "Chocolate",\n    "image": "images/hulk-mass-gainer.png",\n    "inStock": true\n  }\n]';
             document.getElementById('prodSizes').value = '[\n  {\n    "weight": "1 kg",\n    "price": 1500,\n    "oldPrice": 2000,\n    "allowedFlavors": ["Chocolate"]\n  }\n]';
+            document.getElementById('prodBestSeller').checked = false;
+            document.getElementById('prodGlutenFree').checked = false;
+            document.getElementById('prodImages').value = '[]';
             document.getElementById('productModal').classList.add('active');
         }
         function closeProductModal() { document.getElementById('productModal').classList.remove('active'); }
@@ -429,12 +559,14 @@
             document.getElementById('prodDiscount').value = p.discount || '';
             document.getElementById('prodCategory').value = p.category;
             document.getElementById('prodStock').value = p.stockLeft;
-            document.getElementById('prodBestSeller').value = p.bestSeller ? 'true' : 'false';
+            document.getElementById('prodBestSeller').checked = p.bestSeller ? true : false;
+            document.getElementById('prodGlutenFree').checked = p.glutenFree ? true : false;
             document.getElementById('prodDesc').value = p.description || '';
             document.getElementById('prodIngredients').value = p.ingredients || '';
             document.getElementById('prodNutrition').value = p.nutritionalFacts ? p.nutritionalFacts.join('\n') : '';
             document.getElementById('prodFlavors').value = JSON.stringify(p.flavors, null, 2);
             document.getElementById('prodSizes').value = JSON.stringify(p.sizes || [], null, 2);
+            document.getElementById('prodImages').value = JSON.stringify(p.images || [], null, 2);
             document.getElementById('productModal').classList.add('active');
         }
 
@@ -451,8 +583,20 @@
             try { if (document.getElementById('prodSizes').value.trim() !== '') sizes = JSON.parse(document.getElementById('prodSizes').value); }
             catch (err) { return alert('Invalid JSON in Sizes field!'); }
 
+            let images = [];
+            try { if (document.getElementById('prodImages').value.trim() !== '') images = JSON.parse(document.getElementById('prodImages').value); }
+            catch (err) { return alert('Invalid JSON in Additional Images field!'); }
+
             const oldPriceVal = document.getElementById('prodOldPrice').value;
             const discountVal = document.getElementById('prodDiscount').value;
+
+            let descriptionVal = document.getElementById('prodDesc').value;
+            if (document.getElementById('prodGlutenFree').checked) {
+                descriptionVal += ' <!--[GF]-->';
+            }
+            if (images && images.length > 0) {
+                descriptionVal += ` <!--[IMAGES:${JSON.stringify(images)}]-->`;
+            }
 
             const productData = {
                 id: Number(document.getElementById('prodNumericId').value),
@@ -461,12 +605,13 @@
                 price: Number(document.getElementById('prodPrice').value),
                 category: document.getElementById('prodCategory').value,
                 stockLeft: Number(document.getElementById('prodStock').value),
-                bestSeller: document.getElementById('prodBestSeller').value === 'true',
-                description: document.getElementById('prodDesc').value,
+                bestSeller: document.getElementById('prodBestSeller').checked,
+                description: descriptionVal,
                 ingredients: document.getElementById('prodIngredients').value,
                 nutritionalFacts: document.getElementById('prodNutrition').value.split('\n').filter(line => line.trim() !== ''),
                 flavors: flavors,
-                sizes: sizes
+                sizes: sizes,
+                images: images
             };
 
             if (oldPriceVal) productData.oldPrice = Number(oldPriceVal);
@@ -573,6 +718,112 @@
                     fileInput.value = '';
                 } else { resultDiv.innerHTML = `<span style="color: #e74c3c;">Error: ${data.message}</span>`; }
             } catch (err) { resultDiv.innerHTML = `<span style="color: #e74c3c;">Network Error</span>`; }
+        }
+
+        // ===== ORDER MANAGEMENT LOGIC =====
+
+        function switchAdminTab(tab) {
+            if (tab === 'products') {
+                document.getElementById('productsView').style.display = 'block';
+                document.getElementById('ordersView').style.display = 'none';
+                document.getElementById('tabProductsBtn').className = 'btn-primary';
+                document.getElementById('tabOrdersBtn').className = 'btn-outline';
+                fetchAdminProducts();
+            } else {
+                document.getElementById('productsView').style.display = 'none';
+                document.getElementById('ordersView').style.display = 'block';
+                document.getElementById('tabProductsBtn').className = 'btn-outline';
+                document.getElementById('tabOrdersBtn').className = 'btn-primary';
+                fetchOrders();
+            }
+        }
+
+        async function fetchOrders() {
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_URL}/orders`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                if (data.success) {
+                    renderOrders(data.data);
+                } else {
+                    document.getElementById('adminOrdersTable').innerHTML = `<tr><td colspan="7" style="text-align:center;color:red;">Error: ${data.message}</td></tr>`;
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('adminOrdersTable').innerHTML = `<tr><td colspan="7" style="text-align:center;color:red;">Network Error</td></tr>`;
+            }
+        }
+
+        function renderOrders(ordersData) {
+            const tbody = document.getElementById('adminOrdersTable');
+            if (ordersData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No orders found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = ordersData.map(o => {
+                const itemsList = o.products.map(p => `• ${p.name} <span style="color:var(--text-muted);">(${p.flavor} ${p.weight || ''})</span> <b>x${p.quantity}</b>`).join('<br>');
+                const statusColor = o.status === 'confirmed' ? '#2ecc71' : (o.status === 'cancelled' ? '#e74c3c' : '#f39c12');
+
+                let actions = '';
+                if (o.status === 'pending') {
+                    actions = `
+                        <button class="action-btn" style="background: rgba(46, 204, 64, 0.1); color: #2ecc71; margin-right: 5px; margin-bottom: 5px;" onclick="confirmOrder('${o._id}')">✅ Confirm</button>
+                        <button class="action-btn" style="background: rgba(231, 76, 60, 0.1); color: #e74c3c;" onclick="cancelOrder('${o._id}')">❌ Cancel</button>
+                    `;
+                } else {
+                    actions = `<span style="font-size: 12px; color: var(--text-muted);">No actions available</span>`;
+                }
+
+                return `
+                <tr>
+                    <td style="font-weight: bold; color: var(--accent); font-family: var(--font-heading); font-size: 16px;">${o.orderId}</td>
+                    <td style="font-size: 13px;">${new Date(o.createdAt).toLocaleString()}</td>
+                    <td style="font-size: 14px;"><b>${o.customerDetails.name}</b><br><span style="color: var(--text-muted); font-size: 12px;">${o.customerDetails.phone}</span><br><span style="color: var(--text-muted); font-size: 11px; display:inline-block; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${o.customerDetails.address}">${o.customerDetails.address}</span></td>
+                    <td style="font-size: 13px; line-height: 1.5;">${itemsList}</td>
+                    <td style="font-weight: bold; color: #fff;">₹${o.totalAmount.toLocaleString()}</td>
+                    <td><span style="background: ${statusColor}22; color: ${statusColor}; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 11px;">${o.status}</span></td>
+                    <td>${actions}</td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        async function confirmOrder(id) {
+            if (!confirm('Confirming this order will deduct stock from the inventory. Are you sure?')) return;
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_URL}/orders/${id}/confirm`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('✅ Order Confirmed! Stock has been deducted.');
+                    fetchOrders();
+                    forceGlobalRefreshSilently(); // Instantly update active users' screens
+                } else {
+                    alert('❌ Failed: ' + data.message);
+                }
+            } catch (err) { alert('Network Error'); }
+        }
+
+        async function cancelOrder(id) {
+            if (!confirm('Are you sure you want to cancel this order? Stock will NOT be deducted.')) return;
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch(`${API_URL}/orders/${id}/cancel`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) { fetchOrders(); }
+                else { alert('Failed: ' + data.message); }
+            } catch (err) { alert('Network Error'); }
+        }
+
+        async function forceGlobalRefreshSilently() {
+            const token = localStorage.getItem('token');
+            try { await fetch(`${API_URL}/settings/version/increment`, { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` } }); } catch (err) { }
         }
 
         // Init

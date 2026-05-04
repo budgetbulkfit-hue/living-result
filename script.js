@@ -28,6 +28,7 @@ function renderProductCard(product) {
           ${defaultFlavor.inStock ? 'In Stock' : 'Out of Stock'}
         </span>
         ${product.bestSeller ? '<span class="best-seller-badge">🔥 Best Seller</span>' : ''}
+        ${product.glutenFree ? '<span class="gluten-free-badge">🌾 Gluten Free</span>' : ''}
       </div>
       <div class="product-info">
         <h3 class="product-name">${product.name}</h3>
@@ -129,6 +130,8 @@ function toggleViewAll() {
 // ===== PRODUCT MODAL LOGIC =====
 let currentSelectedFlavorIndex = 0;
 let currentSelectedSizeIndex = 0;
+let currentGalleryImages = [];
+let currentGalleryIndex = 0;
 
 // ===== PRIVACY POLICY MODAL =====
 function openPrivacyModal(e) {
@@ -182,6 +185,26 @@ function toggleZoom(e) {
     img.style.transform = "scale(1)";
     img.style.cursor = "zoom-in";
   }
+}
+
+// ===== MAGNIFYING GLASS HOVER ZOOM =====
+function handleImageZoom(e, wrapper) {
+  if (window.innerWidth <= 768) return; // Disable on touch/mobile devices
+  const img = wrapper.querySelector('img');
+  if (!img) return;
+  const { left, top, width, height } = wrapper.getBoundingClientRect();
+  const x = ((e.clientX - left) / width) * 100;
+  const y = ((e.clientY - top) / height) * 100;
+  img.style.transformOrigin = `${x}% ${y}%`;
+  img.style.transform = 'scale(2.2)'; // Zoom level
+}
+
+function resetImageZoom(wrapper) {
+  if (window.innerWidth <= 768) return;
+  const img = wrapper.querySelector('img');
+  if (!img) return;
+  img.style.transformOrigin = 'center center';
+  img.style.transform = 'scale(1)';
 }
 
 // ===== SEARCH OVERLAY =====
@@ -361,6 +384,12 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 let cart = JSON.parse(localStorage.getItem('livingResultCart')) || [];
 let pendingOrderAmount = 0;
 
+// FIX: Clear out old cart items that are using the old numeric IDs instead of MongoDB ObjectIds
+if (cart.some(item => typeof item.productId !== 'string')) {
+  cart = [];
+  localStorage.setItem('livingResultCart', JSON.stringify(cart));
+}
+
 function saveCart() {
   localStorage.setItem('livingResultCart', JSON.stringify(cart));
 }
@@ -514,8 +543,37 @@ async function processCheckout(e) {
   if (checkoutOverlay) checkoutOverlay.classList.remove("active");
 
   try {
+    // --- NEW: PHASE 3 - CREATE PENDING ORDER ON BACKEND ---
+    const orderPayload = {
+      customerDetails: { name, phone, address },
+      products: cart.map(item => ({
+        productId: item.productId,
+        name: item.name,
+        flavor: item.flavorName,
+        weight: item.weight || '',
+        quantity: item.qty,
+        price: item.price
+      })),
+      totalAmount: pendingOrderAmount
+    };
+
+    const orderRes = await fetch(`${API_URL}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderPayload)
+    });
+
+    const orderData = await orderRes.json();
+    if (!orderData.success) {
+      throw new Error(orderData.message || 'Failed to create pending order on server');
+    }
+
+    const generatedOrderId = orderData.data.orderId;
+    // ------------------------------------------------------
+
     // PREPARE WHATSAPP MESSAGE
-    let message = `🛒 *NEW ORDER — Living Result*\n\n`;
+    let message = `🛒 *NEW ORDER — Living Result*\n`;
+    message += `🔖 *Order ID:* ${generatedOrderId}\n\n`;
     message += `📦 *Items:*\n`;
 
     cart.forEach(item => {
@@ -578,6 +636,28 @@ async function processCheckout(e) {
     const rzp1 = new window.Razorpay(options);
     rzp1.open();
     */
+
+    // --- NEW: LOG INTENT TO GOOGLE SHEETS ---
+    // Replace the URL below with your Google Apps Script Web App URL
+    const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwWTolkQqA0LXgLwTYj8vnWMoEHQeonlhCc7-8RDEXgnGzZG6C22wK_RInl6Gkh0t3o8A/exec";
+
+    if (GOOGLE_WEB_APP_URL) {
+      const sheetPayload = {
+        timestamp: new Date().toLocaleString(),
+        name: name,
+        phone: phone,
+        address: address,
+        total: pendingOrderAmount,
+        items: cart.map(i => `${i.name} (${i.flavorName}) x${i.qty}`).join(' | ')
+      };
+
+      fetch(GOOGLE_WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors', // Prevents CORS errors from blocking the redirect
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sheetPayload)
+      }).catch(err => console.error("Sheet logging failed:", err));
+    }
 
     // OPEN WHATSAPP
     window.open(whatsappLink, '_blank');
@@ -823,7 +903,20 @@ async function fetchProducts() {
     const res = await fetch(`${API_URL}/products`);
     const data = await res.json();
     if (data.success) {
-      allProducts = data.data;
+      allProducts = data.data.map(p => {
+        if (p.description && p.description.includes('<!--[GF]-->')) {
+          p.glutenFree = true;
+          p.description = p.description.replace(/ ?<!--\[GF\]-->/g, '');
+        }
+        if (p.description && p.description.includes('<!--[IMAGES:')) {
+          const match = p.description.match(/ ?<!--\[IMAGES:(.*?)\]-->/);
+          if (match && match[1]) {
+            try { p.images = JSON.parse(match[1]); } catch (e) { }
+            p.description = p.description.replace(match[0], '');
+          }
+        }
+        return p;
+      });
       if (!window.location.pathname.includes('product.html')) {
         renderProducts();
       }
@@ -845,6 +938,17 @@ async function loadSingleProductPage() {
     const data = await res.json();
     if (data.success) {
       currentProductData = data.data;
+      if (currentProductData.description && currentProductData.description.includes('<!--[GF]-->')) {
+        currentProductData.glutenFree = true;
+        currentProductData.description = currentProductData.description.replace(/ ?<!--\[GF\]-->/g, '');
+      }
+      if (currentProductData.description && currentProductData.description.includes('<!--[IMAGES:')) {
+        const match = currentProductData.description.match(/ ?<!--\[IMAGES:(.*?)\]-->/);
+        if (match && match[1]) {
+          try { currentProductData.images = JSON.parse(match[1]); } catch (e) { }
+          currentProductData.description = currentProductData.description.replace(match[0], '');
+        }
+      }
       currentSelectedFlavorIndex = 0;
       currentSelectedSizeIndex = 0;
       renderSingleProductPage();
@@ -893,6 +997,28 @@ function renderSingleProductPage() {
 
   const allowedFlavors = (size && size.allowedFlavors && size.allowedFlavors.length > 0) ? size.allowedFlavors : null;
 
+  // Combine active flavor image with any additional product images
+  currentGalleryImages = [flavor.image, ...(product.images || [])].filter(Boolean);
+  currentGalleryIndex = 0;
+
+  let galleryArrows = '';
+  if (currentGalleryImages.length > 1) {
+    galleryArrows = `
+      <button class="gallery-arrow left" onclick="navigateGallery(-1, event)">&#10094;</button>
+      <button class="gallery-arrow right" onclick="navigateGallery(1, event)">&#10095;</button>
+    `;
+  }
+
+  const galleryHTML = currentGalleryImages.length > 1 ? `
+    <div class="thumbnail-gallery">
+      ${currentGalleryImages.map((img, idx) => `
+        <img src="${img}" class="thumbnail-img" 
+             onclick="setGalleryImage(${idx})" 
+             style="width: 70px; height: 70px; object-fit: contain; background: #0e0e0e; border-radius: 6px; cursor: pointer; border: 2px solid ${idx === 0 ? 'var(--accent)' : 'transparent'};">
+      `).join('')}
+    </div>
+  ` : '';
+
   const flavorPills = product.flavors.map((f, i) => {
     if (allowedFlavors && !allowedFlavors.includes(f.name)) return ''; // Hide flavor if not allowed for this size
     return `<button class="flavor-pill ${i === currentSelectedFlavorIndex ? 'active' : ''}" onclick="selectPageFlavor(${i})">
@@ -916,10 +1042,14 @@ function renderSingleProductPage() {
         Back to Shop
       </a>
     </div>
-    <div class="modal-grid" style="position: relative; background: var(--bg-secondary); padding: 40px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+    <div class="modal-grid" style="position: relative; background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
       <button class="modal-close" onclick="window.location.href='index.html#products'" title="Go Back">&times;</button>
       <div class="modal-image-col">
-        <img src="${flavor.image}" alt="${product.name}" onclick="openImageLightbox('${flavor.image}')" style="cursor: zoom-in;" title="Click to zoom">
+        <div class="main-image-wrapper" onmousemove="handleImageZoom(event, this)" onmouseleave="resetImageZoom(this)" ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)" style="position: relative;">
+          ${galleryArrows}
+          <img id="mainModalImage" src="${flavor.image}" alt="${product.name}" onclick="openImageLightbox(this.src)" style="cursor: zoom-in;" title="Click to zoom">
+        </div>
+        ${galleryHTML}
         <div class="image-disclaimer">
           All images are AI-generated and inspired. The actual product tub may not look exactly the same.
         </div>
@@ -927,6 +1057,10 @@ function renderSingleProductPage() {
       </div>
       <div class="modal-info-col">
         <h1 style="font-family: var(--font-heading); font-size: 32px; margin-bottom: 10px; color: var(--text-primary); text-transform: uppercase;">${product.name}</h1>
+        <div style="font-size: 12px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Verified Independent Reseller
+        </div>
+        ${product.glutenFree ? `<span style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(46, 204, 64, 0.2); color: var(--green); border: 1px solid var(--green); margin-bottom: 15px;">🌾 Gluten Free</span>` : ''}
           <div class="modal-price" style="margin-bottom: 5px;">₹${currentPrice.toLocaleString()} ${currentOldPrice > currentPrice ? `<span style="font-size: 14px; text-decoration: line-through; color: var(--text-muted); font-weight: normal; margin-left: 10px;">₹${currentOldPrice.toLocaleString()}</span>` : ''}</div>
           ${currentWeight ? `<div class="modal-weight" style="color: var(--accent); font-weight: 600; font-size: 14px; margin-bottom: 20px;">Weight: ${currentWeight}</div>` : ''}
           ${sizePills ? `<div class="flavor-selector" style="margin-bottom:15px;"><span class="flavor-label">Select Size:</span><div class="flavor-pills">${sizePills}</div></div>` : ''}
@@ -977,6 +1111,47 @@ function renderSingleProductPage() {
   `;
 }
 
+// Function to navigate gallery with arrows
+function navigateGallery(direction, event) {
+  if (event) event.stopPropagation();
+  currentGalleryIndex += direction;
+  if (currentGalleryIndex < 0) currentGalleryIndex = currentGalleryImages.length - 1;
+  if (currentGalleryIndex >= currentGalleryImages.length) currentGalleryIndex = 0;
+  setGalleryImage(currentGalleryIndex);
+}
+
+// Function to swap main image when a thumbnail or arrow is clicked
+function setGalleryImage(index) {
+  currentGalleryIndex = index;
+  document.getElementById('mainModalImage').src = currentGalleryImages[index];
+  const thumbnails = document.querySelectorAll('.thumbnail-img');
+  thumbnails.forEach((el, idx) => el.style.borderColor = idx === index ? 'var(--accent)' : 'transparent');
+  if (thumbnails[index]) thumbnails[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+}
+
+// ===== GALLERY SWIPE LOGIC =====
+let touchStartX = 0;
+let touchEndX = 0;
+
+function handleTouchStart(e) {
+  touchStartX = e.changedTouches[0].screenX;
+}
+
+function handleTouchEnd(e) {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipeGesture();
+}
+
+function handleSwipeGesture() {
+  if (currentGalleryImages.length <= 1) return; // Skip if only 1 image
+
+  const threshold = 50; // Minimum distance required to trigger a swipe
+
+  // Calculate the swipe direction
+  if (touchStartX - touchEndX > threshold) navigateGallery(1); // Swipe Left -> Next Image
+  if (touchEndX - touchStartX > threshold) navigateGallery(-1); // Swipe Right -> Prev Image
+}
+
 function addToCartFromPage() {
   const qtyEl = document.getElementById('modalQty');
   const qty = qtyEl ? parseInt(qtyEl.textContent) : 1;
@@ -989,10 +1164,10 @@ function addToCartFromPage() {
   const price = size ? size.price : product.price;
   const weight = size ? size.weight : '';
 
-  const key = `${product.id}-${flavorIndex}-${sizeIndex}`;
+  const key = `${product._id}-${flavorIndex}-${sizeIndex}`; // Use MongoDB _id
   const existing = cart.find(i => i.key === key);
   if (existing) { existing.qty += qty; }
-  else { cart.push({ key, productId: product.id, flavorIndex, sizeIndex, name: product.name, flavorName: flavor.name, weight: weight, price: price, image: flavor.image, qty }); }
+  else { cart.push({ key, productId: product._id, flavorIndex, sizeIndex, name: product.name, flavorName: flavor.name, weight: weight, price: price, image: flavor.image, qty }); }
 
   saveCart();
   updateCartUI();

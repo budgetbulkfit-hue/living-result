@@ -1133,6 +1133,21 @@ section {
   object-fit: contain;
 }
 
+.main-image-wrapper {
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  touch-action: pan-y;
+}
+
+.main-image-wrapper img {
+  transition: transform 0.15s ease-out;
+  will-change: transform;
+}
+
 .image-disclaimer {
   font-size: 11px;
   color: var(--text-muted);
@@ -1747,6 +1762,87 @@ section {
   z-index: 2;
 }
 
+.gluten-free-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(46, 204, 64, 0.2);
+  color: var(--green);
+  border: 1px solid var(--green);
+  z-index: 2;
+}
+
+/* ===== PRODUCT GALLERY ===== */
+.thumbnail-gallery {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--bg-primary);
+  width: 100%;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+}
+
+.thumbnail-gallery::-webkit-scrollbar {
+  height: 4px;
+}
+
+.thumbnail-gallery::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 4px;
+}
+
+.thumbnail-gallery .thumbnail-img {
+  flex-shrink: 0;
+  transition: var(--transition);
+  scroll-snap-align: start;
+}
+
+.thumbnail-gallery .thumbnail-img:hover {
+  transform: translateY(-2px);
+}
+
+/* ===== GALLERY ARROWS ===== */
+.gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 10;
+  transition: var(--transition);
+  backdrop-filter: blur(4px);
+}
+
+.gallery-arrow:hover {
+  background: var(--accent);
+}
+
+.gallery-arrow.left {
+  left: 10px;
+}
+
+.gallery-arrow.right {
+  right: 10px;
+}
 
 @media (max-width: 1024px) {
   .products-grid {
@@ -1854,6 +1950,25 @@ section {
     grid-template-columns: 1fr;
     gap: 40px;
   }
+
+  /* Hide scrollbar on mobile for a cleaner carousel look */
+  .thumbnail-gallery {
+    scrollbar-width: none;
+  }
+
+  .thumbnail-gallery::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Stack product view: Image on top, details on bottom */
+  .modal-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .modal-image-col {
+    padding: 30px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1881,7 +1996,6 @@ section {
 
   /* Even smaller for phones */
   .modal-grid {
-    grid-template-columns: 1fr;
     gap: 24px;
     padding: 24px;
   }
