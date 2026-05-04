@@ -384,6 +384,12 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 let cart = JSON.parse(localStorage.getItem('livingResultCart')) || [];
 let pendingOrderAmount = 0;
 
+// FIX: Clear out old cart items that are using the old numeric IDs instead of MongoDB ObjectIds
+if (cart.some(item => typeof item.productId !== 'string')) {
+  cart = [];
+  localStorage.setItem('livingResultCart', JSON.stringify(cart));
+}
+
 function saveCart() {
   localStorage.setItem('livingResultCart', JSON.stringify(cart));
 }
@@ -537,8 +543,37 @@ async function processCheckout(e) {
   if (checkoutOverlay) checkoutOverlay.classList.remove("active");
 
   try {
+    // --- NEW: PHASE 3 - CREATE PENDING ORDER ON BACKEND ---
+    const orderPayload = {
+      customerDetails: { name, phone, address },
+      products: cart.map(item => ({
+        productId: item.productId,
+        name: item.name,
+        flavor: item.flavorName,
+        weight: item.weight || '',
+        quantity: item.qty,
+        price: item.price
+      })),
+      totalAmount: pendingOrderAmount
+    };
+
+    const orderRes = await fetch(`${API_URL}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderPayload)
+    });
+
+    const orderData = await orderRes.json();
+    if (!orderData.success) {
+      throw new Error(orderData.message || 'Failed to create pending order on server');
+    }
+
+    const generatedOrderId = orderData.data.orderId;
+    // ------------------------------------------------------
+
     // PREPARE WHATSAPP MESSAGE
-    let message = `🛒 *NEW ORDER — Living Result*\n\n`;
+    let message = `🛒 *NEW ORDER — Living Result*\n`;
+    message += `🔖 *Order ID:* ${generatedOrderId}\n\n`;
     message += `📦 *Items:*\n`;
 
     cart.forEach(item => {
@@ -601,6 +636,28 @@ async function processCheckout(e) {
     const rzp1 = new window.Razorpay(options);
     rzp1.open();
     */
+
+    // --- NEW: LOG INTENT TO GOOGLE SHEETS ---
+    // Replace the URL below with your Google Apps Script Web App URL
+    const GOOGLE_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwWTolkQqA0LXgLwTYj8vnWMoEHQeonlhCc7-8RDEXgnGzZG6C22wK_RInl6Gkh0t3o8A/exec";
+
+    if (GOOGLE_WEB_APP_URL) {
+      const sheetPayload = {
+        timestamp: new Date().toLocaleString(),
+        name: name,
+        phone: phone,
+        address: address,
+        total: pendingOrderAmount,
+        items: cart.map(i => `${i.name} (${i.flavorName}) x${i.qty}`).join(' | ')
+      };
+
+      fetch(GOOGLE_WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors', // Prevents CORS errors from blocking the redirect
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sheetPayload)
+      }).catch(err => console.error("Sheet logging failed:", err));
+    }
 
     // OPEN WHATSAPP
     window.open(whatsappLink, '_blank');
@@ -1000,6 +1057,9 @@ function renderSingleProductPage() {
       </div>
       <div class="modal-info-col">
         <h1 style="font-family: var(--font-heading); font-size: 32px; margin-bottom: 10px; color: var(--text-primary); text-transform: uppercase;">${product.name}</h1>
+        <div style="font-size: 12px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Verified Independent Reseller
+        </div>
         ${product.glutenFree ? `<span style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(46, 204, 64, 0.2); color: var(--green); border: 1px solid var(--green); margin-bottom: 15px;">🌾 Gluten Free</span>` : ''}
           <div class="modal-price" style="margin-bottom: 5px;">₹${currentPrice.toLocaleString()} ${currentOldPrice > currentPrice ? `<span style="font-size: 14px; text-decoration: line-through; color: var(--text-muted); font-weight: normal; margin-left: 10px;">₹${currentOldPrice.toLocaleString()}</span>` : ''}</div>
           ${currentWeight ? `<div class="modal-weight" style="color: var(--accent); font-weight: 600; font-size: 14px; margin-bottom: 20px;">Weight: ${currentWeight}</div>` : ''}
@@ -1104,10 +1164,10 @@ function addToCartFromPage() {
   const price = size ? size.price : product.price;
   const weight = size ? size.weight : '';
 
-  const key = `${product.id}-${flavorIndex}-${sizeIndex}`;
+  const key = `${product._id}-${flavorIndex}-${sizeIndex}`; // Use MongoDB _id
   const existing = cart.find(i => i.key === key);
   if (existing) { existing.qty += qty; }
-  else { cart.push({ key, productId: product.id, flavorIndex, sizeIndex, name: product.name, flavorName: flavor.name, weight: weight, price: price, image: flavor.image, qty }); }
+  else { cart.push({ key, productId: product._id, flavorIndex, sizeIndex, name: product.name, flavorName: flavor.name, weight: weight, price: price, image: flavor.image, qty }); }
 
   saveCart();
   updateCartUI();
