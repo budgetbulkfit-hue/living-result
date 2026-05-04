@@ -542,6 +542,10 @@ async function processCheckout(e) {
   const checkoutOverlay = document.getElementById("checkoutModalOverlay");
   if (checkoutOverlay) checkoutOverlay.classList.remove("active");
 
+  // --- CRITICAL FIX FOR PC POPUP BLOCKERS ---
+  // We must open the new tab synchronously BEFORE any 'await' calls, otherwise Chrome blocks it!
+  const whatsappWindow = window.open('about:blank', '_blank');
+
   try {
     // --- NEW: PHASE 3 - CREATE PENDING ORDER ON BACKEND ---
     const orderPayload = {
@@ -671,14 +675,21 @@ async function processCheckout(e) {
 
     // Show success modal
     const successOverlay = document.getElementById("successModalOverlay");
-    if (successOverlay) successOverlay.classList.add("active");
+    if (successOverlay) {
+      successOverlay.classList.add("active");
+      document.body.style.overflow = "hidden";
+    }
 
-    // OPEN WHATSAPP (Delayed slightly to ensure the UI updates and modal shows before redirecting)
-    setTimeout(() => {
-      window.open(whatsappLink, '_blank');
-    }, 600);
+    // REDIRECT THE ALREADY OPENED TAB TO WHATSAPP
+    if (whatsappWindow) {
+      whatsappWindow.location.href = whatsappLink;
+    } else {
+      // Fallback if browser completely blocked the initial open
+      window.location.href = whatsappLink;
+    }
 
   } catch (error) {
+    if (whatsappWindow) whatsappWindow.close(); // Close the blank tab if an error occurs
     console.error('Checkout error:', error);
     alert(`Checkout Failed: ${error.message}`);
   }
