@@ -298,6 +298,17 @@
             <!-- 5. SETTINGS VIEW -->
             <div id="view-settings" class="page-view">
                 <div class="header-title"><span>Global Site Settings</span></div>
+                
+                <!-- NEW LAUNCH CONTROL -->
+                <div class="panel-card" style="max-width: 600px; border-color: #2ecc71; text-align: center; padding: 30px;">
+                    <h3 style="margin: 0 0 10px 0; color: #2ecc71; font-family: var(--font-heading); text-transform: uppercase; font-size: 24px;">Investor Launch Control</h3>
+                    <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 25px;">Lock the website behind a 'Coming Soon' screen, then let your investor press the Launch button to reveal it live to the world.</p>
+                    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <button type="button" class="btn-outline" style="border-color: #f39c12; color: #f39c12;" onclick="setLaunchStatus(false)">🔒 Lock Site (Pre-Launch)</button>
+                        <button type="button" class="btn-primary" style="background: #2ecc71; border-color: #2ecc71; font-size: 16px; padding: 12px 24px; box-shadow: 0 4px 20px rgba(46,204,64,0.4);" onclick="setLaunchStatus(true)">🚀 LAUNCH WEBSITE</button>
+                    </div>
+                </div>
+
                 <div class="panel-card" style="max-width: 600px;">
                     <form onsubmit="saveGlobalSettings(event)">
                         <div class="form-group">
@@ -985,6 +996,17 @@
             const settingsData = { noticeStrip: { text: document.getElementById('noticeStripText').value, enabled: document.getElementById('noticeStripEnabled').checked } };
             const res = await authFetch(`${API_URL}/settings`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settingsData) });
             if((await res.json()).success) showToast('Settings saved', 'success');
+        }
+
+        async function setLaunchStatus(isLaunched) {
+            const msg = isLaunched ? "Are you ready to LAUNCH the website to the public?" : "Lock the website and show the 'Coming Soon' screen?";
+            if (!confirm(msg)) return;
+            showToast(isLaunched ? 'Launching...' : 'Locking...', 'info');
+            const res = await authFetch(`${API_URL}/settings`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isLaunched }) });
+            if ((await res.json()).success) {
+                showToast(isLaunched ? 'WEBSITE IS LIVE! 🚀' : 'Website Locked 🔒', 'success');
+                forceGlobalRefreshSilently(); // Instantly pushes the change to all live visitors
+            }
         }
 
         async function forceGlobalRefresh() {

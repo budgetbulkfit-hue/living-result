@@ -806,8 +806,21 @@ async function fetchAndDisplaySettings() {
   try {
     const res = await fetch(`${API_URL}/settings`);
     const data = await res.json();
-    if (data.success && data.data.noticeStrip) {
-      const noticeStrip = data.data.noticeStrip;
+    if (data.success) {
+      
+      // Handle Launch Status (Defaults to true/launched so live site doesn't break)
+      const preLaunchOverlay = document.getElementById('preLaunchOverlay');
+      if (preLaunchOverlay) {
+          if (data.data.isLaunched === false) {
+              preLaunchOverlay.style.display = 'flex';
+              document.body.style.overflow = 'hidden';
+          } else {
+              preLaunchOverlay.style.display = 'none';
+              document.body.style.overflow = '';
+          }
+      }
+
+      const noticeStrip = data.data.noticeStrip || {};
       if (noticeStrip.enabled && noticeStrip.text) {
         document.getElementById('noticeStripText').textContent = noticeStrip.text;
         const strip = document.getElementById('noticeStrip');
