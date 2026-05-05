@@ -12,8 +12,9 @@ let currentProductData = null;
 function renderProductCard(product) {
   const stars = "★".repeat(product.rating) + "☆".repeat(5 - product.rating);
 
-  // Use the first flavor as default display
+  // Use the first flavor for image, but check all flavors for stock status
   const defaultFlavor = product.flavors[0];
+  const isAnyFlavorInStock = product.flavors.some(f => f.inStock);
 
   const displayPrice = product.sizes && product.sizes.length > 0 ? product.sizes[0].price : product.price;
   const displayOldPrice = product.sizes && product.sizes.length > 0 && product.sizes[0].oldPrice ? product.sizes[0].oldPrice : (product.oldPrice || displayPrice);
@@ -24,8 +25,8 @@ function renderProductCard(product) {
     <div class="product-card" id="product-${product.slug}" onclick="handleProductCardClick('${product.slug}', '${product._id || ''}')" style="cursor: pointer;">
       <div class="product-image">
         <img src="${defaultFlavor.image}" alt="${product.name}" loading="lazy">
-        <span class="stock-badge ${defaultFlavor.inStock ? 'in-stock' : 'out-of-stock'}">
-          ${defaultFlavor.inStock ? 'In Stock' : 'Out of Stock'}
+        <span class="stock-badge ${isAnyFlavorInStock ? 'in-stock' : 'out-of-stock'}">
+          ${isAnyFlavorInStock ? 'In Stock' : 'Out of Stock'}
         </span>
         ${product.bestSeller ? '<span class="best-seller-badge">🔥 Best Seller</span>' : ''}
         ${product.glutenFree ? '<span class="gluten-free-badge">🌾 Gluten Free</span>' : ''}
@@ -777,7 +778,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-const API_URL = (window.APP_CONFIG && window.APP_CONFIG.apiUrl) || 'https://living-result-backend.onrender.com/api';
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_URL = (window.APP_CONFIG && window.APP_CONFIG.apiUrl) || (isLocal ? 'http://localhost:5000/api' : 'https://living-result-backend.onrender.com/api');
 
 // ===== GLOBAL REFRESH POLLING =====
 let currentSiteVersion = null;
@@ -1069,8 +1071,14 @@ function renderSingleProductPage() {
 
   const flavorPills = product.flavors.map((f, i) => {
     if (allowedFlavors && !allowedFlavors.includes(f.name)) return ''; // Hide flavor if not allowed for this size
-    return `<button class="flavor-pill ${i === currentSelectedFlavorIndex ? 'active' : ''}" onclick="selectPageFlavor(${i})">
-      ${f.name}
+    
+    const isOutOfStock = !f.inStock;
+    const outOfStockClass = isOutOfStock ? 'out-of-stock' : '';
+
+    return `<button 
+              class="flavor-pill ${i === currentSelectedFlavorIndex ? 'active' : ''} ${outOfStockClass}" 
+              onclick="selectPageFlavor(${i})">
+      ${f.name} ${isOutOfStock ? '<span class="sold-out-text">(Sold Out)</span>' : ''}
     </button>`;
   }).join("");
 

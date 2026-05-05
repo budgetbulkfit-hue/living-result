@@ -8,6 +8,23 @@
     <title>Living Result | Product Details</title>
     <link rel="icon" type="image/png" href="images/favicon.png">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .flavor-pill.out-of-stock {
+            opacity: 0.6;
+            background: var(--bg-primary);
+            border-color: var(--border);
+            color: var(--text-muted);
+        }
+        .flavor-pill.out-of-stock.active {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .sold-out-text {
+            font-size: 10px;
+            color: var(--red, #e74c3c);
+            margin-left: 4px;
+        }
+    </style>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-984GHQEJ6R"></script>
     <script>
