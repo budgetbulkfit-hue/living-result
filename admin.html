@@ -138,10 +138,12 @@
                 </div>
                 <div class="panel-card">
                     <h3 style="margin: 0 0 15px 0; font-family: var(--font-heading); text-transform: uppercase; color: var(--text-primary);">Product Performance</h3>
-                    <table>
-                        <thead><tr><th>Product</th><th>Views</th><th>Confirmed Sales</th><th>Revenue (₹)</th><th>Conversion Rate</th></tr></thead>
-                        <tbody id="productPerformanceTable"><tr><td colspan="5" style="text-align:center;">Loading...</td></tr></tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Product</th><th>Views</th><th>Confirmed Sales</th><th>Revenue (₹)</th><th>Conversion Rate</th></tr></thead>
+                            <tbody id="productPerformanceTable"><tr><td colspan="5" style="text-align:center;">Loading...</td></tr></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -168,10 +170,12 @@
                         <button class="btn-outline" type="button" onclick="resetProductFilters()">Clear Filters</button>
                     </div>
                 </div>
-                <table>
-                    <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Badges</th><th>Actions</th></tr></thead>
-                    <tbody id="adminProductTable"><tr><td colspan="7" style="text-align: center;">Loading products...</td></tr></tbody>
-                </table>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Badges</th><th>Actions</th></tr></thead>
+                        <tbody id="adminProductTable"><tr><td colspan="7" style="text-align: center;">Loading products...</td></tr></tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- 3. EDIT PRODUCT VIEW (Replaces JSON Modals) -->
@@ -190,12 +194,12 @@
 
                     <!-- Basic Info -->
                     <div id="section-basic" class="editor-section active">
-                        <div style="display: flex; gap: 15px;">
+                        <div class="form-row">
                             <div class="form-group" style="flex: 1;"><label>Cart ID (Num)</label><input type="number" id="ep-id"></div>
                             <div class="form-group" style="flex: 2;"><label>Product Name</label><input type="text" id="ep-name"></div>
                             <div class="form-group" style="flex: 1;"><label>URL Slug</label><input type="text" id="ep-slug"></div>
                         </div>
-                        <div style="display: flex; gap: 15px;">
+                        <div class="form-row">
                             <div class="form-group" style="flex: 1;"><label>Base Price (₹)</label><input type="number" id="ep-price"></div>
                             <div class="form-group" style="flex: 1;"><label>Old Price (₹)</label><input type="number" id="ep-oldprice"></div>
                             <div class="form-group" style="flex: 1;">
@@ -207,7 +211,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 15px;">
+                        <div class="form-row">
                             <div class="form-group" style="flex: 1;">
                                 <label>Manual Rating</label>
                                 <div id="ep-star-rating" style="font-size: 24px; cursor: pointer; color: #f5a623; display: flex; gap: 5px; user-select: none;">
@@ -221,7 +225,7 @@
                             </div>
                             <div class="form-group" style="flex: 1;"><label>Manual Review Count</label><input type="number" id="ep-numreviews"></div>
                         </div>
-                        <div style="display: flex; gap: 25px; margin-bottom: 20px;">
+                        <div class="form-row" style="margin-bottom: 20px;">
                             <div class="form-group" style="margin: 0;"><label>Base Stock</label><input type="number" id="ep-stock" style="width:100px;"></div>
                             <div class="form-group" style="margin: 0;"><label>Best Seller</label><label class="toggle-switch"><input type="checkbox" id="ep-bestseller"><span class="toggle-slider"></span></label></div>
                             <div class="form-group" style="margin: 0;"><label>Gluten Free</label><label class="toggle-switch"><input type="checkbox" id="ep-glutenfree"><span class="toggle-slider"></span></label></div>
@@ -237,10 +241,12 @@
                             <p style="color: var(--text-muted); font-size: 13px; margin: 0;">Define different sizes/weights for this product.</p>
                             <button class="btn-outline" onclick="openVariantModal()">+ Add Variant</button>
                         </div>
-                        <table>
-                            <thead><tr><th>Weight</th><th>Price</th><th>Old Price</th><th>Flavors Allowed</th><th>Actions</th></tr></thead>
-                            <tbody id="ep-variants-table"></tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr><th>Weight</th><th>Price</th><th>Old Price</th><th>Flavors Allowed</th><th>Actions</th></tr></thead>
+                                <tbody id="ep-variants-table"></tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Images -->
@@ -261,10 +267,12 @@
                             <p style="color: var(--text-muted); font-size: 13px; margin: 0;">Define flavors and their specific tub images.</p>
                             <button class="btn-outline" onclick="openFlavorModal()">+ Add Flavor</button>
                         </div>
-                        <table>
-                            <thead><tr><th>Flavor Name</th><th>Image</th><th>In Stock</th><th>Actions</th></tr></thead>
-                            <tbody id="ep-flavors-table"></tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr><th>Flavor Name</th><th>Image</th><th>In Stock</th><th>Actions</th></tr></thead>
+                                <tbody id="ep-flavors-table"></tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <hr style="border: 0; border-top: 1px solid var(--border); margin: 30px 0;">
