@@ -290,10 +290,12 @@
                         <button class="btn-outline" type="button" onclick="resetOrderFilters()">Clear Filters</button>
                     </div>
                 </div>
-                <table>
-                    <thead><tr><th>Order ID</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
-                    <tbody id="adminOrdersTable"><tr><td colspan="7" style="text-align: center;">Loading orders...</td></tr></tbody>
-                </table>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Order ID</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="adminOrdersTable"><tr><td colspan="7" style="text-align: center;">Loading orders...</td></tr></tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- 5. SETTINGS VIEW -->
@@ -1051,6 +1053,20 @@
                 } else showToast('Failed to reset data', 'error');
             } catch (err) { showToast('Error resetting data', 'error'); }
         }
+
+        // --- MOBILE SWIPE TO CLOSE ---
+        let adminTouchStartX = 0;
+        document.addEventListener('touchstart', e => {
+            adminTouchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        document.addEventListener('touchend', e => {
+            const adminTouchEndX = e.changedTouches[0].screenX;
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && sidebar.classList.contains('active') && adminTouchStartX - adminTouchEndX > 50) {
+                toggleAdminSidebar();
+            }
+        }, { passive: true });
 
         checkAdminAuth();
     </script>
