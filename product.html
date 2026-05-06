@@ -36,6 +36,26 @@
 </head>
 
 <body>
+    <!-- PRE-LAUNCH OVERLAY -->
+    <div id="preLaunchOverlay" style="display: none; position: fixed; inset: 0; background: var(--bg-primary); z-index: 99999; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+        <img src="images/logo.png" alt="Living Result" style="height: 120px; margin-bottom: 30px; animation: pulseLogo 2s infinite;">
+        <h1 style="font-family: var(--font-heading); font-size: clamp(32px, 5vw, 64px); color: var(--text-primary); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Coming Soon</h1>
+        <p style="color: var(--accent); font-size: 18px; font-weight: 600; letter-spacing: 2px;">#WEARETHELIVINGRESULT</p>
+        <style>
+            @keyframes pulseLogo {
+                0% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 0px var(--accent)); }
+                50% { transform: scale(1.05); opacity: 0.8; filter: drop-shadow(0 0 20px var(--accent)); }
+                100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 0px var(--accent)); }
+            }
+        </style>
+    </div>
+
+    <!-- TOP NOTICE STRIP -->
+    <div class="notice-strip" id="noticeStrip" style="display: none;">
+        <div class="container">
+            <p id="noticeStripText"></p>
+        </div>
+    </div>
 
     <!-- NAVBAR -->
     <nav class="navbar" id="navbar">
@@ -94,6 +114,17 @@
         <div class="cart-sidebar-body" id="cartBody"></div>
     </div>
     <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+
+    <!-- FLOATING CART BUTTON -->
+    <button class="floating-cart-btn" id="floatingCartBtn" onclick="toggleCart()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="9" cy="21" r="1" />
+            <circle cx="20" cy="21" r="1" />
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+        </svg>
+        View Cart
+        <span class="floating-cart-count" id="floatingCartCount">0</span>
+    </button>
 
     <!-- SINGLE PRODUCT SECTION -->
     <section class="product-page-section" style="padding: 120px 0 60px 0; min-height: 80vh;">
@@ -157,6 +188,22 @@
                     style="width: 100%; justify-content: center; background: #25D366; border-color: #25D366;">Proceed to
                     WhatsApp Order</button>
             </form>
+        </div>
+    </div>
+
+    <!-- SUCCESS MODAL -->
+    <div class="modal-overlay" id="successModalOverlay" onclick="closeSuccessModal(event)">
+        <div class="modal-content" style="max-width: 400px; padding: 40px; text-align: center;">
+            <div
+                style="width: 80px; height: 80px; background: rgba(46,204,64,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: var(--green);">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+            <h2 style="font-family: var(--font-heading); font-size: 28px; text-transform: uppercase; margin-bottom: 10px; color: #fff;">Order Sent!</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 30px;">Your order has been securely created in our system.<br><br><span style="color: #25D366; font-weight: bold; font-size: 15px;">Redirecting to WhatsApp to complete it...</span></p>
+            <button onclick="closeSuccessModal({target: document.getElementById('successModalOverlay')})" class="btn-primary" style="width: 100%; justify-content: center;">Continue Shopping</button>
         </div>
     </div>
 

@@ -46,9 +46,7 @@ function renderProductCard(product) {
           <span class="stars">${stars}</span>
           <span class="rating-count">(${product.numReviews || product.reviews || 0})</span>
         </div>
-        <div class="scarcity-text" style="color: var(--accent); font-size: 12px; font-weight: 600; margin-top: 8px;">
-           🔥 Hurry, only ${product.stockLeft} left!
-        </div>
+        ${product.showScarcity !== false && product.stockLeft > 0 ? `<div class="scarcity-text" style="color: var(--accent); font-size: 12px; font-weight: 600; margin-top: 8px;">🔥 Hurry, only ${product.stockLeft} left!</div>` : ''}
       </div>
     </div>
   `;
@@ -784,14 +782,14 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const API_URL = (window.APP_CONFIG && window.APP_CONFIG.apiUrl) || (isLocal ? 'http://localhost:5000/api' : 'https://living-result-backend.onrender.com/api');
 
 // ===== GLOBAL REFRESH POLLING =====
 let currentSiteVersion = null;
 async function checkSiteVersion() {
   try {
-    const res = await fetch(`${API_URL}/settings/version`);
+    const res = await fetch(`${API_URL}/settings/version`, { cache: 'no-store' });
     const data = await res.json();
     if (data.success) {
       if (currentSiteVersion === null) {
@@ -810,7 +808,7 @@ async function startGlobalRefreshPolling() {
 
 async function fetchAndDisplaySettings() {
   try {
-    const res = await fetch(`${API_URL}/settings`);
+    const res = await fetch(`${API_URL}/settings`, { cache: 'no-store' });
     const data = await res.json();
     if (data.success) {
       
@@ -967,10 +965,11 @@ async function handleLogout() {
 // ===== DATABASE / API LOGIC =====
 async function fetchProducts() {
   try {
-    const res = await fetch(`${API_URL}/products`);
+    const res = await fetch(`${API_URL}/products`, { cache: 'no-store' });
     const data = await res.json();
     if (data.success) {
       allProducts = data.data.map(p => {
+        if (p.sizes) p.sizes.sort((a, b) => (a.price || 0) - (b.price || 0));
         if (p.description && p.description.includes('<!--[GF]-->')) {
           p.glutenFree = true;
           p.description = p.description.replace(/ ?<!--\[GF\]-->/g, '');
@@ -1001,10 +1000,11 @@ async function loadSingleProductPage() {
     return;
   }
   try {
-    const res = await fetch(`${API_URL}/products/${slug}`);
+    const res = await fetch(`${API_URL}/products/${slug}`, { cache: 'no-store' });
     const data = await res.json();
     if (data.success) {
       currentProductData = data.data;
+      if (currentProductData.sizes) currentProductData.sizes.sort((a, b) => (a.price || 0) - (b.price || 0));
       const displayPrice = (currentProductData.sizes && currentProductData.sizes.length > 0) ? currentProductData.sizes[0].price : currentProductData.price;
       trackProductViewEvent(currentProductData._id, currentProductData.name, "product_page", displayPrice);
       if (currentProductData.description && currentProductData.description.includes('<!--[GF]-->')) {
@@ -1101,11 +1101,13 @@ function renderSingleProductPage() {
     </button>`;
   }).join("");
 
-  const sizePills = (product.sizes && product.sizes.length > 0) ? product.sizes.map((s, i) => `
-    <button class="flavor-pill ${i === currentSelectedSizeIndex ? 'active' : ''}" onclick="selectPageSize(${i})">
-      ${s.weight}
-    </button>
-  `).join("") : "";
+  const sizePills = (product.sizes && product.sizes.length > 0) ? product.sizes.map((s, i) => {
+    const isOutOfStock = s.inStock === false;
+    const outOfStockClass = isOutOfStock ? 'out-of-stock' : '';
+    return `<button class="flavor-pill ${i === currentSelectedSizeIndex ? 'active' : ''} ${outOfStockClass}" onclick="selectPageSize(${i})">
+      ${s.weight} ${isOutOfStock ? '<span class="sold-out-text">(Sold Out)</span>' : ''}
+    </button>`;
+  }).join("") : "";
 
   const nutritionList = product.nutritionalFacts.map(fact => `<li>${fact}</li>`).join("");
   document.title = `${product.name} | Living Result`;
@@ -1141,7 +1143,7 @@ function renderSingleProductPage() {
           ${sizePills ? `<div class="flavor-selector" style="margin-bottom:15px;"><span class="flavor-label">Select Size:</span><div class="flavor-pills">${sizePills}</div></div>` : ''}
         <div class="flavor-selector"><span class="flavor-label">Select Flavor:</span><div class="flavor-pills">${flavorPills}</div></div>
         <div style="margin: 30px 0; display: flex; flex-direction: column; gap: 12px;">
-          ${flavor.inStock
+          ${flavor.inStock && (!size || size.inStock !== false)
       ? `<div style="display: flex; gap: 10px; align-items: center;">
                 <div class="qty-control">
                   <button class="qty-btn" onclick="changeModalQty(-1)">−</button>
@@ -1150,7 +1152,7 @@ function renderSingleProductPage() {
                 </div>
                 <button onclick="addToCartFromPage()" class="btn-add-cart" style="flex:1; padding: 12px 16px;">Add to Cart</button>
               </div>`
-      : `<button class="btn-primary" style="width: 100%; justify-content: center; padding: 18px; background: var(--border); color: var(--text-muted); cursor: not-allowed;">Out of Stock</button>`}
+      : `<button class="btn-primary" style="width: 100%; justify-content: center; padding: 18px; background: var(--border); color: var(--text-muted); cursor: not-allowed;" disabled>Out of Stock</button>`}
         </div>
         <div class="modal-tabs">
           <div class="modal-tab active" onclick="switchModalTab('desc')">About</div>

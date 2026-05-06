@@ -716,18 +716,14 @@
                     <!-- Basic Info -->
                     <div id="section-basic" class="editor-section active">
                         <div class="form-row">
-                            <div class="form-group" style="flex: 1;"><label>Cart ID (Num)</label><input type="number"
-                                    id="ep-id"></div>
-                            <div class="form-group" style="flex: 2;"><label>Product Name</label><input type="text"
-                                    id="ep-name"></div>
+                            <div class="form-group" style="flex: 1;"><label>Cart ID (Num)</label><input type="number" id="ep-id"></div>
+                            <div class="form-group" style="flex: 2;"><label>Product Name</label><input type="text" id="ep-name"></div>
                             <div class="form-group" style="flex: 1;"><label>URL Slug</label><input type="text"
                                     id="ep-slug"></div>
                         </div>
                         <div class="form-row">
-                            <div class="form-group" style="flex: 1;"><label>Base Price (₹)</label><input type="number"
-                                    id="ep-price"></div>
-                            <div class="form-group" style="flex: 1;"><label>Old Price (₹)</label><input type="number"
-                                    id="ep-oldprice"></div>
+                            <div class="form-group" style="flex: 1;"><label>Discount (%)</label><input type="number"
+                                    id="ep-discount" placeholder="e.g. 15"></div>
                             <div class="form-group" style="flex: 1;">
                                 <label>Category</label>
                                 <select id="ep-category">
@@ -756,6 +752,9 @@
                         <div class="form-row" style="margin-bottom: 20px;">
                             <div class="form-group" style="margin: 0;"><label>Base Stock</label><input type="number"
                                     id="ep-stock" style="width:100px;"></div>
+                            <div class="form-group" style="margin: 0;"><label>Show Scarcity</label><label
+                                    class="toggle-switch"><input type="checkbox" id="ep-showscarcity"><span
+                                        class="toggle-slider"></span></label></div>
                             <div class="form-group" style="margin: 0;"><label>Best Seller</label><label
                                     class="toggle-switch"><input type="checkbox" id="ep-bestseller"><span
                                         class="toggle-slider"></span></label></div>
@@ -787,6 +786,7 @@
                                         <th>Price</th>
                                         <th>Old Price</th>
                                         <th>Flavors Allowed</th>
+                                        <th>In Stock</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -993,7 +993,11 @@
                 <label>Allowed Flavors (Comma separated, or blank for all)</label>
                 <input type="text" id="vm-flavors" placeholder="Chocolate, Vanilla">
             </div>
-            <button class="btn-primary" style="width:100%; justify-content:center;" onclick="saveVariant()">Add</button>
+            <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+                <label class="toggle-switch"><input type="checkbox" id="vm-stock" checked><span class="toggle-slider"></span></label>
+                <span style="font-size:13px; font-weight:bold;">In Stock</span>
+            </div>
+            <button class="btn-primary" style="width:100%; justify-content:center;" onclick="saveVariant()">Save Variant</button>
         </div>
     </div>
 
@@ -1015,8 +1019,7 @@
                         class="toggle-slider"></span></label>
                 <span style="font-size:13px; font-weight:bold;">In Stock</span>
             </div>
-            <button class="btn-primary" style="width:100%; justify-content:center;" onclick="saveFlavor()">Add
-                Flavor</button>
+            <button class="btn-primary" style="width:100%; justify-content:center;" onclick="saveFlavor()">Save Flavor</button>
         </div>
     </div>
 
@@ -1031,6 +1034,8 @@
 
         // PRODUCT EDITOR STATE
         let epData = {};
+        let editingVariantIndex = -1;
+        let editingFlavorIndex = -1;
 
         function authFetch(url, options = {}) {
             const headers = { ...(options.headers || {}) };
@@ -1299,10 +1304,11 @@
         async function fetchAdminProducts() {
             setTableState('adminProductTable', 7, 'Loading products...');
             try {
-                const res = await fetch(`${API_URL}/products`);
+                const res = await fetch(`${API_URL}/products`, { cache: 'no-store' });
                 const data = await res.json();
                 if (data.success) {
                     products = data.data.map(p => {
+                        if (p.sizes) p.sizes.sort((a, b) => (a.price || 0) - (b.price || 0));
                         if (p.description && p.description.includes('<!--[GF]-->')) { p.glutenFree = true; p.description = p.description.replace(/ ?<!--\[GF\]-->/g, ''); }
                         if (p.description && p.description.includes('<!--[IMAGES:')) {
                             const match = p.description.match(/ ?<!--\[IMAGES:(.*?)\]-->/);
@@ -1356,13 +1362,13 @@
             document.getElementById('ep-id').value = epData.id || '';
             document.getElementById('ep-name').value = epData.name || '';
             document.getElementById('ep-slug').value = epData.slug || '';
-            document.getElementById('ep-price').value = epData.price || '';
-            document.getElementById('ep-oldprice').value = epData.oldPrice || '';
+            document.getElementById('ep-discount').value = epData.discount || '';
             document.getElementById('ep-category').value = epData.category || 'common';
             document.getElementById('ep-rating').value = epData.rating !== undefined ? epData.rating : 5;
             setRating(document.getElementById('ep-rating').value);
             document.getElementById('ep-numreviews').value = epData.numReviews || 0;
             document.getElementById('ep-stock').value = epData.stockLeft || 0;
+            document.getElementById('ep-showscarcity').checked = epData.showScarcity !== false;
             document.getElementById('ep-bestseller').checked = !!epData.bestSeller;
             document.getElementById('ep-glutenfree').checked = !!epData.glutenFree;
             document.getElementById('ep-desc').value = epData.description || '';
@@ -1379,28 +1385,48 @@
 
         function renderEpVariants() {
             const tb = document.getElementById('ep-variants-table');
-            if (!epData.sizes || !epData.sizes.length) { tb.innerHTML = '<tr><td colspan="5" style="text-align:center;">No variants added</td></tr>'; return; }
+            if (!epData.sizes || !epData.sizes.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;">No variants added</td></tr>'; return; }
             tb.innerHTML = epData.sizes.map((s, i) => `<tr>
                 <td>${s.weight}</td><td>₹${s.price}</td><td>${s.oldPrice ? '₹' + s.oldPrice : '-'}</td>
                 <td>${s.allowedFlavors && s.allowedFlavors.length ? s.allowedFlavors.join(', ') : 'All'}</td>
-                <td><button class="action-btn btn-delete" onclick="epData.sizes.splice(${i},1); renderEpVariants()">✕</button></td>
+                <td><label class="toggle-switch"><input type="checkbox" ${s.inStock !== false ? 'checked' : ''} onchange="epData.sizes[${i}].inStock = this.checked;"><span class="toggle-slider"></span></label></td>
+                <td>
+                    <button class="action-btn btn-edit" onclick="openVariantModal(${i})">Edit</button>
+                    <button class="action-btn btn-delete" onclick="epData.sizes.splice(${i},1); renderEpVariants()">✕</button>
+                </td>
             </tr>`).join('');
         }
 
-        function openVariantModal() {
-            document.getElementById('vm-weight').value = ''; document.getElementById('vm-price').value = '';
-            document.getElementById('vm-oldprice').value = ''; document.getElementById('vm-flavors').value = '';
+        function openVariantModal(index = -1) {
+            editingVariantIndex = index;
+            if (index > -1) {
+                const v = epData.sizes[index];
+                document.getElementById('vm-weight').value = v.weight || '';
+                document.getElementById('vm-price').value = v.price || '';
+                document.getElementById('vm-oldprice').value = v.oldPrice || '';
+                document.getElementById('vm-flavors').value = v.allowedFlavors ? v.allowedFlavors.join(', ') : '';
+                document.getElementById('vm-stock').checked = v.inStock !== false;
+            } else {
+                document.getElementById('vm-weight').value = ''; document.getElementById('vm-price').value = '';
+                document.getElementById('vm-oldprice').value = ''; document.getElementById('vm-flavors').value = '';
+                document.getElementById('vm-stock').checked = true;
+            }
             document.getElementById('variantModal').classList.add('active');
         }
 
         function saveVariant() {
             const f = document.getElementById('vm-flavors').value.split(',').map(s => s.trim()).filter(Boolean);
-            epData.sizes.push({
+            const variantData = {
                 weight: document.getElementById('vm-weight').value,
                 price: Number(document.getElementById('vm-price').value),
                 oldPrice: Number(document.getElementById('vm-oldprice').value) || null,
-                allowedFlavors: f
-            });
+                allowedFlavors: f,
+                inStock: document.getElementById('vm-stock').checked
+            };
+            if (!epData.sizes) epData.sizes = [];
+            if (editingVariantIndex > -1) { epData.sizes[editingVariantIndex] = variantData; } 
+            else { epData.sizes.push(variantData); }
+            epData.sizes.sort((a, b) => (a.price || 0) - (b.price || 0)); // Auto-sort by price ascending
             document.getElementById('variantModal').classList.remove('active');
             renderEpVariants();
         }
@@ -1423,13 +1449,25 @@
             tb.innerHTML = epData.flavors.map((f, i) => `<tr>
                 <td>${f.name}</td><td><img src="${f.image}" style="height:30px; border-radius:4px; background:#fff;"></td>
                 <td><label class="toggle-switch"><input type="checkbox" ${f.inStock ? 'checked' : ''} onchange="epData.flavors[${i}].inStock = this.checked;"><span class="toggle-slider"></span></label></td>
-                <td><button class="action-btn btn-delete" onclick="epData.flavors.splice(${i},1); renderEpFlavors()">✕</button></td>
+                <td>
+                    <button class="action-btn btn-edit" onclick="openFlavorModal(${i})">Edit</button>
+                    <button class="action-btn btn-delete" onclick="epData.flavors.splice(${i},1); renderEpFlavors()">✕</button>
+                </td>
             </tr>`).join('');
         }
 
-        function openFlavorModal() {
-            document.getElementById('fm-name').value = ''; document.getElementById('fm-image-file').value = '';
-            document.getElementById('fm-image-url').value = ''; document.getElementById('fm-stock').checked = true;
+        function openFlavorModal(index = -1) {
+            editingFlavorIndex = index;
+            if (index > -1) {
+                const f = epData.flavors[index];
+                document.getElementById('fm-name').value = f.name || '';
+                document.getElementById('fm-image-url').value = f.image || '';
+                document.getElementById('fm-image-file').value = '';
+                document.getElementById('fm-stock').checked = f.inStock !== false;
+            } else {
+                document.getElementById('fm-name').value = ''; document.getElementById('fm-image-file').value = '';
+                document.getElementById('fm-image-url').value = ''; document.getElementById('fm-stock').checked = true;
+            }
             document.getElementById('flavorModal').classList.add('active');
         }
 
@@ -1441,7 +1479,11 @@
             if (!imgUrl) return showToast('Please provide an image', 'error');
 
             if (!epData.flavors) epData.flavors = [];
-            epData.flavors.push({ name: document.getElementById('fm-name').value, image: imgUrl, inStock: document.getElementById('fm-stock').checked });
+            const flavorData = { name: document.getElementById('fm-name').value, image: imgUrl, inStock: document.getElementById('fm-stock').checked };
+            
+            if (editingFlavorIndex > -1) { epData.flavors[editingFlavorIndex] = flavorData; } 
+            else { epData.flavors.push(flavorData); }
+            
             document.getElementById('flavorModal').classList.remove('active');
             renderEpFlavors();
         }
@@ -1451,21 +1493,25 @@
             if (document.getElementById('ep-glutenfree').checked) desc += ' <!--[GF]-->';
             if (epData.images && epData.images.length) desc += ` <!--[IMAGES:${JSON.stringify(epData.images)}]-->`;
 
+            const sortedSizes = (epData.sizes || []).sort((a, b) => (a.price || 0) - (b.price || 0));
+
             const payload = {
                 id: Number(document.getElementById('ep-id').value),
                 name: document.getElementById('ep-name').value,
                 slug: document.getElementById('ep-slug').value,
-                price: Number(document.getElementById('ep-price').value),
-                oldPrice: Number(document.getElementById('ep-oldprice').value) || null,
+                price: sortedSizes.length > 0 ? sortedSizes[0].price : 0,
+                oldPrice: sortedSizes.length > 0 ? sortedSizes[0].oldPrice : null,
+                discount: Number(document.getElementById('ep-discount').value) || 0,
                 category: document.getElementById('ep-category').value,
                 rating: Number(document.getElementById('ep-rating').value),
                 numReviews: Number(document.getElementById('ep-numreviews').value),
                 stockLeft: Number(document.getElementById('ep-stock').value),
+                showScarcity: document.getElementById('ep-showscarcity').checked,
                 bestSeller: document.getElementById('ep-bestseller').checked,
                 description: desc,
                 ingredients: document.getElementById('ep-ingredients').value,
                 nutritionalFacts: document.getElementById('ep-nutrition').value.split('\n').filter(l => l.trim()),
-                sizes: epData.sizes || [],
+                sizes: sortedSizes,
                 flavors: epData.flavors || []
             };
 
@@ -1536,7 +1582,7 @@
         // --- ORDERS ---
         async function fetchOrders() {
             setTableState('adminOrdersTable', 7, 'Loading orders...');
-            const res = await authFetch(`${API_URL}/orders`);
+            const res = await authFetch(`${API_URL}/orders`, { cache: 'no-store' });
             const data = await res.json();
             if (data.success) { allOrders = data.data || []; applyOrderFilters(); }
         }
@@ -1625,7 +1671,7 @@
 
         // --- SETTINGS & GLOBALS ---
         async function fetchGlobalSettings() {
-            const res = await fetch(`${API_URL}/settings`);
+            const res = await fetch(`${API_URL}/settings`, { cache: 'no-store' });
             const data = await res.json();
             if (data.success && data.data.noticeStrip) {
                 document.getElementById('noticeStripText').value = data.data.noticeStrip.text || '';
