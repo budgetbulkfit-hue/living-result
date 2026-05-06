@@ -943,6 +943,16 @@
 
     <div id="toastWrap" class="toast-wrap"></div>
 
+    <!-- FULL SCREEN LAUNCH ANIMATION OVERLAY -->
+    <div id="launchAnimationOverlay" style="display: none; position: fixed; inset: 0; background: #000; z-index: 999999; flex-direction: column; align-items: center; justify-content: center;">
+        <video id="launchVideo" autoplay muted playsinline style="max-width: 100vw; max-height: 80vh;">
+            <source src="images/animation.mp4" type="video/mp4">
+        </video>
+        <p style="color: var(--accent); margin-top: 20px; font-family: var(--font-heading); font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">
+            Initializing Launch Sequence...
+        </p>
+    </div>
+
     <!-- MODALS FOR SUB-FEATURES -->
 
     <div class="modal-overlay" id="orderDetailsModal">
@@ -1640,6 +1650,18 @@
                 forceGlobalRefreshSilently(); // Instantly pushes the change to all live visitors
                 if (isLaunched) {
                     triggerConfetti();
+                    
+                    // Show full-screen 8-second animation
+                    const animOverlay = document.getElementById('launchAnimationOverlay');
+                    const launchVideo = document.getElementById('launchVideo');
+                    if (animOverlay) {
+                        animOverlay.style.display = 'flex';
+                        if (launchVideo) {
+                            launchVideo.currentTime = 0; // Reset video to start
+                            launchVideo.play().catch(e => console.log('Autoplay prevented:', e));
+                        }
+                        setTimeout(() => { animOverlay.style.display = 'none'; }, 8000); // Hides after exactly 8000ms (8 seconds)
+                    }
                 }
             }
         }
