@@ -571,6 +571,8 @@ async function processCheckout(e) {
   const phone = document.getElementById("checkoutPhone").value;
   const email = document.getElementById("checkoutEmail").value;
   const address = document.getElementById("checkoutAddress").value;
+  const couponEl = document.getElementById("checkoutCoupon");
+  const coupon = couponEl ? couponEl.value.trim() : "";
 
   // Close checkout modal
   const checkoutOverlay = document.getElementById("checkoutModalOverlay");
@@ -583,7 +585,7 @@ async function processCheckout(e) {
   try {
     // --- NEW: PHASE 3 - CREATE PENDING ORDER ON BACKEND ---
     const orderPayload = {
-      customerDetails: { name, phone, email, address },
+      customerDetails: { name, phone, email, address, coupon },
       products: cart.map(item => ({
         productId: item.productId,
         name: item.name,
@@ -624,6 +626,9 @@ async function processCheckout(e) {
     message += `📞 *Phone:* ${phone}\n`;
     message += `✉️ *Email:* ${email}\n`;
     message += `📍 *Address:* ${address}\n\n`;
+    if (coupon) {
+      message += `🎟️ *Coupon:* ${coupon}\n\n`;
+    }
     message += `Please confirm my order! 🙏`;
 
     const encodedMessage = encodeURIComponent(message);
@@ -687,6 +692,7 @@ async function processCheckout(e) {
         phone: phone,
         email: email,
         address: address,
+        coupon: coupon,
         total: pendingOrderAmount,
         items: cart.map(i => `${i.name} (${i.flavorName}) x${i.qty}`).join(' | ')
       };
