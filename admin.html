@@ -726,10 +726,19 @@
                                     id="ep-discount" placeholder="e.g. 15"></div>
                             <div class="form-group" style="flex: 1;">
                                 <label>Category</label>
-                                <select id="ep-category">
+                                <select id="ep-category" onchange="toggleSubCategoryDropdown()">
                                     <option value="common">Everyday Essentials</option>
                                     <option value="unique">Unique Collection</option>
                                     <option value="combos">Combos</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="ep-subcategory-group" style="display:none; flex: 1;">
+                                <label>Sub-Category</label>
+                                <select id="ep-subcategory">
+                                    <option value="">None / Other</option>
+                                    <option value="Creatine">Creatine</option>
+                                    <option value="Mass Gainer">Mass Gainer</option>
+                                    <option value="Whey Protein">Whey Protein</option>
                                 </select>
                             </div>
                         </div>
@@ -1304,6 +1313,10 @@
                             const match = p.description.match(/ ?<!--\[IMAGES:(.*?)\]-->/);
                             if (match && match[1]) { try { p.images = JSON.parse(match[1]); } catch (e) { } p.description = p.description.replace(match[0], ''); }
                         }
+                            if (p.description && p.description.includes('<!--[SUBCAT:')) {
+                                const match = p.description.match(/ ?<!--\[SUBCAT:(.*?)\]-->/);
+                                if (match && match[1]) { p.subCategory = match[1]; p.description = p.description.replace(match[0], ''); }
+                            }
                         return p;
                     });
                     applyProductFilters();
@@ -1339,6 +1352,11 @@
             document.getElementById(`section-${tab}`).classList.add('active');
         }
 
+        function toggleSubCategoryDropdown() {
+            const cat = document.getElementById('ep-category').value;
+            document.getElementById('ep-subcategory-group').style.display = cat === 'common' ? 'block' : 'none';
+        }
+
         function openProductEditor(id = null) {
             if (id) {
                 const p = products.find(prod => prod._id === id);
@@ -1354,6 +1372,8 @@
             document.getElementById('ep-slug').value = epData.slug || '';
             document.getElementById('ep-discount').value = epData.discount || '';
             document.getElementById('ep-category').value = epData.category || 'common';
+            document.getElementById('ep-subcategory').value = epData.subCategory || '';
+            toggleSubCategoryDropdown();
             document.getElementById('ep-rating').value = epData.rating !== undefined ? epData.rating : 5;
             setRating(document.getElementById('ep-rating').value);
             document.getElementById('ep-numreviews').value = epData.numReviews || 0;
@@ -1482,6 +1502,11 @@
             let desc = document.getElementById('ep-desc').value;
             if (document.getElementById('ep-glutenfree').checked) desc += ' <!--[GF]-->';
             if (epData.images && epData.images.length) desc += ` <!--[IMAGES:${JSON.stringify(epData.images)}]-->`;
+            
+            if (document.getElementById('ep-category').value === 'common') {
+                const sub = document.getElementById('ep-subcategory').value;
+                if (sub) desc += ` <!--[SUBCAT:${sub}]-->`;
+            }
 
             const sortedSizes = (epData.sizes || []).sort((a, b) => (a.price || 0) - (b.price || 0));
 

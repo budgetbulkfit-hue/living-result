@@ -80,15 +80,27 @@ function handleProductCardClick(slug, productId) {
   const product = allProducts.find(p => p._id === productId || p.slug === slug);
   const productName = product ? product.name : "Unknown Product";
   const price = product ? (product.sizes && product.sizes.length > 0 ? product.sizes[0].price : product.price) : 0;
+  sessionStorage.setItem('lr_lastViewedProduct', slug); // Save exact product to scroll back to
   trackProductViewEvent(productId, productName, "card_click", price);
   window.location.href = `product.html?slug=${slug}`;
 }
 
 // ===== STATE FOR PRODUCT CATEGORY =====
-let currentCategory = "unique";
+let currentCategory = sessionStorage.getItem('lr_currentCategory') || "unique";
+let currentSubCategory = sessionStorage.getItem('lr_currentSubCategory') || "all";
+
+function switchSubCategory(subCat) {
+  currentSubCategory = subCat;
+  sessionStorage.setItem('lr_currentSubCategory', subCat);
+  document.querySelectorAll('.subcat-pill').forEach(el => el.classList.remove('active'));
+  const activePill = document.getElementById('subcat-' + subCat.replace(/\s+/g, ''));
+  if (activePill) activePill.classList.add('active');
+  renderProducts();
+}
 
 function switchProductCategory(category) {
   currentCategory = category;
+  sessionStorage.setItem('lr_currentCategory', category);
 
   // Update tabs
   ['unique', 'common', 'combos'].forEach(cat => {
@@ -110,13 +122,29 @@ function switchProductCategory(category) {
   }
   const activeDesc = document.getElementById(`category-description-${category}`);
   if (activeDesc) activeDesc.style.display = 'block';
+  
+  const subcatContainer = document.getElementById('common-subcategories');
+  if (subcatContainer) {
+      subcatContainer.style.display = category === 'common' ? 'flex' : 'none';
+      if (category === 'common') {
+          document.querySelectorAll('.subcat-pill').forEach(el => el.classList.remove('active'));
+          const activePill = document.getElementById('subcat-' + currentSubCategory.replace(/\s+/g, ''));
+          if (activePill) activePill.classList.add('active');
+      }
+  }
 
   renderProducts();
 }
 
 // ===== RENDER PRODUCTS =====
 function renderProducts() {
-  const filteredProducts = allProducts.filter(p => p.category === currentCategory);
+  const filteredProducts = allProducts.filter(p => {
+    if (p.category !== currentCategory) return false;
+    if (currentCategory === 'common' && currentSubCategory !== 'all') {
+        return p.subCategory === currentSubCategory;
+    }
+    return true;
+  });
 
   // Scroll view (default)
   const scrollContainer = document.getElementById("productsScroll");
@@ -777,7 +805,24 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById('singleProductContainer')) {
       loadSingleProductPage();
     } else {
+      switchProductCategory(currentCategory); // Restore active category tab
+      if (currentCategory === 'common') switchSubCategory(currentSubCategory); // Restore subcategory
       setupAnimations();
+      
+      // Return user to their exact scroll position/product
+      const lastViewed = sessionStorage.getItem('lr_lastViewedProduct');
+      if (lastViewed) {
+        setTimeout(() => {
+          const el = document.getElementById('product-' + lastViewed);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.style.transition = "box-shadow 0.5s ease";
+            el.style.boxShadow = "0 0 20px var(--accent)";
+            setTimeout(() => el.style.boxShadow = "none", 1500);
+          }
+          sessionStorage.removeItem('lr_lastViewedProduct');
+        }, 300);
+      }
     }
   });
 });
@@ -994,6 +1039,13 @@ async function fetchProducts() {
             p.description = p.description.replace(match[0], '');
           }
         }
+        if (p.description && p.description.includes('<!--[SUBCAT:')) {
+          const match = p.description.match(/ ?<!--\[SUBCAT:(.*?)\]-->/);
+          if (match && match[1]) {
+            p.subCategory = match[1];
+            p.description = p.description.replace(match[0], '');
+          }
+        }
         return p;
       });
       if (!document.getElementById('singleProductContainer')) {
@@ -1028,6 +1080,12 @@ async function loadSingleProductPage() {
         const match = currentProductData.description.match(/ ?<!--\[IMAGES:(.*?)\]-->/);
         if (match && match[1]) {
           try { currentProductData.images = JSON.parse(match[1]); } catch (e) { }
+          currentProductData.description = currentProductData.description.replace(match[0], '');
+        }
+      }
+      if (currentProductData.description && currentProductData.description.includes('<!--[SUBCAT:')) {
+        const match = currentProductData.description.match(/ ?<!--\[SUBCAT:(.*?)\]-->/);
+        if (match && match[1]) {
           currentProductData.description = currentProductData.description.replace(match[0], '');
         }
       }
@@ -1146,7 +1204,12 @@ function renderSingleProductPage() {
         <span class="stock-badge ${flavor.inStock ? 'in-stock' : 'out-of-stock'}">${flavor.inStock ? 'In Stock' : 'Out of Stock'}</span>
       </div>
       <div class="modal-info-col">
-        <h1 style="font-family: var(--font-heading); font-size: 32px; margin-bottom: 10px; color: var(--text-primary); text-transform: uppercase;">${product.name}</h1>
+        <h1 style="font-family: var(--font-heading); font-size: 32px; margin-bottom: 10px; color: var(--text-primary); text-transform: uppercase; display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+          ${product.name}
+          <button onclick="shareProduct('${window.location.origin}/product.html?slug=${product.slug}', '${product.name.replace(/'/g, "\\'")}', this)" style="background: var(--bg-primary); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; padding: 6px 10px; border-radius: 6px; transition: 0.3s; display: flex; align-items: center; justify-content: center; width: fit-content;" onmouseover="this.style.color='var(--accent)'; this.style.borderColor='var(--accent)';" onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='var(--border)';" title="Share Product">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          </button>
+        </h1>
         <div style="font-size: 12px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 6px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Verified Independent Reseller
         </div>

@@ -193,6 +193,18 @@
           Combos</button>
       </div>
 
+      <!-- NEW SUB-CATEGORY PILLS FOR EVERYDAY ESSENTIALS -->
+      <style>
+        .subcat-pill { padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-muted); cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+        .subcat-pill.active, .subcat-pill:hover { background: rgba(255, 106, 0, 0.1); border-color: var(--accent); color: var(--accent); }
+      </style>
+      <div id="common-subcategories" style="display: none; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; justify-content: flex-start;">
+          <button id="subcat-all" class="subcat-pill active" onclick="switchSubCategory('all')">All</button>
+          <button id="subcat-Creatine" class="subcat-pill" onclick="switchSubCategory('Creatine')">Creatine</button>
+          <button id="subcat-MassGainer" class="subcat-pill" onclick="switchSubCategory('Mass Gainer')">Mass Gainer</button>
+          <button id="subcat-WheyProtein" class="subcat-pill" onclick="switchSubCategory('Whey Protein')">Whey Protein</button>
+      </div>
+
       <div id="category-description-unique"
         style="margin-bottom: 30px; padding: 20px; background: rgba(255, 68, 0, 0.1); border-left: 4px solid var(--accent); border-radius: 4px;">
         <h4
