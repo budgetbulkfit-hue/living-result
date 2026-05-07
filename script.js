@@ -1123,6 +1123,31 @@ function selectPageSize(index) {
   renderSingleProductPage();
 }
 
+// ===== SHARE PRODUCT LOGIC =====
+async function shareProduct(url, title, btnEl) {
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: title,
+        text: `Check out ${title} on Living Result!`,
+        url: url
+      });
+    } catch (err) {
+      console.error('Error sharing:', err);
+    }
+  } else {
+    try {
+      await navigator.clipboard.writeText(url);
+      const originalHTML = btnEl.innerHTML;
+      btnEl.innerHTML = '<span style="font-size:12px;font-weight:600;padding:0 2px;">Link Copied!</span>';
+      setTimeout(() => { btnEl.innerHTML = originalHTML; }, 2000);
+    } catch (err) {
+      console.error('Copy failed', err);
+      alert('Failed to copy link. Please manually copy the URL from your browser.');
+    }
+  }
+}
+
 function renderSingleProductPage() {
   const container = document.getElementById("singleProductContainer");
   if (!container || !currentProductData) return;
