@@ -479,6 +479,13 @@ function changeCartQty(key, delta) {
   saveCart();
 }
 
+function clearCart() {
+  cart = [];
+  updateCartUI();
+  updateFloatingCart();
+  saveCart();
+}
+
 function updateFloatingCart() {
   const btn = document.getElementById('floatingCartBtn');
   const countEl = document.getElementById('floatingCartCount');
@@ -533,9 +540,14 @@ function updateCartUI() {
         <span style="font-size:15px;font-weight:600;">Total</span>
         <span style="font-size:18px;font-weight:700;color:var(--accent);">₹${total.toLocaleString()}</span>
       </div>
-      <button onclick="startCartCheckout()" class="btn-primary" style="width:100%;justify-content:center;padding:16px;font-size:15px;">
-        Proceed to Checkout
-      </button>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="clearCart()" class="btn-outline" style="width: 30%; justify-content:center; padding:16px; font-size:14px; text-align: center;">
+          Clear All
+        </button>
+        <button onclick="startCartCheckout()" class="btn-primary" style="flex: 1; justify-content:center;padding:16px;font-size:15px;">
+          Proceed to Checkout
+        </button>
+      </div>
     </div>`;
 }
 
@@ -1125,6 +1137,14 @@ function selectPageSize(index) {
 
 // ===== SHARE PRODUCT LOGIC =====
 async function shareProduct(url, title, btnEl) {
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "share", {
+      method: navigator.share ? "native_share" : "copy_link",
+      content_type: "product",
+      item_id: title
+    });
+  }
+
   if (navigator.share) {
     try {
       await navigator.share({
