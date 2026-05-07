@@ -774,7 +774,7 @@ document.addEventListener("DOMContentLoaded", () => {
   startGlobalRefreshPolling();
 
   fetchProducts().then(() => {
-    if (window.location.pathname.includes('product.html')) {
+    if (document.getElementById('singleProductContainer')) {
       loadSingleProductPage();
     } else {
       setupAnimations();
@@ -996,7 +996,7 @@ async function fetchProducts() {
         }
         return p;
       });
-      if (!window.location.pathname.includes('product.html')) {
+      if (!document.getElementById('singleProductContainer')) {
         renderProducts();
       }
     }
