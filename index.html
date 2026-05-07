@@ -21,18 +21,9 @@
 
 <body>
 
-  <!-- PRE-LAUNCH OVERLAY -->
-  <div id="preLaunchOverlay" style="display: none; position: fixed; inset: 0; background: var(--bg-primary); z-index: 99999; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-    <img src="images/logo.png" alt="Living Result" style="height: 120px; margin-bottom: 30px; animation: pulseLogo 2s infinite;">
-    <h1 style="font-family: var(--font-heading); font-size: clamp(32px, 5vw, 64px); color: var(--text-primary); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Coming Soon</h1>
-    <p style="color: var(--accent); font-size: 18px; font-weight: 600; letter-spacing: 2px;">#WEARETHELIVINGRESULT</p>
-    <style>
-        @keyframes pulseLogo {
-            0% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 0px var(--accent)); }
-            50% { transform: scale(1.05); opacity: 0.8; filter: drop-shadow(0 0 20px var(--accent)); }
-            100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 0px var(--accent)); }
-        }
-    </style>
+  <!-- PRE-LAUNCH / MAINTENANCE OVERLAY -->
+  <div id="preLaunchOverlay" style="display: none; position: fixed; inset: 0; z-index: 99999;">
+    <!-- Content is injected by script.js -->
   </div>
 
   <!-- TOP NOTICE STRIP -->

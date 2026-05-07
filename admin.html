@@ -887,17 +887,17 @@
                 <div class="settings-grid">
                     <!-- NEW LAUNCH CONTROL -->
                     <div class="panel-card" style="border-color: #2ecc71; text-align: center; padding: 30px;">
-                        <h3
-                            style="margin: 0 0 10px 0; color: #2ecc71; font-family: var(--font-heading); text-transform: uppercase; font-size: 24px;">Launch Control</h3>
+                        <h3 style="margin: 0 0 10px 0; color: #f39c12; font-family: var(--font-heading); text-transform: uppercase; font-size: 24px;">
+                            Maintenance Mode</h3>
                         <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 25px;">
-                            Lock the website behind a 'Coming Soon' screen, then press the Launch button to reveal it live to the world.
+                            Enable maintenance mode to show a 'Maintenance Break' screen to users while you push updates. Disable it to return the site to normal.
                         </p>
                         <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                             <button type="button" class="btn-outline" style="border-color: #f39c12; color: #f39c12;"
-                                onclick="setLaunchStatus(false)">🔒 Lock Site (Pre-Launch)</button>
+                                onclick="setLaunchStatus(false)">🔒 Enable Maintenance Mode</button>
                             <button type="button" class="btn-primary"
                                 style="background: #2ecc71; border-color: #2ecc71; font-size: 16px; padding: 12px 24px; box-shadow: 0 4px 20px rgba(46,204,64,0.4);"
-                                onclick="setLaunchStatus(true)">🚀 LAUNCH WEBSITE</button>
+                                onclick="setLaunchStatus(true)">✅ Disable Maintenance Mode</button>
                         </div>
                     </div>
 
@@ -942,16 +942,6 @@
     </div>
 
     <div id="toastWrap" class="toast-wrap"></div>
-
-    <!-- FULL SCREEN LAUNCH ANIMATION OVERLAY -->
-    <div id="launchAnimationOverlay" style="display: none; position: fixed; inset: 0; background: #000; z-index: 999999; flex-direction: column; align-items: center; justify-content: center;">
-        <video id="launchVideo" autoplay muted playsinline style="max-width: 100vw; max-height: 80vh;">
-            <source src="images/animation.mp4" type="video/mp4">
-        </video>
-        <p style="color: var(--accent); margin-top: 20px; font-family: var(--font-heading); font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">
-            Initializing Launch Sequence...
-        </p>
-    </div>
 
     <!-- MODALS FOR SUB-FEATURES -->
 
@@ -1687,75 +1677,14 @@
         }
 
         async function setLaunchStatus(isLaunched) {
-            const msg = isLaunched ? "Are you ready to LAUNCH the website to the public?" : "Lock the website and show the 'Coming Soon' screen?";
+            const msg = isLaunched ? "This will make the website LIVE for all users. Are you sure?" : "This will enable Maintenance Mode, locking the site for users. Are you sure?";
             if (!confirm(msg)) return;
-            showToast(isLaunched ? 'Launching...' : 'Locking...', 'info');
+            showToast(isLaunched ? 'Disabling Maintenance Mode...' : 'Enabling Maintenance Mode...', 'info');
             const res = await authFetch(`${API_URL}/settings`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isLaunched }) });
             if ((await res.json()).success) {
-                showToast(isLaunched ? 'WEBSITE IS LIVE! 🚀' : 'Website Locked 🔒', 'success');
+                showToast(isLaunched ? 'Website is LIVE! ✅' : 'Maintenance Mode Enabled 🔒', 'success');
                 forceGlobalRefreshSilently(); // Instantly pushes the change to all live visitors
-                if (isLaunched) {
-                    triggerConfetti();
-                    
-                    // Show full-screen 8-second animation
-                    const animOverlay = document.getElementById('launchAnimationOverlay');
-                    const launchVideo = document.getElementById('launchVideo');
-                    if (animOverlay) {
-                        animOverlay.style.display = 'flex';
-                        if (launchVideo) {
-                            launchVideo.currentTime = 0; // Reset video to start
-                            launchVideo.play().catch(e => console.log('Autoplay prevented:', e));
-                        }
-                        setTimeout(() => { animOverlay.style.display = 'none'; }, 8000); // Hides after exactly 8000ms (8 seconds)
-                    }
-                }
             }
-        }
-
-        function triggerConfetti() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            canvas.style.position = 'fixed';
-            canvas.style.top = '0';
-            canvas.style.left = '0';
-            canvas.style.zIndex = '99999';
-            canvas.style.pointerEvents = 'none';
-            document.body.appendChild(canvas);
-
-            const confettiPieces = [];
-            const pieceCount = 150;
-            const colors = ['#2ecc71', '#f39c12', '#e74c3c', '#3498db', '#9b59b6', '#f1c40f', '#ff6b00', '#ffffff'];
-
-            for (let i = 0; i < pieceCount; i++) {
-                confettiPieces.push({
-                    x: canvas.width / 2,
-                    y: canvas.height + 10,
-                    size: Math.random() * 8 + 4,
-                    vx: (Math.random() - 0.5) * 30,
-                    vy: Math.random() * -20 - 10,
-                    gravity: 0.5,
-                    color: colors[Math.floor(Math.random() * colors.length)],
-                    rotation: Math.random() * Math.PI * 2,
-                    rotationSpeed: (Math.random() - 0.5) * 0.2
-                });
-            }
-
-            function animate() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                let active = false;
-                confettiPieces.forEach(p => {
-                    p.vy += p.gravity; p.x += p.vx; p.y += p.vy; p.rotation += p.rotationSpeed;
-                    if (p.y < canvas.height + 20) {
-                        active = true;
-                        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation);
-                        ctx.fillStyle = p.color; ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size); ctx.restore();
-                    }
-                });
-                if (active) requestAnimationFrame(animate); else document.body.removeChild(canvas);
-            }
-            animate();
         }
 
         async function forceGlobalRefresh() {

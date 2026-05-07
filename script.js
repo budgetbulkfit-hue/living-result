@@ -816,10 +816,23 @@ async function fetchAndDisplaySettings() {
       const preLaunchOverlay = document.getElementById('preLaunchOverlay');
       if (preLaunchOverlay) {
           if (data.data.isLaunched === false) {
+              // Override inner HTML to show Maintenance Break and remove any old UI/animations
+              preLaunchOverlay.innerHTML = `
+                <div style="text-align: center; padding: 40px; background: #0a0a0a; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.5); max-width: 500px; margin: auto;">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 20px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <h1 style="color: var(--text-primary); font-family: var(--font-heading); text-transform: uppercase; margin-bottom: 20px; font-size: 28px;">Maintenance <span style="color: var(--accent);">Break</span></h1>
+                  <p style="color: var(--text-secondary); font-size: 16px; line-height: 1.5;">We are currently pushing updates to improve your experience.<br>Please check back shortly.</p>
+                </div>
+              `;
               preLaunchOverlay.style.display = 'flex';
+              preLaunchOverlay.style.alignItems = 'center';
+              preLaunchOverlay.style.justifyContent = 'center';
+              preLaunchOverlay.style.background = 'rgba(0,0,0,0.95)';
+              preLaunchOverlay.style.zIndex = '999999';
               document.body.style.overflow = 'hidden';
           } else {
               preLaunchOverlay.style.display = 'none';
+              preLaunchOverlay.innerHTML = ''; // Clear it out when launched
               document.body.style.overflow = '';
           }
       }
