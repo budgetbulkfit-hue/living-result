@@ -579,7 +579,7 @@ function startCartCheckout() {
         <div style="display:flex;justify-content:space-between;">
           <span style="color:var(--text-primary);font-weight:bold;">Total to Pay:</span>
           <span style="color:#fff;font-weight:bold;font-size:18px;">₹${pendingOrderAmount.toLocaleString()}</span>
-        </div>`;
+        </div>
         <div style="margin-top: 10px; text-align: right; font-size: 11px; color: var(--text-muted); font-style: italic;">
           *Delivery charges will apply accordingly.
         </div>`;
