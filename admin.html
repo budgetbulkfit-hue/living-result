@@ -669,6 +669,7 @@
                             <option value="combos">Combos</option>
                         </select>
                         <select id="productSortBy" onchange="applyProductFilters()">
+                            <option value="serialAsc">Serial No. (Low-High)</option>
                             <option value="nameAsc">Name (A-Z)</option>
                             <option value="priceDesc">Price (High-Low)</option>
                             <option value="priceAsc">Price (Low-High)</option>
@@ -680,6 +681,7 @@
                     <table>
                         <thead>
                             <tr>
+                                <th>S.No</th>
                                 <th>Image</th>
                                 <th>Name</th>
                                 <th>Category</th>
@@ -691,7 +693,7 @@
                         </thead>
                         <tbody id="adminProductTable">
                             <tr>
-                                <td colspan="7" style="text-align: center;">Loading products...</td>
+                                <td colspan="8" style="text-align: center;">Loading products...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1200,6 +1202,7 @@
             filteredProducts.sort((a, b) => {
                 if (sortBy === 'priceDesc') return (b.price || 0) - (a.price || 0);
                 if (sortBy === 'priceAsc') return (a.price || 0) - (b.price || 0);
+                if (sortBy === 'serialAsc') return (Number(a.id) || 0) - (Number(b.id) || 0);
                 return (a.name || '').localeCompare(b.name || '');
             });
             renderProductTable();
@@ -1208,17 +1211,18 @@
         function resetProductFilters() {
             document.getElementById('productSearchInput').value = '';
             document.getElementById('productCategoryFilter').value = 'all';
-            document.getElementById('productSortBy').value = 'nameAsc';
+            document.getElementById('productSortBy').value = 'serialAsc';
             applyProductFilters();
         }
 
         function renderProductTable() {
             if (!filteredProducts.length) {
-                setTableState('adminProductTable', 7, 'No products found');
+                setTableState('adminProductTable', 8, 'No products found');
                 return;
             }
             document.getElementById('adminProductTable').innerHTML = filteredProducts.map(p => `
             <tr>
+              <td style="font-weight: bold; color: var(--accent);">${p.id || '-'}</td>
               <td><img src="${p.flavors?.[0]?.image || ''}" width="40" style="border-radius:4px; background:#fff;"></td>
               <td style="font-weight: bold;">${p.name}</td>
               <td><span style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase;">${p.category}</span></td>
@@ -1303,7 +1307,7 @@
         }
 
         async function fetchAdminProducts() {
-            setTableState('adminProductTable', 7, 'Loading products...');
+            setTableState('adminProductTable', 8, 'Loading products...');
             try {
                 const res = await fetch(`${API_URL}/products`, { cache: 'no-store' });
                 const data = await res.json();
@@ -1325,7 +1329,7 @@
                 }
             } catch (err) {
                 console.error('Fetch products error:', err);
-                setTableState('adminProductTable', 7, 'Failed to load products. Check server.', '#e74c3c');
+                setTableState('adminProductTable', 8, 'Failed to load products. Check server.', '#e74c3c');
             }
         }
 

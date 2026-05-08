@@ -536,9 +536,12 @@ function updateCartUI() {
   cartBody.innerHTML = `
     ${itemsHTML}
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
-      <div style="display:flex;justify-content:space-between;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
         <span style="font-size:15px;font-weight:600;">Total</span>
         <span style="font-size:18px;font-weight:700;color:var(--accent);">₹${total.toLocaleString()}</span>
+      </div>
+      <div style="font-size: 11px; color: var(--text-muted); text-align: right; margin-bottom: 16px; font-style: italic;">
+        *Delivery charges will apply accordingly.
       </div>
       <div style="display: flex; gap: 10px;">
         <button onclick="clearCart()" class="btn-outline" style="width: 30%; justify-content:center; padding:16px; font-size:14px; text-align: center;">
@@ -576,6 +579,9 @@ function startCartCheckout() {
         <div style="display:flex;justify-content:space-between;">
           <span style="color:var(--text-primary);font-weight:bold;">Total to Pay:</span>
           <span style="color:#fff;font-weight:bold;font-size:18px;">₹${pendingOrderAmount.toLocaleString()}</span>
+        </div>`;
+        <div style="margin-top: 10px; text-align: right; font-size: 11px; color: var(--text-muted); font-style: italic;">
+          *Delivery charges will apply accordingly.
         </div>`;
     }
   }
@@ -659,7 +665,8 @@ async function processCheckout(e) {
       message += `• ${item.name} (${details}) × ${item.qty} — ₹${(item.price * item.qty).toLocaleString()}\n`;
     });
 
-    message += `\n💰 *Total: ₹${pendingOrderAmount.toLocaleString()}*\n\n`;
+    message += `\n💰 *Total: ₹${pendingOrderAmount.toLocaleString()}*\n`;
+    message += `_(Delivery charges will apply accordingly)_\n\n`;
     message += `👤 *Name:* ${name}\n`;
     message += `📞 *Phone:* ${phone}\n`;
     message += `✉️ *Email:* ${email}\n`;
