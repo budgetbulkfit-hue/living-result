@@ -5,6 +5,7 @@
 // To remove: just delete the object from the array.
 // Merged product lookup (all categories)
 let allProducts = [];
+let allCombos = [];
 let currentProductData = null;
 
 
@@ -57,6 +58,39 @@ function renderProductCard(product) {
         </div>
         ${product.showScarcity !== false && product.stockLeft > 0 ? `<div class="scarcity-text" style="color: var(--accent); font-size: 12px; font-weight: 600; margin-top: 8px; margin-bottom: 4px;">🔥 Hurry, only ${product.stockLeft} left!</div>` : ''}
         <div class="dynamic-viewers-count" style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; margin-top: 6px; transition: opacity 0.5s ease; opacity: ${showViewers ? 1 : 0};">👀 <span>${viewersCount}</span> people viewing this</div>
+      </div>
+    </div>
+  `;
+}
+
+// ===== RENDER A SINGLE COMBO CARD =====
+function renderComboCard(combo) {
+  const includesText = combo.products.map(p => `• ${p.name} (x${p.quantity})`).join('<br>');
+  return `
+    <div class="product-card combo-card" id="combo-${combo.comboSlug}">
+      <div class="product-image" style="background: #000; padding: 0;">
+        <img src="${combo.comboBanner || 'images/logo.png'}" alt="${combo.comboName}" loading="lazy" style="height: 100%; width: 100%; object-fit: cover;">
+        <span class="stock-badge in-stock" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff;">💎 Premium Stack</span>
+      </div>
+      <div class="product-info">
+        <h3 class="product-name">${combo.comboName}</h3>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px;">
+          <strong style="color: #fff; text-transform: uppercase; letter-spacing: 1px;">Stack Includes:</strong><br> ${includesText}
+        </div>
+        <div class="combo-pricing-box">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">
+            <span>Individual MRP</span>
+            <span style="text-decoration: line-through;">₹${combo.autoCalculatedMrp.toLocaleString()}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #fff; margin-bottom: 4px;">
+            <span>Bundle Price</span>
+            <span style="color: #9b59b6;">₹${combo.finalPrice.toLocaleString()}</span>
+          </div>
+          <div style="text-align: right; font-size: 13px; color: var(--green); font-weight: 700; margin-top: 6px;">
+            🔥 YOU SAVE ₹${combo.totalSavings.toLocaleString()}
+          </div>
+        </div>
+        <button onclick="openComboFlavorSelector('${combo.comboSlug}')" class="btn-primary btn-combo" style="width: 100%; justify-content: center; padding: 12px; font-size: 14px;">Claim This Stack</button>
       </div>
     </div>
   `;
@@ -148,6 +182,16 @@ function switchProductCategory(category) {
 
 // ===== RENDER PRODUCTS =====
 function renderProducts() {
+  // Special rendering logic if the Combos tab is active
+  if (currentCategory === 'combos') {
+    const html = allCombos.map(renderComboCard).join("");
+    const scrollContainer = document.getElementById("productsScroll");
+    if (scrollContainer) scrollContainer.innerHTML = html;
+    const gridContainer = document.getElementById("productsGrid");
+    if (gridContainer) gridContainer.innerHTML = html;
+    return;
+  }
+
   const filteredProducts = allProducts.filter(p => {
     if (p.category !== currentCategory) return false;
     if (currentCategory === 'common' && currentSubCategory !== 'all') {
@@ -524,12 +568,17 @@ function updateCartUI() {
   }
 
   const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const itemsHTML = cart.map(item => `
+  const itemsHTML = cart.map(item => {
+    let subText = `${item.flavorName}${item.weight ? ' | ' + item.weight : ''}`;
+    if (item.isCombo && item.comboSelections && item.comboSelections.length > 0) {
+      subText = item.comboSelections.map(s => `<span style="color:#aaa;">${s.name}:</span> ${s.flavor}`).join('<br>');
+    }
+    return `
     <div style="display:flex; gap:12px; padding:16px 0; border-bottom:1px solid var(--border);">
       <img src="${item.image}" style="width:60px;height:60px;object-fit:contain;background:#0e0e0e;border-radius:6px;padding:4px;" alt="${item.name}">
       <div style="flex:1;">
         <div style="font-weight:600;font-size:13px;margin-bottom:2px;">${item.name}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">${item.flavorName}${item.weight ? ' | ' + item.weight : ''}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">${subText}</div>
         <div style="display:flex;align-items:center;gap:10px;">
           <div class="qty-control" style="border-color:var(--border);">
             <button class="qty-btn" onclick="changeCartQty('${item.key}', -1)" style="width:28px;height:28px;font-size:15px;">−</button>
@@ -541,7 +590,8 @@ function updateCartUI() {
         </div>
       </div>
     </div>
-  `).join('');
+    `;
+  }).join('');
 
   // FOMO Cart Elements (Urgency + Premium Offer)
   const fomoCartHTML = `
@@ -683,14 +733,19 @@ async function processCheckout(e) {
     // --- NEW: PHASE 3 - CREATE PENDING ORDER ON BACKEND ---
     const orderPayload = {
       customerDetails: { name, phone, email, address, coupon },
-      products: cart.map(item => ({
-        productId: item.productId,
-        name: item.name,
-        flavor: item.flavorName,
-        weight: item.weight || '',
-        quantity: item.qty,
-        price: item.price
-      })),
+      products: cart.map(item => {
+        if (item.isCombo) {
+          return { comboId: item.comboId, isCombo: true, name: item.name, flavor: item.flavorName, comboSelections: item.comboSelections, weight: item.weight || '', quantity: item.qty, price: item.price };
+        }
+        return {
+          productId: item.productId,
+          name: item.name,
+          flavor: item.flavorName,
+          weight: item.weight || '',
+          quantity: item.qty,
+          price: item.price
+        };
+      }),
       totalAmount: pendingOrderAmount
     };
 
@@ -714,8 +769,15 @@ async function processCheckout(e) {
     message += `📦 *Items:*\n`;
 
     cart.forEach(item => {
-      const details = [item.flavorName, item.weight].filter(Boolean).join(', ');
-      message += `• ${item.name} (${details}) × ${item.qty} — ₹${(item.price * item.qty).toLocaleString()}\n`;
+      if (item.isCombo && item.comboSelections) {
+        message += `• ${item.name} × ${item.qty} — ₹${(item.price * item.qty).toLocaleString()}\n`;
+        item.comboSelections.forEach(s => {
+          message += `   ↳ ${s.name} (${s.flavor}) x${s.quantity * item.qty}\n`;
+        });
+      } else {
+        const details = [item.flavorName, item.weight].filter(Boolean).join(', ');
+        message += `• ${item.name} (${details}) × ${item.qty} — ₹${(item.price * item.qty).toLocaleString()}\n`;
+      }
     });
 
     message += `\n💰 *Total: ₹${pendingOrderAmount.toLocaleString()}*\n`;
@@ -877,6 +939,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initExitIntentPopup();
   initDynamicViewers();
 
+  fetchCombos();
   fetchProducts().then(() => {
     if (document.getElementById('singleProductContainer')) {
       loadSingleProductPage();
@@ -1133,6 +1196,19 @@ async function fetchProducts() {
   } catch (error) {
     console.error('Error fetching products:', error);
   }
+}
+
+async function fetchCombos() {
+  try {
+    const res = await fetch(`${API_URL}/combos`, { cache: 'no-store' });
+    const data = await res.json();
+    if (data.success) {
+      allCombos = data.data;
+      if (!document.getElementById('singleProductContainer')) {
+        renderProducts(); // Refresh in case they are on the combos tab
+      }
+    }
+  } catch (error) { console.error('Error fetching combos:', error); }
 }
 
 async function loadSingleProductPage() {
@@ -1442,6 +1518,93 @@ function handleSwipeGesture() {
   // Calculate the swipe direction
   if (touchStartX - touchEndX > threshold) navigateGallery(1); // Swipe Left -> Next Image
   if (touchEndX - touchStartX > threshold) navigateGallery(-1); // Swipe Right -> Prev Image
+}
+
+let currentComboSelection = null;
+
+function openComboFlavorSelector(comboSlug) {
+    const combo = allCombos.find(c => c.comboSlug === comboSlug);
+    if (!combo) return;
+
+    currentComboSelection = combo;
+    const container = document.getElementById('comboFlavorContainer');
+    let html = '';
+
+    combo.products.forEach((p, index) => {
+        const fullProd = allProducts.find(ap => ap._id === p._id);
+        let options = '';
+        if (fullProd && fullProd.flavors) {
+            fullProd.flavors.forEach(f => {
+                if (f.inStock) { options += `<option value="${f.name}">${f.name}</option>`; }
+            });
+        }
+        if (!options) options = `<option value="Default">Default</option>`;
+
+        html += `
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">${p.name} (x${p.quantity})</label>
+                <select id="combo-flavor-${index}" style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-family: inherit;">
+                    ${options}
+                </select>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+    const overlay = document.getElementById('comboFlavorModalOverlay');
+    if (overlay) {
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeComboFlavorModal(e) {
+    if (e && e.target.id !== "comboFlavorModalOverlay" && !e.target.closest('.modal-close')) return;
+    const overlay = document.getElementById("comboFlavorModalOverlay");
+    if (overlay) {
+        overlay.classList.remove("active");
+        document.body.style.overflow = "";
+    }
+}
+
+function confirmComboToCart() {
+    if (!currentComboSelection) return;
+    const combo = currentComboSelection;
+    
+    const selections = [];
+    combo.products.forEach((p, index) => {
+        const select = document.getElementById(`combo-flavor-${index}`);
+        selections.push({ productId: p._id, name: p.name, quantity: p.quantity, flavor: select ? select.value : 'Default' });
+    });
+
+    const flavorKey = selections.map(s => s.flavor.replace(/\s+/g, '')).join('-');
+    const key = `combo-${combo._id}-${flavorKey}`;
+    
+    const existing = cart.find(i => i.key === key);
+    
+    if (existing) {
+        existing.qty += 1;
+    } else {
+        cart.push({
+            key: key,
+            comboId: combo._id,
+            isCombo: true,
+            productId: combo._id,
+            name: combo.comboName,
+            flavorName: 'Custom Bundle',
+            comboSelections: selections,
+            weight: combo.totalWeight ? combo.totalWeight.display : '',
+            price: combo.finalPrice,
+            image: combo.comboBanner || 'images/logo.png',
+            qty: 1
+        });
+    }
+
+    saveCart();
+    updateCartUI();
+    updateFloatingCart();
+    closeComboFlavorModal();
+    toggleCart();
 }
 
 function addToCartFromPage() {

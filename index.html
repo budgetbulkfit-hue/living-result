@@ -190,9 +190,9 @@
         <button id="tab-common" class="tab-btn" onclick="switchProductCategory('common')"
           style="padding: 10px 20px; background: none; border: none; color: var(--text-muted); font-size: 18px; font-weight: bold; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s; font-family: var(--font-heading); text-transform: uppercase;">Everyday
           Essentials</button>
-        <button id="tab-combos" class="tab-btn" onclick="switchProductCategory('combos')"
-          style="display: none; padding: 10px 20px; background: none; border: none; color: var(--text-muted); font-size: 18px; font-weight: bold; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s; font-family: var(--font-heading); text-transform: uppercase;">🔥
-          Combos</button>
+        <button id="tab-combos" class="tab-btn" onclick="switchProductCategory('combos')" 
+          style="padding: 10px 20px; background: none; border: none; color: #9b59b6; font-size: 18px; font-weight: bold; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s; font-family: var(--font-heading); text-transform: uppercase; text-shadow: 0 0 10px rgba(155, 89, 182, 0.4);">
+          💎 Premium Stacks</button>
       </div>
 
       <!-- NEW SUB-CATEGORY PILLS FOR EVERYDAY ESSENTIALS -->
@@ -570,6 +570,16 @@
           treat, cure, or prevent any disease. Results may vary from person to person. Please consult a healthcare
           professional before use.</p>
       </div>
+    </div>
+  </div>
+
+  <!-- COMBO FLAVOR SELECTION MODAL -->
+  <div class="modal-overlay" id="comboFlavorModalOverlay" onclick="closeComboFlavorModal(event)">
+    <div class="modal-content" style="max-width: 500px; padding: 30px;">
+      <button class="modal-close" onclick="closeComboFlavorModal({target: this})">&times;</button>
+      <h2 style="font-family: var(--font-heading); font-size: 24px; text-transform: uppercase; margin-bottom: 20px;">Customize Your Bundle</h2>
+      <div id="comboFlavorContainer"></div>
+      <button onclick="confirmComboToCart()" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 20px;">Add to Cart</button>
     </div>
   </div>
 

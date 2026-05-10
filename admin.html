@@ -572,6 +572,7 @@
             <nav class="sidebar-nav">
                 <a class="nav-item active" id="nav-dashboard" onclick="navigate('dashboard')">Dashboard</a>
                 <a class="nav-item" id="nav-products" onclick="navigate('products')">Products</a>
+                <a class="nav-item" id="nav-combos" onclick="navigate('combos')">Combos</a>
                 <a class="nav-item" id="nav-orders" onclick="navigate('orders')">Orders</a>
                 <a class="nav-item" id="nav-settings" onclick="navigate('settings')">Settings</a>
             </nav>
@@ -852,6 +853,88 @@
                 </div>
             </div>
 
+            <!-- 3.5 COMBOS VIEW -->
+            <div id="view-combos" class="page-view">
+                <div class="header-title">
+                    <span>Combo Bundles</span>
+                    <button class="btn-primary" onclick="openComboEditor()" style="background: #9b59b6; border-color: #9b59b6; font-size: 13px;">+ Create Combo</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Banner</th>
+                                <th>Combo Name</th>
+                                <th>Items</th>
+                                <th>Auto MRP</th>
+                                <th>Final Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminComboTable">
+                            <tr><td colspan="7" style="text-align: center;">Loading combos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3.6 EDIT COMBO VIEW -->
+            <div id="view-edit-combo" class="page-view">
+                <div class="header-title">
+                    <span id="comboEditorTitle">Build Combo</span>
+                    <button class="btn-outline" onclick="navigate('combos')" style="font-size: 13px;">Cancel & Go Back</button>
+                </div>
+                <div class="panel-card">
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 2;"><label>Combo Name</label><input type="text" id="ec-name"></div>
+                        <div class="form-group" style="flex: 1;"><label>URL Slug</label><input type="text" id="ec-slug"></div>
+                    </div>
+                    <div class="form-group"><label>Description</label><textarea id="ec-desc" rows="2"></textarea></div>
+                    <div class="form-group"><label>Banner Image URL</label><input type="text" id="ec-banner" placeholder="https://..."></div>
+                    
+                    <hr style="border: 0; border-top: 1px solid var(--border); margin: 25px 0;">
+                    
+                    <h4 style="color: var(--accent); margin-bottom: 15px; text-transform: uppercase;">Dynamic Product Selection</h4>
+                    <div class="form-row" style="align-items: flex-end;">
+                        <div class="form-group" style="flex: 3;">
+                            <label>Select Product from Database</label>
+                            <select id="ec-product-select"></select>
+                        </div>
+                        <div class="form-group" style="flex: 1;"><label>Qty</label><input type="number" id="ec-product-qty" value="1" min="1"></div>
+                        <button class="btn-outline" onclick="addComboProduct()" style="margin-bottom: 18px;">Add to Bundle</button>
+                    </div>
+
+                    <div class="table-responsive" style="margin-bottom: 20px;">
+                        <table>
+                            <thead><tr><th>Product Name</th><th>Quantity</th><th>Actions</th></tr></thead>
+                            <tbody id="ec-selected-products"></tbody>
+                        </table>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid var(--border); margin: 25px 0;">
+                    
+                    <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; border: 1px dashed var(--border);">
+                        <h4 style="color: #fff; margin-bottom: 15px; text-transform: uppercase;">Pricing & Validation</h4>
+                        <div class="form-row">
+                            <div class="form-group" style="flex: 1;"><label>Manual Price Override (₹)</label><input type="number" id="ec-override" placeholder="Leave blank to use auto-price"></div>
+                            <div class="form-group" style="flex: 1; display:flex; align-items:center; gap:10px; margin-top:25px;">
+                                <label class="toggle-switch"><input type="checkbox" id="ec-published" checked><span class="toggle-slider"></span></label>
+                                <span style="font-size:13px; font-weight:bold;">Publish Combo</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 20px; font-size: 14px; color: var(--text-secondary); margin-top: 10px;" id="ec-live-stats">
+                            <!-- Calculated via JS -->
+                            <div>Auto MRP: <strong style="color:#fff;">₹0</strong></div>
+                            <div>Auto Price: <strong style="color:var(--accent);">₹0</strong></div>
+                            <div>Estimated Weight: <strong style="color:#fff;">0g</strong></div>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" onclick="saveComboEditor()" style="width: 100%; justify-content: center; font-size: 16px; padding: 15px; background: #9b59b6; border-color: #9b59b6; margin-top: 20px;">Save Combo Bundle</button>
+                </div>
+            </div>
+
             <!-- 4. ORDERS VIEW -->
             <div id="view-orders" class="page-view">
                 <div class="header-title">
@@ -1067,6 +1150,9 @@
         let filteredProducts = [];
         let adminToken = localStorage.getItem('adminToken') || '';
         let allOrders = [];
+        let allCombos = [];
+        let editingComboId = null;
+        let ecData = { products: [] };
 
         // PRODUCT EDITOR STATE
         let epData = {};
@@ -1286,6 +1372,7 @@
                 document.getElementById('appContainer').style.display = 'flex';
                 navigate('dashboard');
                 fetchAdminProducts();
+                fetchAdminCombos();
                 fetchOrders();
                 fetchGlobalSettings();
             } catch (err) {
@@ -1359,6 +1446,7 @@
                         return p;
                     });
                     applyProductFilters();
+                    populateComboProductDropdown();
                 }
             } catch (err) {
                 console.error('Fetch products error:', err);
@@ -1370,6 +1458,112 @@
             if (!confirm('Are you sure you want to permanently delete this product?')) return;
             const res = await authFetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
             if ((await res.json()).success) { fetchAdminProducts(); showToast('Deleted', 'success'); }
+        }
+
+        // --- COMBO BUNDLE SYSTEM ---
+        async function fetchAdminCombos() {
+            setTableState('adminComboTable', 7, 'Loading combos...');
+            try {
+                const res = await authFetch(`${API_URL}/combos`);
+                const data = await res.json();
+                if (data.success) {
+                    allCombos = data.data;
+                    renderComboTable();
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function renderComboTable() {
+            const tb = document.getElementById('adminComboTable');
+            if (!allCombos.length) return setTableState('adminComboTable', 7, 'No combos found');
+            tb.innerHTML = allCombos.map(c => `
+                <tr>
+                    <td><img src="${c.comboBanner || ''}" width="50" style="border-radius:4px; background:#fff;"></td>
+                    <td style="font-weight: bold; color: var(--accent);">${c.comboName}</td>
+                    <td style="font-size: 12px; color: var(--text-secondary);">${c.products.map(p => p.name).join(', ')}</td>
+                    <td style="text-decoration: line-through; color: var(--text-muted);">₹${c.autoCalculatedMrp.toLocaleString()}</td>
+                    <td style="font-weight: bold; color: #fff;">₹${c.finalPrice.toLocaleString()}</td>
+                    <td><span style="background: ${c.isPublished ? '#2ecc7122' : '#e74c3c22'}; color: ${c.isPublished ? '#2ecc71' : '#e74c3c'}; padding: 4px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase;">${c.isPublished ? 'Published' : 'Hidden'}</span></td>
+                    <td>
+                        <button class="action-btn btn-edit" onclick="editCombo('${c._id}')">Edit</button>
+                        <button class="action-btn btn-delete" onclick="deleteCombo('${c._id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function populateComboProductDropdown() {
+            const select = document.getElementById('ec-product-select');
+            if (select) select.innerHTML = products.map(p => `<option value="${p._id}">${p.name} (₹${p.price})</option>`).join('');
+        }
+
+        function openComboEditor() {
+            editingComboId = null;
+            ecData = { products: [] };
+            document.getElementById('ec-name').value = '';
+            document.getElementById('ec-slug').value = '';
+            document.getElementById('ec-desc').value = '';
+            document.getElementById('ec-banner').value = '';
+            document.getElementById('ec-override').value = '';
+            document.getElementById('ec-published').checked = true;
+            document.getElementById('comboEditorTitle').textContent = 'Build Combo';
+            renderComboSelectedProducts();
+            navigate('edit-combo');
+        }
+
+        function editCombo(id) {
+            const combo = allCombos.find(c => c._id === id);
+            if (!combo) return;
+            editingComboId = id;
+            ecData = { products: combo.products.map(p => ({ productId: p._id, name: p.name, quantity: p.quantity })) };
+            document.getElementById('ec-name').value = combo.comboName;
+            document.getElementById('ec-slug').value = combo.comboSlug;
+            document.getElementById('ec-desc').value = combo.description || '';
+            document.getElementById('ec-banner').value = combo.comboBanner || '';
+            document.getElementById('ec-override').value = combo.manualOverridePrice || '';
+            document.getElementById('ec-published').checked = combo.isPublished;
+            document.getElementById('comboEditorTitle').textContent = 'Edit Combo';
+            renderComboSelectedProducts();
+            navigate('edit-combo');
+        }
+
+        function addComboProduct() {
+            const select = document.getElementById('ec-product-select');
+            const qty = parseInt(document.getElementById('ec-product-qty').value);
+            if (!select.value || isNaN(qty) || qty < 1) return;
+            const prod = products.find(p => p._id === select.value);
+            if (prod) {
+                ecData.products.push({ productId: prod._id, name: prod.name, quantity: qty });
+                renderComboSelectedProducts();
+            }
+        }
+
+        function renderComboSelectedProducts() {
+            const tb = document.getElementById('ec-selected-products');
+            if (!ecData.products.length) tb.innerHTML = '<tr><td colspan="3" style="text-align:center;">No products added to bundle yet.</td></tr>';
+            else tb.innerHTML = ecData.products.map((p, i) => `<tr><td>${p.name}</td><td>x${p.quantity}</td><td><button class="action-btn btn-delete" onclick="ecData.products.splice(${i},1); renderComboSelectedProducts()">Remove</button></td></tr>`).join('');
+        }
+
+        async function saveComboEditor() {
+            const payload = {
+                comboName: document.getElementById('ec-name').value,
+                comboSlug: document.getElementById('ec-slug').value,
+                description: document.getElementById('ec-desc').value,
+                comboBanner: document.getElementById('ec-banner').value,
+                manualOverridePrice: Number(document.getElementById('ec-override').value) || null,
+                isPublished: document.getElementById('ec-published').checked,
+                products: ecData.products.map(p => ({ productId: p.productId, quantity: p.quantity }))
+            };
+            const method = editingComboId ? 'PUT' : 'POST';
+            const url = editingComboId ? `${API_URL}/combos/${editingComboId}` : `${API_URL}/combos`;
+            const res = await authFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if ((await res.json()).success) { showToast(editingComboId ? 'Combo updated!' : 'Combo created!', 'success'); fetchAdminCombos(); navigate('combos'); }
+        }
+
+        async function deleteCombo(id) {
+            if (!confirm('Permanently delete this combo bundle?')) return;
+            const res = await authFetch(`${API_URL}/combos/${id}`, { method: 'DELETE' });
+            if ((await res.json()).success) { fetchAdminCombos(); showToast('Combo Deleted', 'success'); }
         }
 
         // --- PRODUCT EDITOR (REPLACES JSON) ---
@@ -1688,7 +1882,11 @@
         function openOrderDetailsModal(orderId) {
             const order = allOrders.find((o) => o._id === orderId);
             const items = (order.products || []).map((p) => `
-                <tr><td style="padding:8px 6px;">${p.name}</td><td style="padding:8px 6px;">${p.flavor || '-'}</td><td style="padding:8px 6px;">${p.weight || '-'}</td><td style="padding:8px 6px;">x${p.quantity}</td><td style="padding:8px 6px;">₹${p.price.toLocaleString()}</td></tr>
+                <tr>
+                  <td style="padding:8px 6px;">${p.name}</td>
+                  <td style="padding:8px 6px;">${(p.isCombo && p.comboSelections?.length) ? p.comboSelections.map(s => `${s.name}: ${s.flavor}`).join('<br>') : (p.flavor || '-')}</td>
+                  <td style="padding:8px 6px;">${p.weight || '-'}</td><td style="padding:8px 6px;">x${p.quantity}</td><td style="padding:8px 6px;">₹${p.price.toLocaleString()}</td>
+                </tr>
             `).join('');
             document.getElementById('orderDetailsBody').innerHTML = `
                 <div class="panel-card">
