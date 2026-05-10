@@ -12,6 +12,15 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/admin',
+        destination: '/admin.html',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
