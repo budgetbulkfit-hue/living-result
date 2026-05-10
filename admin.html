@@ -930,6 +930,39 @@
                         </form>
                     </div>
 
+                    <!-- FOMO & CONVERSION CONTROLS -->
+                    <div class="panel-card" style="border-color: var(--accent);">
+                        <h3 style="margin: 0 0 10px 0; color: var(--accent);">FOMO & Conversion Rules</h3>
+                        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Control psychology triggers and urgency indicators.</p>
+                        <form onsubmit="saveFomoSettings(event)">
+                            <div class="form-row">
+                                <div class="form-group" style="display:flex; align-items:center; gap:10px; flex:1;">
+                                    <label class="toggle-switch"><input type="checkbox" id="fomoLaunchPricing" checked><span class="toggle-slider"></span></label>
+                                    <span style="font-size:13px; font-weight:bold;">Launch Pricing Badges</span>
+                                </div>
+                                <div class="form-group" style="display:flex; align-items:center; gap:10px; flex:1;">
+                                    <label class="toggle-switch"><input type="checkbox" id="fomoSocialProof" checked><span class="toggle-slider"></span></label>
+                                    <span style="font-size:13px; font-weight:bold;">Social Proof Popups</span>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group" style="display:flex; align-items:center; gap:10px; flex:1;">
+                                    <label class="toggle-switch"><input type="checkbox" id="fomoScarcity" checked><span class="toggle-slider"></span></label>
+                                    <span style="font-size:13px; font-weight:bold;">Scarcity Indicators</span>
+                                </div>
+                                <div class="form-group" style="display:flex; align-items:center; gap:10px; flex:1;">
+                                    <label class="toggle-switch"><input type="checkbox" id="fomoExitIntent" checked><span class="toggle-slider"></span></label>
+                                    <span style="font-size:13px; font-weight:bold;">Exit Intent Popup</span>
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-top: 15px;">
+                                <div class="form-group" style="flex:1;"><label>Popup Interval (Sec)</label><input type="number" id="fomoPopupInterval" value="35"></div>
+                                <div class="form-group" style="flex:1;"><label>Countdown Duration (Min)</label><input type="number" id="fomoTimerDuration" value="10"></div>
+                            </div>
+                            <button type="submit" class="btn-primary" style="margin-top: 10px;">Save FOMO Settings</button>
+                        </form>
+                    </div>
+
                     <div class="panel-card" style="border-color: #e74c3c;">
                         <h3 style="margin: 0 0 10px 0; color: #e74c3c;">Danger Zone</h3>
                         <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Force all active
