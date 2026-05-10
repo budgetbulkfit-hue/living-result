@@ -251,9 +251,9 @@ export default function ProductDetailClient({ product }) {
         {/* Tab: Nutrition */}
         {activeTab === 'nutrition' && (
           <div className="modal-tab-content active" style={{ display: 'block' }}>
-            {product.nutritionFacts ? (
+            {product.nutritionalFacts && product.nutritionalFacts.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {product.nutritionFacts.split('\n').filter(line => line.trim() !== '').map((line, idx) => (
+                {product.nutritionalFacts.map((line, idx) => (
                   <div key={idx} style={{ padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-secondary)', fontSize: '14px' }}>
                     {line}
                   </div>
