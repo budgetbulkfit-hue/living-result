@@ -10,11 +10,25 @@ export default function Navbar({ cartCount = 0, onSearchOpen, onCartOpen }) {
   const [noticeHeight, setNoticeHeight] = useState(0);
   const navRef = useRef(null);
 
-  // Scroll effect — makes navbar more opaque on scroll
+  // Scroll effect — makes navbar more opaque on scroll and handles notice strip pushing
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 80);
+      const scrollY = window.scrollY;
+      setScrolled(scrollY > 80);
+
+      // Dynamic sticky navbar logic
+      const strip = document.getElementById('noticeStrip');
+      if (strip && navRef.current) {
+        const stripHeight = strip.offsetHeight;
+        navRef.current.style.top = scrollY > stripHeight ? '0px' : `${stripHeight - scrollY}px`;
+      } else if (navRef.current) {
+        navRef.current.style.top = '0px';
+      }
     };
+
+    // Run once on mount to set initial position
+    setTimeout(handleScroll, 50);
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
