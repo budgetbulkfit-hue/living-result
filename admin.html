@@ -605,8 +605,7 @@
                             style="font-size: 13px; color: #3498db; border-color: #3498db;">☁ Sync to Sheets</button>
                         <button class="btn-outline" onclick="refreshDashboard()" style="font-size: 13px;">⟳ Refresh
                             List</button>
-                        <a href="index.html" class="btn-outline" target="_blank" style="font-size: 13px;">View Live
-                            Site</a>
+                    <button class="btn-outline" onclick="openLiveSiteBypass()" style="font-size: 13px;">View Live Site</button>
                     </div>
                 </div>
                 <div class="dashboard-cards">
@@ -722,9 +721,8 @@
                     <div id="section-basic" class="editor-section active">
                         <div class="form-row">
                             <div class="form-group" style="flex: 1;"><label>Cart ID (Num)</label><input type="number" id="ep-id"></div>
-                            <div class="form-group" style="flex: 2;"><label>Product Name</label><input type="text" id="ep-name"></div>
-                            <div class="form-group" style="flex: 1;"><label>URL Slug</label><input type="text"
-                                    id="ep-slug"></div>
+                            <div class="form-group" style="flex: 2;"><label>Product Name</label><input type="text" id="ep-name" oninput="if(!document.getElementById('ep-slug').dataset.manual) document.getElementById('ep-slug').value = generateSlug(this.value)"></div>
+                            <div class="form-group" style="flex: 1;"><label>URL Slug</label><input type="text" id="ep-slug" placeholder="Auto-generates as you type" oninput="this.dataset.manual = 'true'"></div>
                         </div>
                         <div class="form-row">
                             <div class="form-group" style="flex: 1;"><label>Discount (%)</label><input type="number"
@@ -886,48 +884,112 @@
                     <button class="btn-outline" onclick="navigate('combos')" style="font-size: 13px;">Cancel & Go Back</button>
                 </div>
                 <div class="panel-card">
-                    <div class="form-row">
-                        <div class="form-group" style="flex: 2;"><label>Combo Name</label><input type="text" id="ec-name"></div>
-                        <div class="form-group" style="flex: 1;"><label>URL Slug</label><input type="text" id="ec-slug"></div>
-                    </div>
-                    <div class="form-group"><label>Description</label><textarea id="ec-desc" rows="2"></textarea></div>
-                    <div class="form-group"><label>Banner Image URL</label><input type="text" id="ec-banner" placeholder="https://..."></div>
-                    
-                    <hr style="border: 0; border-top: 1px solid var(--border); margin: 25px 0;">
-                    
-                    <h4 style="color: var(--accent); margin-bottom: 15px; text-transform: uppercase;">Dynamic Product Selection</h4>
-                    <div class="form-row" style="align-items: flex-end;">
-                        <div class="form-group" style="flex: 3;">
-                            <label>Select Product from Database</label>
-                            <select id="ec-product-select"></select>
-                        </div>
-                        <div class="form-group" style="flex: 1;"><label>Qty</label><input type="number" id="ec-product-qty" value="1" min="1"></div>
-                        <button class="btn-outline" onclick="addComboProduct()" style="margin-bottom: 18px;">Add to Bundle</button>
+                    <div class="editor-tabs">
+                        <div class="editor-tab active" id="tab-c-basic" onclick="switchComboEditorTab('basic')">Basic Info</div>
+                        <div class="editor-tab" id="tab-c-variants" onclick="switchComboEditorTab('variants')">Variants & Sizes</div>
+                        <div class="editor-tab" id="tab-c-images" onclick="switchComboEditorTab('images')">Images</div>
+                        <div class="editor-tab" id="tab-c-flavors" onclick="switchComboEditorTab('flavors')">Flavors</div>
                     </div>
 
-                    <div class="table-responsive" style="margin-bottom: 20px;">
-                        <table>
-                            <thead><tr><th>Product Name</th><th>Quantity</th><th>Actions</th></tr></thead>
-                            <tbody id="ec-selected-products"></tbody>
-                        </table>
-                    </div>
-
-                    <hr style="border: 0; border-top: 1px solid var(--border); margin: 25px 0;">
-                    
-                    <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; border: 1px dashed var(--border);">
-                        <h4 style="color: #fff; margin-bottom: 15px; text-transform: uppercase;">Pricing & Validation</h4>
+                    <!-- Basic Info -->
+                    <div id="section-c-basic" class="editor-section active">
                         <div class="form-row">
-                            <div class="form-group" style="flex: 1;"><label>Manual Price Override (₹)</label><input type="number" id="ec-override" placeholder="Leave blank to use auto-price"></div>
-                            <div class="form-group" style="flex: 1; display:flex; align-items:center; gap:10px; margin-top:25px;">
-                                <label class="toggle-switch"><input type="checkbox" id="ec-published" checked><span class="toggle-slider"></span></label>
-                                <span style="font-size:13px; font-weight:bold;">Publish Combo</span>
+                            <div class="form-group" style="flex: 2;"><label>Combo Name</label><input type="text" id="ec-name" oninput="if(!document.getElementById('ec-slug').dataset.manual) document.getElementById('ec-slug').value = generateSlug(this.value)"></div>
+                            <div class="form-group" style="flex: 1;"><label>URL Slug</label><input type="text" id="ec-slug" placeholder="Auto-generates as you type" oninput="this.dataset.manual = 'true'"></div>
+                        </div>
+                        <div class="form-group"><label>Description</label><textarea id="ec-desc" rows="2"></textarea></div>
+                        
+                        <hr style="border: 0; border-top: 1px solid var(--border); margin: 25px 0;">
+                        
+                        <h4 style="color: var(--accent); margin-bottom: 15px; text-transform: uppercase;">Dynamic Product Selection</h4>
+                        <div class="form-row" style="align-items: flex-end;">
+                            <div class="form-group" style="flex: 3;">
+                                <label>Select Product from Database</label>
+                                <select id="ec-product-select"></select>
+                            </div>
+                            <div class="form-group" style="flex: 1;"><label>Qty</label><input type="number" id="ec-product-qty" value="1" min="1"></div>
+                            <button class="btn-outline" onclick="addComboProduct()" style="margin-bottom: 18px;">Add to Bundle</button>
+                        </div>
+
+                        <div class="table-responsive" style="margin-bottom: 20px;">
+                            <table>
+                                <thead><tr><th>Product Name</th><th>Quantity</th><th>Actions</th></tr></thead>
+                                <tbody id="ec-selected-products"></tbody>
+                            </table>
+                        </div>
+
+                        <hr style="border: 0; border-top: 1px solid var(--border); margin: 25px 0;">
+                        
+                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; border: 1px dashed var(--border);">
+                            <h4 style="color: #fff; margin-bottom: 15px; text-transform: uppercase;">Pricing & Validation</h4>
+                            <div class="form-row">
+                                <div class="form-group" style="flex: 1;"><label>Manual Price Override (₹)</label><input type="number" id="ec-override" placeholder="Leave blank to use auto-price"></div>
+                                <div class="form-group" style="flex: 1; display:flex; align-items:center; gap:10px; margin-top:25px;">
+                                    <label class="toggle-switch"><input type="checkbox" id="ec-published" checked><span class="toggle-slider"></span></label>
+                                    <span style="font-size:13px; font-weight:bold;">Publish Combo</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 20px; font-size: 14px; color: var(--text-secondary); margin-top: 10px;" id="ec-live-stats">
+                                <!-- Calculated via JS -->
+                                <div>Auto MRP: <strong style="color:#fff;">₹0</strong></div>
+                                <div>Auto Price: <strong style="color:var(--accent);">₹0</strong></div>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 20px; font-size: 14px; color: var(--text-secondary); margin-top: 10px;" id="ec-live-stats">
-                            <!-- Calculated via JS -->
-                            <div>Auto MRP: <strong style="color:#fff;">₹0</strong></div>
-                            <div>Auto Price: <strong style="color:var(--accent);">₹0</strong></div>
-                            <div>Estimated Weight: <strong style="color:#fff;">0g</strong></div>
+                    </div>
+
+                    <!-- Variants (Sizes) -->
+                    <div id="section-c-variants" class="editor-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <p style="color: var(--text-muted); font-size: 13px; margin: 0;">Define different sizes/weights for this combo.</p>
+                            <button class="btn-outline" onclick="openVariantModal()">+ Add Variant</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Weight</th>
+                                        <th>Price</th>
+                                        <th>Old Price</th>
+                                        <th>Flavors Allowed</th>
+                                        <th>In Stock</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ec-variants-table"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Images -->
+                    <div id="section-c-images" class="editor-section">
+                        <div class="form-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; border: 1px dashed var(--border);">
+                            <label style="color: var(--accent);">Upload Combo Image</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="file" id="ec-image-upload" accept="image/*" style="flex: 2; padding: 8px;">
+                                <button type="button" class="btn-outline" style="flex: 1;" onclick="uploadComboImage()">Upload & Add</button>
+                            </div>
+                        </div>
+                        <div class="img-grid" id="ec-images-grid"></div>
+                    </div>
+
+                    <!-- Flavors -->
+                    <div id="section-c-flavors" class="editor-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <p style="color: var(--text-muted); font-size: 13px; margin: 0;">Define flavors and their specific tub images.</p>
+                            <button class="btn-outline" onclick="openFlavorModal()">+ Add Flavor</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Flavor Name</th>
+                                        <th>Image</th>
+                                        <th>In Stock</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ec-flavors-table"></tbody>
+                            </table>
                         </div>
                     </div>
 
@@ -1152,12 +1214,15 @@
         let allOrders = [];
         let allCombos = [];
         let editingComboId = null;
-        let ecData = { products: [] };
+        let ecData = { products: [], sizes: [], images: [], flavors: [] };
+        
+        const generateSlug = (text) => (text || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
         // PRODUCT EDITOR STATE
         let epData = {};
         let editingVariantIndex = -1;
         let editingFlavorIndex = -1;
+        let currentEditorContext = 'product'; // 'product' or 'combo'
 
         function authFetch(url, options = {}) {
             const headers = { ...(options.headers || {}) };
@@ -1203,6 +1268,11 @@
                 sidebar.classList.remove('active');
                 if (overlay) overlay.classList.remove('active');
             }
+        }
+
+        function openLiveSiteBypass() {
+            const token = localStorage.getItem('adminToken') || '';
+            window.open(`index.html?admin_bypass=${token}`, '_blank');
         }
 
         function setTableState(tableId, colSpan, text, color = 'var(--text-muted)') {
@@ -1478,7 +1548,7 @@
             if (!allCombos.length) return setTableState('adminComboTable', 7, 'No combos found');
             tb.innerHTML = allCombos.map(c => `
                 <tr>
-                    <td><img src="${c.comboBanner || ''}" width="50" style="border-radius:4px; background:#fff;"></td>
+                    <td><img src="${c.images && c.images.length > 0 ? c.images[0] : (c.comboBanner || '')}" width="50" style="border-radius:4px; background:#fff;"></td>
                     <td style="font-weight: bold; color: var(--accent);">${c.comboName}</td>
                     <td style="font-size: 12px; color: var(--text-secondary);">${c.products.map(p => p.name).join(', ')}</td>
                     <td style="text-decoration: line-through; color: var(--text-muted);">₹${c.autoCalculatedMrp.toLocaleString()}</td>
@@ -1498,32 +1568,47 @@
         }
 
         function openComboEditor() {
+            currentEditorContext = 'combo';
             editingComboId = null;
-            ecData = { products: [] };
+            ecData = { products: [], sizes: [], images: [], flavors: [] };
             document.getElementById('ec-name').value = '';
             document.getElementById('ec-slug').value = '';
+            document.getElementById('ec-slug').dataset.manual = '';
             document.getElementById('ec-desc').value = '';
-            document.getElementById('ec-banner').value = '';
             document.getElementById('ec-override').value = '';
             document.getElementById('ec-published').checked = true;
             document.getElementById('comboEditorTitle').textContent = 'Build Combo';
             renderComboSelectedProducts();
+            renderComboVariants();
+            renderComboImages();
+            renderComboFlavors();
+            switchComboEditorTab('basic');
             navigate('edit-combo');
         }
 
         function editCombo(id) {
             const combo = allCombos.find(c => c._id === id);
             if (!combo) return;
+            currentEditorContext = 'combo';
             editingComboId = id;
-            ecData = { products: combo.products.map(p => ({ productId: p._id, name: p.name, quantity: p.quantity })) };
+            ecData = { 
+                products: combo.products.map(p => ({ productId: p._id || p.productId?._id || p.productId, name: p.name, quantity: p.quantity })),
+                sizes: combo.sizes || [],
+                images: combo.images || (combo.comboBanner ? [combo.comboBanner] : []),
+                flavors: combo.flavors || []
+            };
             document.getElementById('ec-name').value = combo.comboName;
             document.getElementById('ec-slug').value = combo.comboSlug;
+            document.getElementById('ec-slug').dataset.manual = combo.comboSlug ? 'true' : '';
             document.getElementById('ec-desc').value = combo.description || '';
-            document.getElementById('ec-banner').value = combo.comboBanner || '';
             document.getElementById('ec-override').value = combo.manualOverridePrice || '';
             document.getElementById('ec-published').checked = combo.isPublished;
             document.getElementById('comboEditorTitle').textContent = 'Edit Combo';
             renderComboSelectedProducts();
+            renderComboVariants();
+            renderComboImages();
+            renderComboFlavors();
+            switchComboEditorTab('basic');
             navigate('edit-combo');
         }
 
@@ -1542,17 +1627,95 @@
             const tb = document.getElementById('ec-selected-products');
             if (!ecData.products.length) tb.innerHTML = '<tr><td colspan="3" style="text-align:center;">No products added to bundle yet.</td></tr>';
             else tb.innerHTML = ecData.products.map((p, i) => `<tr><td>${p.name}</td><td>x${p.quantity}</td><td><button class="action-btn btn-delete" onclick="ecData.products.splice(${i},1); renderComboSelectedProducts()">Remove</button></td></tr>`).join('');
+            updateComboStats();
+        }
+
+        function switchComboEditorTab(tab) {
+            document.querySelectorAll('#view-edit-combo .editor-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#view-edit-combo .editor-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(`tab-c-${tab}`).classList.add('active');
+            document.getElementById(`section-c-${tab}`).classList.add('active');
+        }
+
+        function renderComboVariants() {
+            const tb = document.getElementById('ec-variants-table');
+            if (!ecData.sizes || !ecData.sizes.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;">No variants added</td></tr>'; return; }
+            tb.innerHTML = ecData.sizes.map((s, i) => `<tr>
+                <td>${s.weight}</td><td>₹${s.price}</td><td>${s.oldPrice ? '₹' + s.oldPrice : '-'}</td>
+                <td>${s.allowedFlavors && s.allowedFlavors.length ? s.allowedFlavors.join(', ') : 'All'}</td>
+                <td><label class="toggle-switch"><input type="checkbox" ${s.inStock !== false ? 'checked' : ''} onchange="ecData.sizes[${i}].inStock = this.checked;"><span class="toggle-slider"></span></label></td>
+                <td>
+                    <button class="action-btn btn-edit" onclick="openVariantModal(${i})">Edit</button>
+                    <button class="action-btn btn-delete" onclick="ecData.sizes.splice(${i},1); renderComboVariants()">✕</button>
+                </td>
+            </tr>`).join('');
+        }
+
+        function renderComboImages() {
+            const grid = document.getElementById('ec-images-grid');
+            grid.innerHTML = (ecData.images || []).map((img, i) => `
+                <div class="img-card"><button class="img-del" onclick="ecData.images.splice(${i},1); renderComboImages()">✕</button><img src="${img}"></div>
+            `).join('');
+        }
+
+        async function uploadComboImage() {
+            const url = await handleCloudinaryUpload('ec-image-upload');
+            if (url) { if (!ecData.images) ecData.images = []; ecData.images.push(url); renderComboImages(); }
+        }
+
+        function renderComboFlavors() {
+            const tb = document.getElementById('ec-flavors-table');
+            if (!ecData.flavors || !ecData.flavors.length) { tb.innerHTML = '<tr><td colspan="4" style="text-align:center;">No flavors added</td></tr>'; return; }
+            tb.innerHTML = ecData.flavors.map((f, i) => `<tr>
+                <td>${f.name}</td><td><img src="${f.image}" style="height:30px; border-radius:4px; background:#fff;"></td>
+                <td><label class="toggle-switch"><input type="checkbox" ${f.inStock !== false ? 'checked' : ''} onchange="ecData.flavors[${i}].inStock = this.checked;"><span class="toggle-slider"></span></label></td>
+                <td>
+                    <button class="action-btn btn-edit" onclick="openFlavorModal(${i})">Edit</button>
+                    <button class="action-btn btn-delete" onclick="ecData.flavors.splice(${i},1); renderComboFlavors()">✕</button>
+                </td>
+            </tr>`).join('');
+        }
+
+        function updateComboStats() {
+            let autoMrp = 0;
+            let autoPrice = 0;
+            ecData.products.forEach(p => {
+                const prod = products.find(full => full._id === p.productId);
+                if (prod) {
+                    const basePrice = prod.sizes && prod.sizes.length > 0 ? prod.sizes[0].price : prod.price;
+                    const oldPrice = prod.sizes && prod.sizes.length > 0 && prod.sizes[0].oldPrice ? prod.sizes[0].oldPrice : (prod.oldPrice || basePrice);
+                    autoMrp += oldPrice * p.quantity;
+                    autoPrice += basePrice * p.quantity;
+                }
+            });
+            
+            const statsEl = document.getElementById('ec-live-stats');
+            if(statsEl) {
+                statsEl.innerHTML = `
+                    <div>Auto MRP: <strong style="color:#fff;">₹${autoMrp.toLocaleString()}</strong></div>
+                    <div>Auto Price: <strong style="color:var(--accent);">₹${autoPrice.toLocaleString()}</strong></div>
+                `;
+            }
         }
 
         async function saveComboEditor() {
+            const comboName = document.getElementById('ec-name').value;
+            let comboSlug = document.getElementById('ec-slug').value.trim();
+            if (!comboSlug) comboSlug = generateSlug(comboName);
+
+            const comboBanner = ecData.images && ecData.images.length > 0 ? ecData.images[0] : '';
+
             const payload = {
-                comboName: document.getElementById('ec-name').value,
-                comboSlug: document.getElementById('ec-slug').value,
+                comboName: comboName,
+                comboSlug: comboSlug,
                 description: document.getElementById('ec-desc').value,
-                comboBanner: document.getElementById('ec-banner').value,
+                comboBanner: comboBanner,
                 manualOverridePrice: Number(document.getElementById('ec-override').value) || null,
                 isPublished: document.getElementById('ec-published').checked,
-                products: ecData.products.map(p => ({ productId: p.productId, quantity: p.quantity }))
+                products: ecData.products.map(p => ({ productId: p.productId, quantity: p.quantity })),
+                sizes: ecData.sizes || [],
+                images: ecData.images || [],
+                flavors: ecData.flavors || []
             };
             const method = editingComboId ? 'PUT' : 'POST';
             const url = editingComboId ? `${API_URL}/combos/${editingComboId}` : `${API_URL}/combos`;
@@ -1591,6 +1754,7 @@
         }
 
         function openProductEditor(id = null) {
+            currentEditorContext = 'product';
             if (id) {
                 const p = products.find(prod => prod._id === id);
                 epData = JSON.parse(JSON.stringify(p)); // Deep clone
@@ -1642,8 +1806,9 @@
 
         function openVariantModal(index = -1) {
             editingVariantIndex = index;
+            const targetData = currentEditorContext === 'product' ? epData : ecData;
             if (index > -1) {
-                const v = epData.sizes[index];
+                const v = targetData.sizes[index];
                 document.getElementById('vm-weight').value = v.weight || '';
                 document.getElementById('vm-price').value = v.price || '';
                 document.getElementById('vm-oldprice').value = v.oldPrice || '';
@@ -1666,12 +1831,14 @@
                 allowedFlavors: f,
                 inStock: document.getElementById('vm-stock').checked
             };
-            if (!epData.sizes) epData.sizes = [];
-            if (editingVariantIndex > -1) { epData.sizes[editingVariantIndex] = variantData; } 
-            else { epData.sizes.push(variantData); }
-            epData.sizes.sort((a, b) => (a.price || 0) - (b.price || 0)); // Auto-sort by price ascending
+            const targetData = currentEditorContext === 'product' ? epData : ecData;
+            if (!targetData.sizes) targetData.sizes = [];
+            if (editingVariantIndex > -1) { targetData.sizes[editingVariantIndex] = variantData; } 
+            else { targetData.sizes.push(variantData); }
+            targetData.sizes.sort((a, b) => (a.price || 0) - (b.price || 0)); // Auto-sort by price ascending
             document.getElementById('variantModal').classList.remove('active');
-            renderEpVariants();
+            if (currentEditorContext === 'product') renderEpVariants();
+            else renderComboVariants();
         }
 
         function renderEpImages() {
@@ -1701,8 +1868,9 @@
 
         function openFlavorModal(index = -1) {
             editingFlavorIndex = index;
+            const targetData = currentEditorContext === 'product' ? epData : ecData;
             if (index > -1) {
-                const f = epData.flavors[index];
+                const f = targetData.flavors[index];
                 document.getElementById('fm-name').value = f.name || '';
                 document.getElementById('fm-image-url').value = f.image || '';
                 document.getElementById('fm-image-file').value = '';
@@ -1721,14 +1889,16 @@
             }
             if (!imgUrl) return showToast('Please provide an image', 'error');
 
-            if (!epData.flavors) epData.flavors = [];
+            const targetData = currentEditorContext === 'product' ? epData : ecData;
+            if (!targetData.flavors) targetData.flavors = [];
             const flavorData = { name: document.getElementById('fm-name').value, image: imgUrl, inStock: document.getElementById('fm-stock').checked };
             
-            if (editingFlavorIndex > -1) { epData.flavors[editingFlavorIndex] = flavorData; } 
-            else { epData.flavors.push(flavorData); }
+            if (editingFlavorIndex > -1) { targetData.flavors[editingFlavorIndex] = flavorData; } 
+            else { targetData.flavors.push(flavorData); }
             
             document.getElementById('flavorModal').classList.remove('active');
-            renderEpFlavors();
+            if (currentEditorContext === 'product') renderEpFlavors();
+            else renderComboFlavors();
         }
 
         async function saveProductEditor() {
@@ -1743,10 +1913,14 @@
 
             const sortedSizes = (epData.sizes || []).sort((a, b) => (a.price || 0) - (b.price || 0));
 
+            const name = document.getElementById('ep-name').value;
+            let slug = document.getElementById('ep-slug').value.trim();
+            if (!slug) slug = generateSlug(name);
+
             const payload = {
                 id: Number(document.getElementById('ep-id').value),
-                name: document.getElementById('ep-name').value,
-                slug: document.getElementById('ep-slug').value,
+                name: name,
+                slug: slug,
                 price: sortedSizes.length > 0 ? sortedSizes[0].price : 0,
                 oldPrice: sortedSizes.length > 0 ? sortedSizes[0].oldPrice : null,
                 discount: Number(document.getElementById('ep-discount').value) || 0,

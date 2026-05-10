@@ -66,28 +66,45 @@ function renderProductCard(product) {
 // ===== RENDER A SINGLE COMBO CARD =====
 function renderComboCard(combo) {
   const includesText = combo.products.map(p => `• ${p.name} (x${p.quantity})`).join('<br>');
+  
+  const displayWeight = combo.sizes && combo.sizes.length > 0 ? combo.sizes[0].weight : (combo.totalWeight ? combo.totalWeight.display : '');
+  const flavorCount = combo.flavors && combo.flavors.length > 0 ? combo.flavors.length : 0;
+  const flavorText = flavorCount > 0 ? `<span class="product-flavor" style="margin-bottom: 0;">${flavorCount} Flavor${flavorCount > 1 ? 's' : ''}</span>` : '';
+  const weightText = displayWeight ? `<span class="product-weight" style="font-size: 13px; color: var(--accent); font-weight: 600;">${displayWeight}</span>` : '';
+  const separator = flavorText && weightText ? `<span style="color: var(--text-muted); opacity: 0.5;">|</span>` : '';
+  
+  const displayPrice = combo.sizes && combo.sizes.length > 0 ? combo.sizes[0].price : combo.finalPrice;
+  const displayOldPrice = combo.sizes && combo.sizes.length > 0 && combo.sizes[0].oldPrice ? combo.sizes[0].oldPrice : combo.autoCalculatedMrp;
+  const savings = displayOldPrice > displayPrice ? displayOldPrice - displayPrice : combo.totalSavings;
+  const imgUrl = (combo.images && combo.images.length > 0) ? combo.images[0] : (combo.comboBanner || 'images/logo.png');
+
   return `
     <div class="product-card combo-card" id="combo-${combo.comboSlug}">
       <div class="product-image" style="background: #000; padding: 0;">
-        <img src="${combo.comboBanner || 'images/logo.png'}" alt="${combo.comboName}" loading="lazy" style="height: 100%; width: 100%; object-fit: cover;">
+        <img src="${imgUrl}" alt="${combo.comboName}" loading="lazy" style="height: 100%; width: 100%; object-fit: cover;">
         <span class="stock-badge in-stock" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff;">💎 Premium Stack</span>
       </div>
       <div class="product-info">
         <h3 class="product-name">${combo.comboName}</h3>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          ${flavorText}
+          ${separator}
+          ${weightText}
+        </div>
         <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 6px;">
           <strong style="color: #fff; text-transform: uppercase; letter-spacing: 1px;">Stack Includes:</strong><br> ${includesText}
         </div>
         <div class="combo-pricing-box">
           <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">
             <span>Individual MRP</span>
-            <span style="text-decoration: line-through;">₹${combo.autoCalculatedMrp.toLocaleString()}</span>
+            <span style="text-decoration: line-through;">₹${displayOldPrice.toLocaleString()}</span>
           </div>
           <div style="display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; color: #fff; margin-bottom: 4px;">
             <span>Bundle Price</span>
-            <span style="color: #9b59b6;">₹${combo.finalPrice.toLocaleString()}</span>
+            <span style="color: #9b59b6;">₹${displayPrice.toLocaleString()}</span>
           </div>
           <div style="text-align: right; font-size: 13px; color: var(--green); font-weight: 700; margin-top: 6px;">
-            🔥 YOU SAVE ₹${combo.totalSavings.toLocaleString()}
+            🔥 YOU SAVE ₹${savings.toLocaleString()}
           </div>
         </div>
         <button onclick="openComboFlavorSelector('${combo.comboSlug}')" class="btn-primary btn-combo" style="width: 100%; justify-content: center; padding: 12px; font-size: 14px;">Claim This Stack</button>
@@ -929,6 +946,14 @@ function closeSuccessModal(e) {
 
 // ===== INIT =====
 document.addEventListener("DOMContentLoaded", () => {
+  // Check for admin bypass token in URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const bypassToken = urlParams.get('admin_bypass');
+  if (bypassToken) {
+    localStorage.setItem('adminToken', bypassToken);
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
   checkAuthStatus(); // Check if user is logged in
   updateCartUI();
   updateFloatingCart();
@@ -998,8 +1023,21 @@ async function fetchAndDisplaySettings() {
       
       // Handle Launch Status (Defaults to true/launched so live site doesn't break)
       const preLaunchOverlay = document.getElementById('preLaunchOverlay');
+      let isAdmin = !!localStorage.getItem('adminToken');
+
+      // Bulletproof Fallback: Verify admin status via cookie if localStorage is empty
+      if (data.data.isLaunched === false && !isAdmin) {
+          try {
+              const authRes = await fetch(`${API_URL}/auth/me`, { credentials: 'include', cache: 'no-store' });
+              const authData = await authRes.json();
+              if (authData.success && authData.data && authData.data.role === 'admin') {
+                  isAdmin = true;
+              }
+          } catch (e) { console.warn("Admin verify failed", e); }
+      }
+
       if (preLaunchOverlay) {
-          if (data.data.isLaunched === false) {
+          if (data.data.isLaunched === false && !isAdmin) {
               // Override inner HTML to show Maintenance Break and remove any old UI/animations
               preLaunchOverlay.innerHTML = `
                 <div style="text-align: center; padding: 40px; background: #0a0a0a; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.5); max-width: 500px; margin: auto;">
@@ -1018,6 +1056,28 @@ async function fetchAndDisplaySettings() {
               preLaunchOverlay.style.display = 'none';
               preLaunchOverlay.innerHTML = ''; // Clear it out when launched
               document.body.style.overflow = '';
+
+              // Show a warning badge to the admin so they don't forget the site is in maintenance
+              if (data.data.isLaunched === false && isAdmin && !document.getElementById('adminMaintenanceBadge')) {
+                  const badge = document.createElement('div');
+                  badge.id = 'adminMaintenanceBadge';
+                  badge.style.position = 'fixed';
+                  badge.style.bottom = '20px';
+                  badge.style.left = '20px';
+                  badge.style.background = '#e74c3c';
+                  badge.style.color = '#fff';
+                  badge.style.padding = '10px 16px';
+                  badge.style.borderRadius = '8px';
+                  badge.style.fontSize = '13px';
+                  badge.style.fontWeight = 'bold';
+                  badge.style.zIndex = '999999';
+                  badge.style.boxShadow = '0 4px 15px rgba(231, 76, 60, 0.4)';
+                  badge.innerHTML = '🔧 Admin Bypass: Site is in Maintenance Mode';
+                  document.body.appendChild(badge);
+                  } else if (data.data.isLaunched !== false) {
+                      const existingBadge = document.getElementById('adminMaintenanceBadge');
+                      if (existingBadge) existingBadge.remove();
+              }
           }
       }
 
@@ -1529,6 +1589,32 @@ function openComboFlavorSelector(comboSlug) {
     currentComboSelection = combo;
     const container = document.getElementById('comboFlavorContainer');
     let html = '';
+    
+    // Combo's own sizes
+    if (combo.sizes && combo.sizes.length > 0) {
+        let sizeOptions = '';
+        combo.sizes.forEach((s, index) => {
+            if (s.inStock !== false) {
+                sizeOptions += `<option value="${index}">${s.weight} - ₹${s.price.toLocaleString()}</option>`;
+            }
+        });
+        if (sizeOptions) {
+            html += `<div style="margin-bottom: 15px;"><label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">Combo Size</label><select id="combo-size-select" style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-family: inherit;">${sizeOptions}</select></div>`;
+        }
+    }
+    
+    // Combo's own flavors
+    if (combo.flavors && combo.flavors.length > 0) {
+        let flavorOptions = '';
+        combo.flavors.forEach(f => {
+            if (f.inStock !== false) {
+                flavorOptions += `<option value="${f.name}">${f.name}</option>`;
+            }
+        });
+        if (flavorOptions) {
+            html += `<div style="margin-bottom: 15px;"><label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">Combo Flavor</label><select id="combo-flavor-select" style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-family: inherit;">${flavorOptions}</select></div>`;
+        }
+    }
 
     combo.products.forEach((p, index) => {
         const fullProd = allProducts.find(ap => ap._id === p._id);
@@ -1542,8 +1628,8 @@ function openComboFlavorSelector(comboSlug) {
 
         html += `
             <div style="margin-bottom: 15px;">
-                <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">${p.name} (x${p.quantity})</label>
-                <select id="combo-flavor-${index}" style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-family: inherit;">
+                <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 5px;">Choose Flavor for ${p.name} (x${p.quantity})</label>
+                <select id="combo-subflavor-${index}" style="width: 100%; padding: 12px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: #fff; font-family: inherit;">
                     ${options}
                 </select>
             </div>
@@ -1571,14 +1657,41 @@ function confirmComboToCart() {
     if (!currentComboSelection) return;
     const combo = currentComboSelection;
     
+    let basePrice = combo.finalPrice;
+    let comboWeight = combo.totalWeight ? combo.totalWeight.display : '';
+    let comboFlavorName = 'Custom Bundle';
+
+    // Check size selection
+    const sizeSelect = document.getElementById('combo-size-select');
+    let sizeIndex = 0;
+    if (sizeSelect) {
+        sizeIndex = parseInt(sizeSelect.value);
+        const size = combo.sizes[sizeIndex];
+        if (size) {
+            basePrice = size.price;
+            comboWeight = size.weight;
+        }
+    } else if (combo.sizes && combo.sizes.length > 0) {
+        basePrice = combo.sizes[0].price;
+        comboWeight = combo.sizes[0].weight;
+    }
+
+    // Check flavor selection
+    const flavorSelect = document.getElementById('combo-flavor-select');
+    if (flavorSelect) {
+        comboFlavorName = flavorSelect.value;
+    } else if (combo.flavors && combo.flavors.length > 0) {
+        comboFlavorName = combo.flavors[0].name;
+    }
+    
     const selections = [];
     combo.products.forEach((p, index) => {
-        const select = document.getElementById(`combo-flavor-${index}`);
+        const select = document.getElementById(`combo-subflavor-${index}`);
         selections.push({ productId: p._id, name: p.name, quantity: p.quantity, flavor: select ? select.value : 'Default' });
     });
 
     const flavorKey = selections.map(s => s.flavor.replace(/\s+/g, '')).join('-');
-    const key = `combo-${combo._id}-${flavorKey}`;
+    const key = `combo-${combo._id}-${comboFlavorName.replace(/\s+/g, '')}-${sizeIndex}-${flavorKey}`;
     
     const existing = cart.find(i => i.key === key);
     
@@ -1591,11 +1704,11 @@ function confirmComboToCart() {
             isCombo: true,
             productId: combo._id,
             name: combo.comboName,
-            flavorName: 'Custom Bundle',
+            flavorName: comboFlavorName,
             comboSelections: selections,
-            weight: combo.totalWeight ? combo.totalWeight.display : '',
-            price: combo.finalPrice,
-            image: combo.comboBanner || 'images/logo.png',
+            weight: comboWeight,
+            price: basePrice,
+            image: (combo.images && combo.images.length > 0) ? combo.images[0] : (combo.comboBanner || 'images/logo.png'),
             qty: 1
         });
     }
