@@ -79,7 +79,7 @@ function renderComboCard(combo) {
   const imgUrl = (combo.images && combo.images.length > 0) ? combo.images[0] : (combo.comboBanner || 'images/logo.png');
 
   return `
-    <div class="product-card combo-card" id="combo-${combo.comboSlug}">
+    <div class="product-card combo-card" id="combo-${combo.comboSlug}" onclick="handleComboCardClick('${combo.comboSlug}')" style="cursor: pointer;">
       <div class="product-image" style="background: #000; padding: 0;">
         <img src="${imgUrl}" alt="${combo.comboName}" loading="lazy" style="height: 100%; width: 100%; object-fit: cover;">
         <span class="stock-badge in-stock" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff;">💎 Premium Stack</span>
@@ -107,7 +107,7 @@ function renderComboCard(combo) {
             🔥 YOU SAVE ₹${savings.toLocaleString()}
           </div>
         </div>
-        <button onclick="openComboFlavorSelector('${combo.comboSlug}')" class="btn-primary btn-combo" style="width: 100%; justify-content: center; padding: 12px; font-size: 14px;">Claim This Stack</button>
+        <button onclick="event.stopPropagation(); openComboFlavorSelector('${combo.comboSlug}')" class="btn-primary btn-combo" style="width: 100%; justify-content: center; padding: 12px; font-size: 14px;">Claim This Stack</button>
       </div>
     </div>
   `;
@@ -144,6 +144,11 @@ function handleProductCardClick(slug, productId) {
   sessionStorage.setItem('lr_lastViewedProduct', slug); // Save exact product to scroll back to
   trackProductViewEvent(productId, productName, "card_click", price);
   window.location.href = `product.html?slug=${slug}`;
+}
+
+function handleComboCardClick(slug) {
+  sessionStorage.setItem('lr_lastViewedProduct', slug);
+  window.location.href = `product.html?slug=${slug}&combo=true`;
 }
 
 // ===== STATE FOR PRODUCT CATEGORY =====
@@ -1274,11 +1279,52 @@ async function fetchCombos() {
 async function loadSingleProductPage() {
   const params = new URLSearchParams(window.location.search);
   const slug = params.get('slug');
+  const isCombo = params.get('combo') === 'true';
   if (!slug) {
     window.location.href = 'index.html';
     return;
   }
   try {
+    if (isCombo) {
+      const res = await fetch(`${API_URL}/combos`, { cache: 'no-store' });
+      const data = await res.json();
+      if (data.success) {
+        allCombos = data.data;
+        const combo = allCombos.find(c => c.comboSlug === slug);
+        if (combo) {
+            currentProductData = {
+                _id: combo._id,
+                id: combo._id,
+                name: combo.comboName,
+                slug: combo.comboSlug,
+                price: combo.finalPrice,
+                oldPrice: combo.autoCalculatedMrp,
+                discount: Math.round(((combo.autoCalculatedMrp - combo.finalPrice) / combo.autoCalculatedMrp) * 100) || 0,
+                category: 'combos',
+                rating: 5,
+                numReviews: 24,
+                stockLeft: 99,
+                bestSeller: true,
+                showScarcity: true,
+                glutenFree: false,
+                description: combo.description || '',
+                ingredients: combo.products.map(p => `• ${p.name} (x${p.quantity})`).join('\n'),
+                nutritionalFacts: ['Please refer to individual product labels for detailed nutritional facts.'],
+                flavors: combo.flavors && combo.flavors.length > 0 ? combo.flavors : [{ name: 'Premium Bundle', image: (combo.images && combo.images.length > 0 ? combo.images[0] : combo.comboBanner) || 'images/logo.png', inStock: true }],
+                sizes: combo.sizes || [],
+                images: combo.images && combo.images.length > 0 ? combo.images : (combo.comboBanner ? [combo.comboBanner] : []),
+                isCombo: true,
+                comboProducts: combo.products
+            };
+            if (currentProductData.sizes) currentProductData.sizes.sort((a, b) => (a.price || 0) - (b.price || 0));
+            currentSelectedFlavorIndex = 0;
+            currentSelectedSizeIndex = 0;
+            renderSingleProductPage();
+            return;
+        }
+      }
+    }
+
     const res = await fetch(`${API_URL}/products/${slug}`, { cache: 'no-store' });
     const data = await res.json();
     if (data.success) {
@@ -1724,6 +1770,10 @@ function addToCartFromPage() {
   const qtyEl = document.getElementById('modalQty');
   const qty = qtyEl ? parseInt(qtyEl.textContent) : 1;
   const product = currentProductData;
+  if (product.isCombo) {
+      openComboFlavorSelector(product.slug);
+      return;
+  }
   const flavorIndex = currentSelectedFlavorIndex;
   const flavor = product.flavors && product.flavors.length > 0 ? product.flavors[flavorIndex] : { name: '', image: '' };
 

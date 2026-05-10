@@ -1163,7 +1163,11 @@
             <button class="modal-close"
                 onclick="document.getElementById('variantModal').classList.remove('active')">&times;</button>
             <h3 style="margin-bottom: 15px; color: var(--accent);">Add Variant</h3>
-            <div class="form-group"><label>Weight/Size (e.g. 1 kg)</label><input type="text" id="vm-weight"></div>
+            <div class="form-group">
+                <label>Weight/Size (e.g. 1 kg)</label>
+                <input type="text" id="vm-weight">
+                <div id="vm-weight-suggestions" style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;"></div>
+            </div>
             <div class="form-row">
                 <div class="form-group" style="flex:1;"><label>Price (₹)</label><input type="number" id="vm-price">
                 </div>
@@ -1819,7 +1823,58 @@
                 document.getElementById('vm-oldprice').value = ''; document.getElementById('vm-flavors').value = '';
                 document.getElementById('vm-stock').checked = true;
             }
+            
+            // Populate Weight Suggestions dynamically based on selected products
+            const suggContainer = document.getElementById('vm-weight-suggestions');
+            if (suggContainer) {
+                suggContainer.innerHTML = '';
+                if (currentEditorContext === 'combo' && ecData.products.length > 0) {
+                    let uniqueWeights = new Set();
+                    ecData.products.forEach(p => {
+                        const fullProd = products.find(prod => prod._id === p.productId || prod.id === p.productId);
+                        if (fullProd && fullProd.sizes) {
+                            fullProd.sizes.forEach(s => {
+                                if (s.weight) uniqueWeights.add(s.weight);
+                            });
+                        }
+                    });
+                    if (uniqueWeights.size > 0) {
+                        let html = '<span style="font-size: 11px; color: var(--text-muted); margin-right: 4px;">Suggestions:</span>';
+                        uniqueWeights.forEach(w => {
+                            const safeW = w.replace(/'/g, "\\'");
+                            html += `<button type="button" onclick="selectWeightSuggestion('${safeW}')" style="background: rgba(155,89,182,0.1); border: 1px solid #9b59b6; color: #9b59b6; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#9b59b6'; this.style.color='#fff';" onmouseout="this.style.background='rgba(155,89,182,0.1)'; this.style.color='#9b59b6';">${w}</button>`;
+                        });
+                        suggContainer.innerHTML = html;
+                    }
+                }
+            }
+
             document.getElementById('variantModal').classList.add('active');
+        }
+
+        function selectWeightSuggestion(weight) {
+            document.getElementById('vm-weight').value = weight;
+            if (currentEditorContext === 'combo' && ecData.products.length > 0) {
+                let autoPrice = 0;
+                let autoOldPrice = 0;
+                ecData.products.forEach(p => {
+                    const fullProd = products.find(prod => prod._id === p.productId || prod.id === p.productId);
+                    if (fullProd) {
+                        // Look for exact weight match, otherwise fallback to the default base price
+                        const matchedSize = fullProd.sizes ? fullProd.sizes.find(s => s.weight === weight) : null;
+                        const defaultPrice = fullProd.sizes && fullProd.sizes.length > 0 ? fullProd.sizes[0].price : fullProd.price;
+                        const defaultOldPrice = fullProd.sizes && fullProd.sizes.length > 0 && fullProd.sizes[0].oldPrice ? fullProd.sizes[0].oldPrice : (fullProd.oldPrice || defaultPrice);
+                        
+                        const itemPrice = matchedSize ? matchedSize.price : defaultPrice;
+                        const itemOldPrice = matchedSize && matchedSize.oldPrice ? matchedSize.oldPrice : (matchedSize ? matchedSize.price : defaultOldPrice);
+                        
+                        autoPrice += itemPrice * p.quantity;
+                        autoOldPrice += itemOldPrice * p.quantity;
+                    }
+                });
+                document.getElementById('vm-price').value = autoPrice;
+                document.getElementById('vm-oldprice').value = autoOldPrice;
+            }
         }
 
         function saveVariant() {
