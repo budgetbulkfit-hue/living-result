@@ -16,9 +16,10 @@ export default function ImageGallery({ images = [], flavors = [], selectedFlavor
   const touchStartX = useRef(null);
   const mainRef = useRef(null);
 
-  // Magnifier state
+  // Magnifier & Lightbox state
   const [showMagnifier, setShowMagnifier] = useState(false);
   const [magnifierStyle, setMagnifierStyle] = useState({});
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   // Build image list: base images + currently selected flavor image
   const baseImages = images.map(resolveImage).filter(Boolean);
@@ -65,8 +66,8 @@ export default function ImageGallery({ images = [], flavors = [], selectedFlavor
       backgroundImage: `url(${displayImages[activeIndex]})`,
       backgroundPosition: `${xPercent}% ${yPercent}%`,
       backgroundSize: '250%',
-      left: `${x - 75}px`,
-      top: `${y - 75}px`,
+      left: `${x - 125}px`,
+      top: `${y - 125}px`,
     });
   };
 
@@ -84,15 +85,16 @@ export default function ImageGallery({ images = [], flavors = [], selectedFlavor
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        style={{ width: '100%', position: 'relative', minHeight: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'crosshair', overflow: 'hidden', borderRadius: '8px', background: 'rgba(255,255,255,0.02)' }}
+        onClick={() => window.innerWidth > 900 && setIsLightboxOpen(true)}
+        style={{ width: '100%', position: 'relative', minHeight: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: window.innerWidth > 900 ? 'zoom-in' : 'pointer', overflow: 'hidden', borderRadius: '8px', background: 'rgba(255,255,255,0.02)' }}
       >
         {/* Magnifying Glass */}
         {showMagnifier && (
           <div
             style={{
               position: 'absolute',
-              width: '150px',
-              height: '150px',
+              width: '250px',
+              height: '250px',
               border: '2px solid var(--accent)',
               borderRadius: '50%',
               pointerEvents: 'none',
@@ -157,6 +159,23 @@ export default function ImageGallery({ images = [], flavors = [], selectedFlavor
               />
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Full Screen Lightbox Overlay */}
+      {isLightboxOpen && (
+        <div 
+          className="modal-overlay active" 
+          onClick={() => setIsLightboxOpen(false)}
+          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 100000, background: 'rgba(0,0,0,0.95)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+        >
+          <button className="modal-close" onClick={() => setIsLightboxOpen(false)} style={{ position: 'absolute', color: '#fff', fontSize: '40px', zIndex: 100001, right: '20px', top: '20px', cursor: 'pointer', border: 'none', background: 'none' }}>&times;</button>
+          <img 
+            src={displayImages[activeIndex]} 
+            alt="Zoomed Product"
+            style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', cursor: 'zoom-out' }}
+            onClick={(e) => { e.stopPropagation(); setIsLightboxOpen(false); }}
+          />
         </div>
       )}
 

@@ -5,7 +5,7 @@ import useCart from '@/lib/cartStore';
 import { createOrder } from '@/lib/api';
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '917003714398';
-const GOOGLE_SHEET_URL = process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL || '';
+const GOOGLE_SHEET_URL = process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL || 'https://script.google.com/macros/s/AKfycbwWTolkQqA0LXgLwTYj8vnWMoEHQeonlhCc7-8RDEXgnGzZG6C22wK_RInl6Gkh0t3o8A/exec';
 
 export default function CheckoutModal({ isOpen, onClose, fomoSettings = {} }) {
   const items = useCart((s) => s.items);
