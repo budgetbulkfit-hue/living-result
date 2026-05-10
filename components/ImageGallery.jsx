@@ -82,11 +82,7 @@ export default function ImageGallery({ images = [], flavors = [], selectedFlavor
         ref={mainRef}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        onMouseMove={handleMouseMove}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onClick={() => window.innerWidth > 900 && setIsLightboxOpen(true)}
-        style={{ width: '100%', position: 'relative', minHeight: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: window.innerWidth > 900 ? 'zoom-in' : 'pointer', overflow: 'hidden', borderRadius: '8px', background: 'rgba(255,255,255,0.02)' }}
+        style={{ width: '100%', position: 'relative', minHeight: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '8px', background: 'rgba(255,255,255,0.02)' }}
       >
         {/* Magnifying Glass */}
         {showMagnifier && (
@@ -107,9 +103,9 @@ export default function ImageGallery({ images = [], flavors = [], selectedFlavor
         {displayTotal > 1 && (
           <button
             className="gallery-arrow left"
-            onClick={() => goTo(activeIndex - 1)}
+            onClick={(e) => { e.stopPropagation(); goTo(activeIndex - 1); }}
             aria-label="Previous image"
-            style={{ position: 'absolute', left: '10px', zIndex: 5 }}
+            style={{ position: 'absolute', left: '10px', zIndex: 15 }}
           >‹</button>
         )}
 
@@ -117,16 +113,20 @@ export default function ImageGallery({ images = [], flavors = [], selectedFlavor
           key={displayImages[activeIndex]}
           src={displayImages[activeIndex]}
           alt={`${productName} — image ${activeIndex + 1}`}
-          style={{ maxHeight: '360px', maxWidth: '100%', objectFit: 'contain', transition: 'opacity 0.2s ease' }}
+          onMouseMove={handleMouseMove}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onClick={() => window.innerWidth > 900 && setIsLightboxOpen(true)}
+          style={{ maxHeight: '360px', maxWidth: '100%', objectFit: 'contain', transition: 'opacity 0.2s ease', cursor: window.innerWidth > 900 ? 'zoom-in' : 'pointer', zIndex: 1 }}
           onError={(e) => { e.target.src = '/images/hydra-whey-protein.png'; e.target.onerror = null; }}
         />
 
         {displayTotal > 1 && (
           <button
             className="gallery-arrow right"
-            onClick={() => goTo(activeIndex + 1)}
+            onClick={(e) => { e.stopPropagation(); goTo(activeIndex + 1); }}
             aria-label="Next image"
-            style={{ position: 'absolute', right: '10px', zIndex: 5 }}
+            style={{ position: 'absolute', right: '10px', zIndex: 15 }}
           >›</button>
         )}
       </div>
