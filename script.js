@@ -25,9 +25,9 @@ function renderProductCard(product) {
   const savings = displayOldPrice > displayPrice ? displayOldPrice - displayPrice : 0;
   const savingsHTML = savings > 0 ? `<div style="font-size: 12px; color: var(--green); font-weight: 600; margin-top: 4px;">You Save ₹${savings.toLocaleString()}</div>` : '';
   
-  // Generate a stable pseudo-random viewer count between 5 and 20 based on product ID characters
-  const seed = product._id ? parseInt(product._id.substring(0, 4), 16) : Math.floor(Math.random() * 1000);
-  const viewersCount = 5 + (seed % 15);
+  // Dynamic Viewers Count (Initial State)
+  const viewersCount = Math.floor(Math.random() * 20) + 4; // random between 4 and 23
+  const showViewers = Math.random() > 0.15; // 85% chance to show initially
 
   return `
     <div class="product-card" id="product-${product.slug}" onclick="handleProductCardClick('${product.slug}', '${product._id || ''}')" style="cursor: pointer;">
@@ -56,7 +56,7 @@ function renderProductCard(product) {
           <span class="rating-count">(${product.numReviews || product.reviews || 0})</span>
         </div>
         ${product.showScarcity !== false && product.stockLeft > 0 ? `<div class="scarcity-text" style="color: var(--accent); font-size: 12px; font-weight: 600; margin-top: 8px; margin-bottom: 4px;">🔥 Hurry, only ${product.stockLeft} left!</div>` : ''}
-        <div style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; margin-top: 6px;">👀 ${viewersCount} people viewing this</div>
+        <div class="dynamic-viewers-count" style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; margin-top: 6px; transition: opacity 0.5s ease; opacity: ${showViewers ? 1 : 0};">👀 <span>${viewersCount}</span> people viewing this</div>
       </div>
     </div>
   `;
@@ -875,6 +875,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initSocialProofPopups();
   initEmotionalMessaging();
   initExitIntentPopup();
+  initDynamicViewers();
 
   fetchProducts().then(() => {
     if (document.getElementById('singleProductContainer')) {
@@ -1248,7 +1249,8 @@ function renderSingleProductPage() {
   // FOMO Logic
   const savings = currentOldPrice > currentPrice ? currentOldPrice - currentPrice : 0;
   const savingsHTML = savings > 0 ? `<div style="font-size: 13px; color: var(--green); font-weight: 600; margin-bottom: 15px;">You Save ₹${savings.toLocaleString()}!</div>` : '';
-  const viewersCount = 5 + (parseInt(product._id.substring(0, 4), 16) % 15 || 7);
+  const viewersCount = Math.floor(Math.random() * 20) + 4;
+  const showViewers = Math.random() > 0.15;
 
   // Market Comparison Logic
   const marketAvg = currentOldPrice > currentPrice ? currentOldPrice : Math.round(currentPrice * 1.35);
@@ -1350,7 +1352,7 @@ function renderSingleProductPage() {
         ${product.glutenFree ? `<span style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(46, 204, 64, 0.2); color: var(--green); border: 1px solid var(--green); margin-bottom: 15px;">🌾 Gluten Free</span>` : ''}
           <div class="modal-price" style="margin-bottom: 5px;">₹${currentPrice.toLocaleString()} ${currentOldPrice > currentPrice ? `<span style="font-size: 14px; text-decoration: line-through; color: var(--text-muted); font-weight: normal; margin-left: 10px;">₹${currentOldPrice.toLocaleString()}</span>` : ''}</div>
           ${savingsHTML}
-          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px; display: flex; align-items: center; gap: 6px;">👀 ${viewersCount} people viewing this right now</div>
+          <div class="dynamic-viewers-count" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px; display: flex; align-items: center; gap: 6px; transition: opacity 0.5s ease; opacity: ${showViewers ? 1 : 0};">👀 <span>${viewersCount}</span> people viewing this right now</div>
           ${currentWeight ? `<div class="modal-weight" style="color: var(--accent); font-weight: 600; font-size: 14px; margin-bottom: 20px;">Weight: ${currentWeight}</div>` : ''}
           ${sizePills ? `<div class="flavor-selector" style="margin-bottom:15px;"><span class="flavor-label">Select Size:</span><div class="flavor-pills">${sizePills}</div></div>` : ''}
         <div class="flavor-selector"><span class="flavor-label">Select Flavor:</span><div class="flavor-pills">${flavorPills}</div></div>
@@ -1521,8 +1523,8 @@ async function submitReview(productId) {
 }
 
 // ===== SOCIAL PROOF POPUPS =====
-function initSocialProofPopups() {
-  const popups = [
+async function initSocialProofPopups() {
+  let popups = [
     "Aritra from Salt Lake just ordered Hydra Whey",
     "5 orders placed from New Town in the last 24 hours",
     "ISO Plasma is trending in Ballygunge right now",
@@ -1530,7 +1532,25 @@ function initSocialProofPopups() {
     "Vikram from Park Street secured Launch Pricing on Creatine",
     "12 people from South Kolkata added Biozyme Whey to their cart today"
   ];
-  setInterval(() => {
+
+  // Fetch real confirmed orders from the backend to blend in
+  try {
+    const res = await fetch(`${API_URL}/orders/recent`, { cache: 'no-store' });
+    const data = await res.json();
+    if (data.success && data.data && data.data.length > 0) {
+      popups = [...data.data, ...popups]; // Combine real and original popups
+    }
+  } catch (err) {
+    console.warn("Could not load real recent orders for social proof.");
+  }
+
+  const showPopup = () => {
+    // Respect Admin Master Toggle
+    if (window.lrFomoSettings && window.lrFomoSettings.socialProof === false) {
+      scheduleNext();
+      return;
+    }
+
     const popupEl = document.getElementById('socialProofPopup');
     if (!popupEl) return;
     
@@ -1538,8 +1558,21 @@ function initSocialProofPopups() {
     if(textEl) textEl.textContent = popups[Math.floor(Math.random() * popups.length)];
     
     popupEl.classList.add('active');
-    setTimeout(() => popupEl.classList.remove('active'), 5000);
-  }, 35000); // Trigger every 35 seconds
+    setTimeout(() => {
+      popupEl.classList.remove('active');
+      scheduleNext();
+    }, 5000);
+  };
+
+  const scheduleNext = () => {
+    const baseInterval = (window.lrFomoSettings && window.lrFomoSettings.popupInterval ? window.lrFomoSettings.popupInterval : 35) * 1000;
+    // Jitter: +/- 40% of the base interval to make it feel organic
+    const jitter = baseInterval * 0.4 * (Math.random() * 2 - 1);
+    setTimeout(showPopup, Math.max(10000, baseInterval + jitter));
+  };
+
+  // Initial start with a random delay between 10-20 seconds
+  setTimeout(showPopup, 10000 + Math.random() * 10000);
 }
 
 // ===== EXIT INTENT POPUP =====
@@ -1608,4 +1641,34 @@ function initEmotionalMessaging() {
       el.style.opacity = 1;
     }, 500); // Wait for fade out before changing text
   }, 5000); // Rotate every 5 seconds
+}
+
+// ===== DYNAMIC VIEWERS LOGIC =====
+function initDynamicViewers() {
+  setInterval(() => {
+    // Respect Admin Master Toggle for Scarcity
+    if (window.lrFomoSettings && window.lrFomoSettings.scarcity === false) return;
+    
+    document.querySelectorAll('.dynamic-viewers-count').forEach(el => {
+      // Jitter the update time so they don't all change at the exact same millisecond
+      setTimeout(() => {
+        if (Math.random() < 0.15) { // 15% chance to hide it completely (nobody watching)
+          el.style.opacity = 0;
+        } else {
+          const span = el.querySelector('span');
+          if (span) {
+            let currentCount = parseInt(span.textContent) || 5;
+            // Fluctuate by -2 to +3 viewers
+            let diff = Math.floor(Math.random() * 6) - 2;
+            let newCount = currentCount + diff;
+            if (newCount < 2) newCount = Math.floor(Math.random() * 4) + 2; // Keep it realistic
+            if (newCount > 35) newCount = 35; // Cap it so it doesn't get crazy high
+            
+            span.textContent = newCount;
+            el.style.opacity = 1;
+          }
+        }
+      }, Math.random() * 10000); // Random delay between 0-10 seconds
+    });
+  }, 35000); // Trigger check every 35 seconds
 }
