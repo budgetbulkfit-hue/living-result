@@ -16,16 +16,18 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
   const [activeSubCat, setActiveSubCat] = useState('All');
   const scrollRef = useRef(null);
 
-  const subCats = getSubCats(uniqueProducts);
+  let baseProducts = [];
+  if (activeTab === 'unique') baseProducts = uniqueProducts;
+  else if (activeTab === 'common') baseProducts = commonProducts;
+
+  const subCats = activeTab !== 'combos' ? getSubCats(baseProducts) : [];
 
   // Filter products based on active tab + subcat
   let displayProducts = [];
-  if (activeTab === 'unique') {
+  if (activeTab !== 'combos') {
     displayProducts = activeSubCat === 'All'
-      ? uniqueProducts
-      : uniqueProducts.filter((p) => p.subCategory === activeSubCat);
-  } else if (activeTab === 'common') {
-    displayProducts = commonProducts;
+      ? baseProducts
+      : baseProducts.filter((p) => p.subCategory === activeSubCat);
   }
 
   const scroll = (dir) => {
@@ -57,14 +59,12 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
             <p className="section-label">Our Arsenal</p>
             <h2 className="section-title">ENGINEERED FOR ELITE PERFORMANCE</h2>
           </div>
-          {activeTab !== 'combos' && (
-            <button
-              className="btn-outline"
-              onClick={() => setViewAll((v) => !v)}
-            >
-              {viewAll ? 'Scroll View' : 'View All'}
-            </button>
-          )}
+          <button
+            className="btn-outline"
+            onClick={() => setViewAll((v) => !v)}
+          >
+            {viewAll ? 'Scroll View' : 'View All'}
+          </button>
         </div>
 
         {/* ── Tab Bar ── */}
@@ -72,16 +72,53 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
           <button style={tabStyle('unique')} onClick={() => { setActiveTab('unique'); setViewAll(false); setActiveSubCat('All'); }}>
             Unique Collection
           </button>
-          <button style={tabStyle('common')} onClick={() => { setActiveTab('common'); setViewAll(false); }}>
+          <button style={tabStyle('common')} onClick={() => { setActiveTab('common'); setViewAll(false); setActiveSubCat('All'); }}>
             Everyday Essentials
           </button>
-          <button style={tabStyle('combos')} onClick={() => { setActiveTab('combos'); setViewAll(true); }}>
+          <button style={tabStyle('combos')} onClick={() => { setActiveTab('combos'); setViewAll(true); setActiveSubCat('All'); }}>
             💎 Premium Stacks
           </button>
         </div>
 
-        {/* ── Sub-category Pills (Unique tab only) ── */}
-        {activeTab === 'unique' && subCats.length > 1 && (
+        {/* ── Category Info Box ── */}
+        <div style={{
+          marginBottom: '30px',
+          padding: '20px',
+          background: activeTab === 'unique' ? 'rgba(255, 68, 0, 0.1)' : activeTab === 'common' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 68, 0, 0.08)',
+          borderLeft: `4px solid ${activeTab === 'unique' || activeTab === 'combos' ? 'var(--accent)' : 'var(--text-muted)'}`,
+          borderRadius: '4px'
+        }}>
+          <h4 style={{
+            color: activeTab === 'unique' || activeTab === 'combos' ? 'var(--accent)' : 'var(--text-primary)',
+            marginBottom: '10px',
+            fontSize: '20px',
+            textTransform: 'uppercase',
+            fontFamily: 'var(--font-heading)',
+            letterSpacing: '1px'
+          }}>
+            {activeTab === 'unique' && 'Exclusive & Unmatched'}
+            {activeTab === 'common' && 'Premium Standards'}
+            {activeTab === 'combos' && '🔥 Best Combos on the Internet'}
+          </h4>
+          <p style={{
+            color: activeTab === 'unique' || activeTab === 'combos' ? 'var(--text-primary)' : 'var(--text-muted)',
+            fontSize: '16px',
+            lineHeight: '1.6',
+            margin: 0
+          }}>
+            {activeTab === 'unique' && (
+              <>
+                Cannot find this anywhere else! These are top-of-the-line products engineered for peak performance.<br/>
+                <strong style={{ color: 'var(--accent)' }}>Challenge us:</strong> If you can find this exact quality elsewhere, show us and we will give it to you at a lower price.
+              </>
+            )}
+            {activeTab === 'common' && 'You may find these products on different platforms, but we guarantee you are getting them here at a lower rate than anywhere else.'}
+            {activeTab === 'combos' && 'We\'ve handpicked the most powerful supplement pairings to maximise your gains, recovery and performance. Get more, save more — these bundles are unbeatable.'}
+          </p>
+        </div>
+
+        {/* ── Sub-category Pills (Both tabs) ── */}
+        {activeTab !== 'combos' && subCats.length > 1 && (
           <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' }}>
             {subCats.map((cat) => (
               <button
@@ -97,7 +134,7 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
         )}
 
         {/* ── Combos Grid ── */}
-        {activeTab === 'combos' && (
+        {activeTab === 'combos' && viewAll && (
           <div className="products-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
             {combos.length === 0 ? (
               <p style={{ color: 'var(--text-muted)', gridColumn: '1/-1', textAlign: 'center', padding: '60px 0' }}>No stacks available yet.</p>
@@ -107,10 +144,30 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
           </div>
         )}
 
+        {/* ── Combos: Scroll View ── */}
+        {activeTab === 'combos' && !viewAll && (
+          <div className="products-scroll-wrapper">
+            {combos.length > 1 && (
+              <button className="scroll-arrow scroll-left" onClick={() => scroll(-1)} aria-label="Scroll left">‹</button>
+            )}
+            <div className="products-scroll" ref={scrollRef}>
+              {combos.map((combo) => (
+                <ComboCard key={combo._id} combo={combo} />
+              ))}
+              {combos.length === 0 && (
+                <p style={{ color: 'var(--text-muted)', padding: '60px 0' }}>No stacks available yet.</p>
+              )}
+            </div>
+            {combos.length > 1 && (
+              <button className="scroll-arrow scroll-right" onClick={() => scroll(1)} aria-label="Scroll right">›</button>
+            )}
+          </div>
+        )}
+
         {/* ── Products: Scroll View ── */}
         {activeTab !== 'combos' && !viewAll && (
           <div className="products-scroll-wrapper">
-            {displayProducts.length > 3 && (
+            {displayProducts.length > 1 && (
               <button className="scroll-arrow scroll-left" onClick={() => scroll(-1)} aria-label="Scroll left">‹</button>
             )}
             <div className="products-scroll" ref={scrollRef}>
@@ -121,7 +178,7 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
                 <p style={{ color: 'var(--text-muted)', padding: '60px 0' }}>No products in this category.</p>
               )}
             </div>
-            {displayProducts.length > 3 && (
+            {displayProducts.length > 1 && (
               <button className="scroll-arrow scroll-right" onClick={() => scroll(1)} aria-label="Scroll right">›</button>
             )}
           </div>
