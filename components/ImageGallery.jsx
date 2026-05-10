@@ -11,25 +11,35 @@ function resolveImage(src) {
   return `/images/${filename}`;
 }
 
-export default function ImageGallery({ flavors = [], selectedFlavorIndex = 0, productName = '' }) {
+export default function ImageGallery({ images = [], flavors = [], selectedFlavorIndex = 0, productName = '' }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const touchStartX = useRef(null);
   const mainRef = useRef(null);
 
-  // Build image list from the selected flavor + all other flavor images
-  const allImages = flavors
-    .map((f) => resolveImage(f.image))
-    .filter(Boolean);
+  // Magnifier state
+  const [showMagnifier, setShowMagnifier] = useState(false);
+  const [magnifierStyle, setMagnifierStyle] = useState({});
 
-  // When flavor changes, jump to that flavor's image
+  // Build image list: base images + currently selected flavor image
+  const baseImages = images.map(resolveImage).filter(Boolean);
+  const selectedFlavorImg = resolveImage(flavors[selectedFlavorIndex]?.image);
+  
+  // Combine base images with the selected flavor image
+  const allImages = [...baseImages];
+  if (selectedFlavorImg && !allImages.includes(selectedFlavorImg)) {
+    allImages.unshift(selectedFlavorImg); // Put flavor image first!
+  }
+
+  // When flavor changes, reset to the first image
   useEffect(() => {
-    setActiveIndex(selectedFlavorIndex < allImages.length ? selectedFlavorIndex : 0);
-  }, [selectedFlavorIndex, allImages.length]);
+    setActiveIndex(0);
+  }, [selectedFlavorIndex]);
 
   const total = allImages.length;
-  if (total === 0) return null;
+  const displayImages = total > 0 ? allImages : ['/images/logo.png'];
+  const displayTotal = displayImages.length;
 
-  const goTo = (idx) => setActiveIndex((idx + total) % total);
+  const goTo = (idx) => setActiveIndex((idx + displayTotal) % displayTotal);
 
   // Touch swipe
   const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
@@ -40,6 +50,29 @@ export default function ImageGallery({ flavors = [], selectedFlavorIndex = 0, pr
     touchStartX.current = null;
   };
 
+  // Magnifying Glass Handlers
+  const handleMouseMove = (e) => {
+    if (!mainRef.current || window.innerWidth <= 900) return; // Disable on mobile
+    const { left, top, width, height } = mainRef.current.getBoundingClientRect();
+    const x = e.clientX - left;
+    const y = e.clientY - top;
+    
+    const xPercent = (x / width) * 100;
+    const yPercent = (y / height) * 100;
+
+    setMagnifierStyle({
+      display: 'block',
+      backgroundImage: `url(${displayImages[activeIndex]})`,
+      backgroundPosition: `${xPercent}% ${yPercent}%`,
+      backgroundSize: '250%',
+      left: `${x - 75}px`,
+      top: `${y - 75}px`,
+    });
+  };
+
+  const handleMouseEnter = () => window.innerWidth > 900 && setShowMagnifier(true);
+  const handleMouseLeave = () => setShowMagnifier(false);
+
   return (
     <div className="modal-image-col" style={{ gap: '16px', position: 'relative' }}>
       {/* Main image */}
@@ -48,37 +81,58 @@ export default function ImageGallery({ flavors = [], selectedFlavorIndex = 0, pr
         ref={mainRef}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        style={{ width: '100%', position: 'relative', minHeight: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        style={{ width: '100%', position: 'relative', minHeight: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'crosshair', overflow: 'hidden', borderRadius: '8px', background: 'rgba(255,255,255,0.02)' }}
       >
-        {total > 1 && (
+        {/* Magnifying Glass */}
+        {showMagnifier && (
+          <div
+            style={{
+              position: 'absolute',
+              width: '150px',
+              height: '150px',
+              border: '2px solid var(--accent)',
+              borderRadius: '50%',
+              pointerEvents: 'none',
+              zIndex: 10,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+              ...magnifierStyle
+            }}
+          />
+        )}
+        {displayTotal > 1 && (
           <button
             className="gallery-arrow left"
             onClick={() => goTo(activeIndex - 1)}
             aria-label="Previous image"
+            style={{ position: 'absolute', left: '10px', zIndex: 5 }}
           >‹</button>
         )}
 
         <img
-          key={allImages[activeIndex]}
-          src={allImages[activeIndex]}
+          key={displayImages[activeIndex]}
+          src={displayImages[activeIndex]}
           alt={`${productName} — image ${activeIndex + 1}`}
           style={{ maxHeight: '360px', maxWidth: '100%', objectFit: 'contain', transition: 'opacity 0.2s ease' }}
           onError={(e) => { e.target.src = '/images/hydra-whey-protein.png'; e.target.onerror = null; }}
         />
 
-        {total > 1 && (
+        {displayTotal > 1 && (
           <button
             className="gallery-arrow right"
             onClick={() => goTo(activeIndex + 1)}
             aria-label="Next image"
+            style={{ position: 'absolute', right: '10px', zIndex: 5 }}
           >›</button>
         )}
       </div>
 
       {/* Thumbnail strip */}
-      {total > 1 && (
-        <div className="thumbnail-gallery">
-          {allImages.map((src, idx) => (
+      {displayTotal > 1 && (
+        <div className="thumbnail-gallery" style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '10px 0', marginTop: '10px' }}>
+          {displayImages.map((src, idx) => (
             <button
               key={idx}
               className="thumbnail-img"

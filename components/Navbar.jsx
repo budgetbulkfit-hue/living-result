@@ -61,7 +61,7 @@ export default function Navbar({ cartCount = 0, onSearchOpen, onCartOpen }) {
               height={130}
               className="logo-img"
               priority
-              style={{ height: '42px', width: 'auto', objectFit: 'contain' }}
+              style={{ height: '70px', width: 'auto', objectFit: 'contain' }}
             />
           </Link>
 

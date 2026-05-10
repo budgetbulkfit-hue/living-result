@@ -85,10 +85,11 @@ export default function ProductDetailClient({ product }) {
   });
 
   return (
-    <div className="modal-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', padding: '40px', alignItems: 'start' }}>
+    <div className="modal-grid">
 
       {/* ── LEFT: Image Gallery ── */}
       <ImageGallery
+        images={product.images || []}
         flavors={flavors}
         selectedFlavorIndex={selectedFlavor}
         productName={product.name}
@@ -111,9 +112,29 @@ export default function ProductDetailClient({ product }) {
           {product.glutenFree && <span className="gluten-free-badge" style={{ position: 'static' }}>✓ Gluten Free</span>}
         </div>
 
-        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', textTransform: 'uppercase', marginBottom: '8px', lineHeight: 1.15 }}>
-          {product.name}
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px', gap: '16px' }}>
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', textTransform: 'uppercase', lineHeight: 1.15, margin: 0 }}>
+            {product.name}
+          </h1>
+          <button
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({ title: product.name, url: window.location.href }).catch(()=>{});
+              } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert('Link copied to clipboard!');
+              }
+            }}
+            className="react-share-btn"
+            title="Share Product"
+            aria-label="Share"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </button>
+        </div>
 
         {/* Rating */}
         <div className="product-rating" style={{ marginBottom: '16px' }}>
