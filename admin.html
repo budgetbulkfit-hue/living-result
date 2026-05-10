@@ -1521,6 +1521,7 @@
                     });
                     applyProductFilters();
                     populateComboProductDropdown();
+                    if ((sessionStorage.getItem('adminCurrentView') || 'dashboard') === 'dashboard') updateDashboardMetrics();
                 }
             } catch (err) {
                 console.error('Fetch products error:', err);
@@ -1811,6 +1812,13 @@
         function openVariantModal(index = -1) {
             editingVariantIndex = index;
             const targetData = currentEditorContext === 'product' ? epData : ecData;
+            
+            const weightGroup = document.getElementById('vm-weight').parentElement;
+            const comboSelectors = document.getElementById('vm-combo-selectors');
+
+            weightGroup.style.display = currentEditorContext === 'product' ? 'block' : 'none';
+            if (comboSelectors) comboSelectors.style.display = currentEditorContext === 'combo' ? 'flex' : 'none';
+
             if (index > -1) {
                 const v = targetData.sizes[index];
                 document.getElementById('vm-weight').value = v.weight || '';
@@ -1824,57 +1832,71 @@
                 document.getElementById('vm-stock').checked = true;
             }
             
-            // Populate Weight Suggestions dynamically based on selected products
-            const suggContainer = document.getElementById('vm-weight-suggestions');
-            if (suggContainer) {
-                suggContainer.innerHTML = '';
-                if (currentEditorContext === 'combo' && ecData.products.length > 0) {
-                    let uniqueWeights = new Set();
-                    ecData.products.forEach(p => {
-                        const fullProd = products.find(prod => prod._id === p.productId || prod.id === p.productId);
-                        if (fullProd && fullProd.sizes) {
-                            fullProd.sizes.forEach(s => {
-                                if (s.weight) uniqueWeights.add(s.weight);
-                            });
+            if (currentEditorContext === 'combo' && ecData.products.length > 0 && comboSelectors) {
+                let html = '<div style="font-size: 12px; color: var(--accent); margin-bottom: -5px;">Select sizes for each item:</div>';
+                ecData.products.forEach((p, idx) => {
+                    const fullProd = products.find(prod => prod._id === p.productId || prod.id === p.productId);
+                    let options = '';
+                    if (fullProd && fullProd.sizes && fullProd.sizes.length > 0) {
+                        fullProd.sizes.forEach(s => {
+                            options += `<option value="${s.weight}" data-price="${s.price}" data-oldprice="${s.oldPrice || s.price}">${s.weight}</option>`;
+                        });
+                    } else {
+                        const price = fullProd ? fullProd.price : 0;
+                        const oldPrice = fullProd ? (fullProd.oldPrice || fullProd.price) : 0;
+                        options = `<option value="Base Size" data-price="${price}" data-oldprice="${oldPrice}">Base Size</option>`;
+                    }
+                    html += `<div style="display:flex; align-items:center; gap: 10px;">
+                        <span style="font-size:13px; color:var(--text-muted); width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${p.name}">${p.name} (x${p.quantity})</span>
+                        <select id="combo-weight-select-${idx}" onchange="updateComboVariantAutoPrice()" style="flex:1; padding: 10px; background: var(--bg-secondary); border: 1px solid var(--border); color: white; border-radius: 6px; font-size: 13px;">
+                            ${options}
+                        </select>
+                    </div>`;
+                });
+                comboSelectors.innerHTML = html;
+
+                // Pre-select if we are editing an existing combination
+                if (index > -1 && targetData.sizes[index].weight) {
+                    const parts = targetData.sizes[index].weight.split(' + ');
+                    parts.forEach((part, idx) => {
+                        const sel = document.getElementById(`combo-weight-select-${idx}`);
+                        if (sel) {
+                            let strippedPart = part.replace(/^\d+x\s*/, ''); // Remove "2x " prefix if quantity > 1
+                            const optionExists = Array.from(sel.options).some(opt => opt.value === strippedPart);
+                            if (optionExists) sel.value = strippedPart;
                         }
                     });
-                    if (uniqueWeights.size > 0) {
-                        let html = '<span style="font-size: 11px; color: var(--text-muted); margin-right: 4px;">Suggestions:</span>';
-                        uniqueWeights.forEach(w => {
-                            const safeW = w.replace(/'/g, "\\'");
-                            html += `<button type="button" onclick="selectWeightSuggestion('${safeW}')" style="background: rgba(155,89,182,0.1); border: 1px solid #9b59b6; color: #9b59b6; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#9b59b6'; this.style.color='#fff';" onmouseout="this.style.background='rgba(155,89,182,0.1)'; this.style.color='#9b59b6';">${w}</button>`;
-                        });
-                        suggContainer.innerHTML = html;
-                    }
+                } else {
+                    updateComboVariantAutoPrice();
                 }
             }
 
             document.getElementById('variantModal').classList.add('active');
         }
 
-        function selectWeightSuggestion(weight) {
-            document.getElementById('vm-weight').value = weight;
-            if (currentEditorContext === 'combo' && ecData.products.length > 0) {
-                let autoPrice = 0;
-                let autoOldPrice = 0;
-                ecData.products.forEach(p => {
-                    const fullProd = products.find(prod => prod._id === p.productId || prod.id === p.productId);
-                    if (fullProd) {
-                        // Look for exact weight match, otherwise fallback to the default base price
-                        const matchedSize = fullProd.sizes ? fullProd.sizes.find(s => s.weight === weight) : null;
-                        const defaultPrice = fullProd.sizes && fullProd.sizes.length > 0 ? fullProd.sizes[0].price : fullProd.price;
-                        const defaultOldPrice = fullProd.sizes && fullProd.sizes.length > 0 && fullProd.sizes[0].oldPrice ? fullProd.sizes[0].oldPrice : (fullProd.oldPrice || defaultPrice);
-                        
-                        const itemPrice = matchedSize ? matchedSize.price : defaultPrice;
-                        const itemOldPrice = matchedSize && matchedSize.oldPrice ? matchedSize.oldPrice : (matchedSize ? matchedSize.price : defaultOldPrice);
-                        
-                        autoPrice += itemPrice * p.quantity;
-                        autoOldPrice += itemOldPrice * p.quantity;
+        function updateComboVariantAutoPrice() {
+            let combinedWeight = [];
+            let autoPrice = 0;
+            let autoOldPrice = 0;
+
+            ecData.products.forEach((p, idx) => {
+                const sel = document.getElementById(`combo-weight-select-${idx}`);
+                if (sel && sel.options[sel.selectedIndex]) {
+                    const opt = sel.options[sel.selectedIndex];
+                    // Format output. If they selected quantity 2, show "2x 1kg"
+                    if (p.quantity > 1) {
+                        combinedWeight.push(`${p.quantity}x ${opt.value}`);
+                    } else {
+                        combinedWeight.push(opt.value);
                     }
-                });
-                document.getElementById('vm-price').value = autoPrice;
-                document.getElementById('vm-oldprice').value = autoOldPrice;
-            }
+                    autoPrice += parseFloat(opt.dataset.price || 0) * p.quantity;
+                    autoOldPrice += parseFloat(opt.dataset.oldprice || 0) * p.quantity;
+                }
+            });
+
+            document.getElementById('vm-weight').value = combinedWeight.join(' + ');
+            document.getElementById('vm-price').value = autoPrice;
+            document.getElementById('vm-oldprice').value = autoOldPrice;
         }
 
         function saveVariant() {
