@@ -930,7 +930,7 @@ async function fetchAndDisplaySettings() {
   try {
     const res = await fetch(`${API_URL}/settings`, { cache: 'no-store' });
     const data = await res.json();
-    if (data.success) {
+    if (data.success && data.data) {
       
       // Handle Launch Status (Defaults to true/launched so live site doesn't break)
       const preLaunchOverlay = document.getElementById('preLaunchOverlay');

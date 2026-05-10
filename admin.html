@@ -1694,17 +1694,19 @@
         async function fetchGlobalSettings() {
             const res = await fetch(`${API_URL}/settings`, { cache: 'no-store' });
             const data = await res.json();
-            if (data.success && data.data.noticeStrip) {
-                document.getElementById('noticeStripText').value = data.data.noticeStrip.text || '';
-                document.getElementById('noticeStripEnabled').checked = data.data.noticeStrip.enabled || false;
-            }
-            if (data.data.fomo) {
-                document.getElementById('fomoLaunchPricing').checked = data.data.fomo.launchPricing !== false;
-                document.getElementById('fomoSocialProof').checked = data.data.fomo.socialProof !== false;
-                document.getElementById('fomoScarcity').checked = data.data.fomo.scarcity !== false;
-                document.getElementById('fomoExitIntent').checked = data.data.fomo.exitIntent !== false;
-                document.getElementById('fomoPopupInterval').value = data.data.fomo.popupInterval || 35;
-                document.getElementById('fomoTimerDuration').value = data.data.fomo.timerDuration || 10;
+            if (data.success && data.data) {
+                if (data.data.noticeStrip) {
+                    document.getElementById('noticeStripText').value = data.data.noticeStrip.text || '';
+                    document.getElementById('noticeStripEnabled').checked = data.data.noticeStrip.enabled || false;
+                }
+                if (data.data.fomo) {
+                    document.getElementById('fomoLaunchPricing').checked = data.data.fomo.launchPricing !== false;
+                    document.getElementById('fomoSocialProof').checked = data.data.fomo.socialProof !== false;
+                    document.getElementById('fomoScarcity').checked = data.data.fomo.scarcity !== false;
+                    document.getElementById('fomoExitIntent').checked = data.data.fomo.exitIntent !== false;
+                    document.getElementById('fomoPopupInterval').value = data.data.fomo.popupInterval || 35;
+                    document.getElementById('fomoTimerDuration').value = data.data.fomo.timerDuration || 10;
+                }
             }
         }
 
