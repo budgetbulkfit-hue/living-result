@@ -19,7 +19,7 @@ export default function ProductDetailClient({ product }) {
   const [selectedFlavor, setSelectedFlavor] = useState(0);
   const [selectedSize, setSelectedSize] = useState(0);
   const [qty, setQty] = useState(1);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('about');
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [reviewName, setReviewName] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
@@ -234,17 +234,17 @@ export default function ProductDetailClient({ product }) {
 
         {/* Info Tabs */}
         <div className="modal-tabs" style={{ marginTop: '28px' }}>
-          {['overview', 'nutrition', 'how-to-use', 'reviews'].map((tab) => (
+          {['about', 'nutrition', 'ingredients', 'reviews'].map((tab) => (
             <button key={tab} style={tabBtnStyle(tab)} onClick={() => setActiveTab(tab)}>
-              {tab === 'overview' ? 'Overview' : tab === 'nutrition' ? 'Nutrition' : tab === 'how-to-use' ? 'How to Use' : `Reviews (${reviews.length})`}
+              {tab === 'about' ? 'About' : tab === 'nutrition' ? 'Nutritional Facts' : tab === 'ingredients' ? 'Ingredients' : `Reviews (${reviews.length})`}
             </button>
           ))}
         </div>
 
-        {/* Tab: Overview */}
-        {activeTab === 'overview' && (
+        {/* Tab: About */}
+        {activeTab === 'about' && (
           <div className="modal-tab-content active" style={{ display: 'block' }}>
-            <p style={{ lineHeight: 1.8, fontSize: '14px' }}>{product.description || 'Premium quality supplement for serious athletes.'}</p>
+            <p style={{ lineHeight: 1.8, fontSize: '14px', color: 'var(--text-secondary)' }}>{product.description || 'Premium quality supplement for serious athletes.'}</p>
           </div>
         )}
 
@@ -252,21 +252,27 @@ export default function ProductDetailClient({ product }) {
         {activeTab === 'nutrition' && (
           <div className="modal-tab-content active" style={{ display: 'block' }}>
             {product.nutritionFacts ? (
-              <p style={{ lineHeight: 1.8, fontSize: '14px', whiteSpace: 'pre-line' }}>{product.nutritionFacts}</p>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {product.nutritionFacts.split('\n').filter(line => line.trim() !== '').map((line, idx) => (
+                  <div key={idx} style={{ padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-secondary)', fontSize: '14px' }}>
+                    {line}
+                  </div>
+                ))}
+              </div>
             ) : (
               <p style={{ color: 'var(--text-muted)', fontSize: '14px', fontStyle: 'italic' }}>Nutrition details not available. Please check the product label.</p>
             )}
           </div>
         )}
 
-        {/* Tab: How to Use */}
-        {activeTab === 'how-to-use' && (
+        {/* Tab: Ingredients */}
+        {activeTab === 'ingredients' && (
           <div className="modal-tab-content active" style={{ display: 'block' }}>
-            {product.howToUse ? (
-              <p style={{ lineHeight: 1.8, fontSize: '14px', whiteSpace: 'pre-line' }}>{product.howToUse}</p>
+            {product.ingredients ? (
+              <p style={{ lineHeight: 1.8, fontSize: '14px', color: 'var(--text-secondary)' }}>{product.ingredients}</p>
             ) : (
-              <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
-                Mix 1 serving with 200-250ml of cold water or milk. Consume immediately after mixing. Best taken within 30 minutes post-workout for optimal results.
+              <p style={{ color: 'var(--text-muted)', fontSize: '14px', fontStyle: 'italic' }}>
+                Ingredients not listed.
               </p>
             )}
           </div>
