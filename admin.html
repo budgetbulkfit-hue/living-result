@@ -1698,6 +1698,14 @@
                 document.getElementById('noticeStripText').value = data.data.noticeStrip.text || '';
                 document.getElementById('noticeStripEnabled').checked = data.data.noticeStrip.enabled || false;
             }
+            if (data.data.fomo) {
+                document.getElementById('fomoLaunchPricing').checked = data.data.fomo.launchPricing !== false;
+                document.getElementById('fomoSocialProof').checked = data.data.fomo.socialProof !== false;
+                document.getElementById('fomoScarcity').checked = data.data.fomo.scarcity !== false;
+                document.getElementById('fomoExitIntent').checked = data.data.fomo.exitIntent !== false;
+                document.getElementById('fomoPopupInterval').value = data.data.fomo.popupInterval || 35;
+                document.getElementById('fomoTimerDuration').value = data.data.fomo.timerDuration || 10;
+            }
         }
 
         async function saveGlobalSettings(e) {
@@ -1705,6 +1713,20 @@
             const settingsData = { noticeStrip: { text: document.getElementById('noticeStripText').value, enabled: document.getElementById('noticeStripEnabled').checked } };
             const res = await authFetch(`${API_URL}/settings`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settingsData) });
             if ((await res.json()).success) showToast('Settings saved', 'success');
+        }
+
+        async function saveFomoSettings(e) {
+            e.preventDefault();
+            const fomoData = {
+                launchPricing: document.getElementById('fomoLaunchPricing').checked,
+                socialProof: document.getElementById('fomoSocialProof').checked,
+                scarcity: document.getElementById('fomoScarcity').checked,
+                exitIntent: document.getElementById('fomoExitIntent').checked,
+                popupInterval: Number(document.getElementById('fomoPopupInterval').value) || 35,
+                timerDuration: Number(document.getElementById('fomoTimerDuration').value) || 10
+            };
+            const res = await authFetch(`${API_URL}/settings`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fomo: fomoData }) });
+            if ((await res.json()).success) showToast('FOMO Settings saved', 'success');
         }
 
         async function setLaunchStatus(isLaunched) {

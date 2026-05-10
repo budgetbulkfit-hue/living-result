@@ -20,6 +20,14 @@ function renderProductCard(product) {
   const displayOldPrice = product.sizes && product.sizes.length > 0 && product.sizes[0].oldPrice ? product.sizes[0].oldPrice : (product.oldPrice || displayPrice);
   const displayWeight = product.sizes && product.sizes.length > 0 ? product.sizes[0].weight : '';
   const discountText = displayOldPrice > displayPrice ? Math.round(((displayOldPrice - displayPrice) / displayOldPrice) * 100) + '% OFF' : (product.discount ? product.discount + '% OFF' : '');
+  
+  // FOMO Logic: Savings & Dynamic Viewers
+  const savings = displayOldPrice > displayPrice ? displayOldPrice - displayPrice : 0;
+  const savingsHTML = savings > 0 ? `<div style="font-size: 12px; color: var(--green); font-weight: 600; margin-top: 4px;">You Save ₹${savings.toLocaleString()}</div>` : '';
+  
+  // Generate a stable pseudo-random viewer count between 5 and 20 based on product ID characters
+  const seed = product._id ? parseInt(product._id.substring(0, 4), 16) : Math.floor(Math.random() * 1000);
+  const viewersCount = 5 + (seed % 15);
 
   return `
     <div class="product-card" id="product-${product.slug}" onclick="handleProductCardClick('${product.slug}', '${product._id || ''}')" style="cursor: pointer;">
@@ -42,11 +50,13 @@ function renderProductCard(product) {
           ${displayOldPrice > displayPrice ? `<span class="old-price">₹${displayOldPrice.toLocaleString()}</span>` : ''}
           ${discountText ? `<span class="discount">${discountText}</span>` : ''}
         </div>
+        ${savingsHTML}
         <div class="product-rating">
           <span class="stars">${stars}</span>
           <span class="rating-count">(${product.numReviews || product.reviews || 0})</span>
         </div>
-        ${product.showScarcity !== false && product.stockLeft > 0 ? `<div class="scarcity-text" style="color: var(--accent); font-size: 12px; font-weight: 600; margin-top: 8px;">🔥 Hurry, only ${product.stockLeft} left!</div>` : ''}
+        ${product.showScarcity !== false && product.stockLeft > 0 ? `<div class="scarcity-text" style="color: var(--accent); font-size: 12px; font-weight: 600; margin-top: 8px; margin-bottom: 4px;">🔥 Hurry, only ${product.stockLeft} left!</div>` : ''}
+        <div style="font-size: 11px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; margin-top: 6px;">👀 ${viewersCount} people viewing this</div>
       </div>
     </div>
   `;
@@ -533,9 +543,21 @@ function updateCartUI() {
     </div>
   `).join('');
 
+  // FOMO Cart Elements (Urgency + Premium Offer)
+  const fomoCartHTML = `
+    <div style="background: rgba(255, 106, 0, 0.05); border: 1px solid rgba(255, 106, 0, 0.2); padding: 12px; border-radius: 6px; margin-bottom: 16px; text-align: center;">
+      <div style="color: #fff; font-size: 13px; font-weight: bold; margin-bottom: 4px;">🔥 Premium Shaker Worth ₹500 Available at Just ₹50</div>
+      <div style="color: var(--text-muted); font-size: 11px; font-style: italic;">Exclusive launch offer for first 10 customers.</div>
+    </div>
+    <div style="color: #e74c3c; font-size: 12px; font-weight: 600; text-align: center; margin-bottom: 16px;">
+      ⚠️ Your cart items are in high demand. Launch pricing is currently active.
+    </div>
+  `;
+
   cartBody.innerHTML = `
     ${itemsHTML}
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      ${fomoCartHTML}
       <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
         <span style="font-size:15px;font-weight:600;">Total</span>
         <span style="font-size:18px;font-weight:700;color:var(--accent);">₹${total.toLocaleString()}</span>
@@ -583,10 +605,40 @@ function startCartCheckout() {
         <div style="margin-top: 10px; text-align: right; font-size: 11px; color: var(--text-muted); font-style: italic;">
           *Delivery charges will apply accordingly.
         </div>`;
+      
+      startCheckoutTimer();
     }
   }
 }
 
+let checkoutTimerInterval;
+function startCheckoutTimer() {
+  const timerEl = document.getElementById('checkoutTimerDisplay');
+  if (!timerEl) return;
+  
+  let endTime = localStorage.getItem('lr_checkout_timer');
+  if (!endTime || endTime < Date.now()) {
+    const durationMins = window.lrFomoSettings ? (window.lrFomoSettings.timerDuration || 10) : 10;
+    endTime = Date.now() + durationMins * 60 * 1000;
+    localStorage.setItem('lr_checkout_timer', endTime);
+  }
+  
+  clearInterval(checkoutTimerInterval);
+  const updateTimer = () => {
+    const diff = endTime - Date.now();
+    if (diff <= 0) {
+      clearInterval(checkoutTimerInterval);
+      timerEl.textContent = "00:00";
+      localStorage.removeItem('lr_checkout_timer');
+      return;
+    }
+    const m = Math.floor((diff / 1000 / 60) % 60).toString().padStart(2, '0');
+    const s = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
+    timerEl.textContent = `${m}:${s}`;
+  };
+  updateTimer();
+  checkoutTimerInterval = setInterval(updateTimer, 1000);
+}
 
 function closeCheckoutModal(e) {
   if (e && e.target.id !== "checkoutModalOverlay" && !e.target.closest('.modal-close')) return;
@@ -594,6 +646,7 @@ function closeCheckoutModal(e) {
   if (overlay) {
     overlay.classList.remove("active");
     document.body.style.overflow = "";
+    clearInterval(checkoutTimerInterval);
   }
 }
 
@@ -819,6 +872,9 @@ document.addEventListener("DOMContentLoaded", () => {
   updateFloatingCart();
   fetchAndDisplaySettings();
   startGlobalRefreshPolling();
+  initSocialProofPopups();
+  initEmotionalMessaging();
+  initExitIntentPopup();
 
   fetchProducts().then(() => {
     if (document.getElementById('singleProductContainer')) {
@@ -900,6 +956,8 @@ async function fetchAndDisplaySettings() {
               document.body.style.overflow = '';
           }
       }
+
+      if (data.data.fomo) window.lrFomoSettings = data.data.fomo;
 
       const noticeStrip = data.data.noticeStrip || {};
       if (noticeStrip.enabled && noticeStrip.text) {
@@ -1187,6 +1245,29 @@ function renderSingleProductPage() {
   const currentOldPrice = size && size.oldPrice ? size.oldPrice : (product.oldPrice || currentPrice);
   const currentWeight = size ? size.weight : '';
 
+  // FOMO Logic
+  const savings = currentOldPrice > currentPrice ? currentOldPrice - currentPrice : 0;
+  const savingsHTML = savings > 0 ? `<div style="font-size: 13px; color: var(--green); font-weight: 600; margin-bottom: 15px;">You Save ₹${savings.toLocaleString()}!</div>` : '';
+  const viewersCount = 5 + (parseInt(product._id.substring(0, 4), 16) % 15 || 7);
+
+  // Market Comparison Logic
+  const marketAvg = currentOldPrice > currentPrice ? currentOldPrice : Math.round(currentPrice * 1.35);
+  const marketComparisonHTML = `
+    <div class="market-comparison-card">
+      <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; text-align: center; font-weight: 600;">Market Value Comparison</div>
+      <table>
+        <tr>
+          <td style="color: var(--text-secondary);">Average Market Price</td>
+          <td style="color: var(--text-secondary); text-align: right; text-decoration: line-through;">₹${marketAvg.toLocaleString()}</td>
+        </tr>
+        <tr>
+          <td style="color: var(--accent); font-weight: bold; font-size: 16px;">Living Result Launch Price</td>
+          <td style="color: var(--accent); text-align: right; font-weight: bold; font-size: 16px;">₹${currentPrice.toLocaleString()}</td>
+        </tr>
+      </table>
+    </div>
+  `;
+
   const allowedFlavors = (size && size.allowedFlavors && size.allowedFlavors.length > 0) ? size.allowedFlavors : null;
 
   // Combine active flavor image with any additional product images
@@ -1262,14 +1343,18 @@ function renderSingleProductPage() {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
           </button>
         </h1>
+        <div class="launch-pricing-badge">⚡ Introductory Launch Pricing Active</div>
         <div style="font-size: 12px; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: flex; align-items: center; gap: 6px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Verified Independent Reseller
         </div>
         ${product.glutenFree ? `<span style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(46, 204, 64, 0.2); color: var(--green); border: 1px solid var(--green); margin-bottom: 15px;">🌾 Gluten Free</span>` : ''}
           <div class="modal-price" style="margin-bottom: 5px;">₹${currentPrice.toLocaleString()} ${currentOldPrice > currentPrice ? `<span style="font-size: 14px; text-decoration: line-through; color: var(--text-muted); font-weight: normal; margin-left: 10px;">₹${currentOldPrice.toLocaleString()}</span>` : ''}</div>
+          ${savingsHTML}
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px; display: flex; align-items: center; gap: 6px;">👀 ${viewersCount} people viewing this right now</div>
           ${currentWeight ? `<div class="modal-weight" style="color: var(--accent); font-weight: 600; font-size: 14px; margin-bottom: 20px;">Weight: ${currentWeight}</div>` : ''}
           ${sizePills ? `<div class="flavor-selector" style="margin-bottom:15px;"><span class="flavor-label">Select Size:</span><div class="flavor-pills">${sizePills}</div></div>` : ''}
         <div class="flavor-selector"><span class="flavor-label">Select Flavor:</span><div class="flavor-pills">${flavorPills}</div></div>
+        ${marketComparisonHTML}
         <div style="margin: 30px 0; display: flex; flex-direction: column; gap: 12px;">
           ${flavor.inStock && (!size || size.inStock !== false)
       ? `<div style="display: flex; gap: 10px; align-items: center;">
@@ -1433,4 +1518,94 @@ async function submitReview(productId) {
   } catch (err) {
     alert("Network Error");
   }
+}
+
+// ===== SOCIAL PROOF POPUPS =====
+function initSocialProofPopups() {
+  const popups = [
+    "Aritra from Salt Lake just ordered Hydra Whey",
+    "5 orders placed from New Town in the last 24 hours",
+    "ISO Plasma is trending in Ballygunge right now",
+    "Rahul from Jadavpur just ordered Hulk Mass Gainer",
+    "Vikram from Park Street secured Launch Pricing on Creatine",
+    "12 people from South Kolkata added Biozyme Whey to their cart today"
+  ];
+  setInterval(() => {
+    const popupEl = document.getElementById('socialProofPopup');
+    if (!popupEl) return;
+    
+    const textEl = document.getElementById('socialProofText');
+    if(textEl) textEl.textContent = popups[Math.floor(Math.random() * popups.length)];
+    
+    popupEl.classList.add('active');
+    setTimeout(() => popupEl.classList.remove('active'), 5000);
+  }, 35000); // Trigger every 35 seconds
+}
+
+// ===== EXIT INTENT POPUP =====
+function initExitIntentPopup() {
+  const showExitIntent = () => {
+    // Respect Admin Master Toggle
+    if (window.lrFomoSettings && window.lrFomoSettings.exitIntent === false) return;
+    if (sessionStorage.getItem('lr_exit_intent_shown') === 'true') return;
+    
+    const popup = document.getElementById('exitIntentOverlay');
+    if (popup) {
+      popup.classList.add('active');
+      sessionStorage.setItem('lr_exit_intent_shown', 'true');
+    }
+  };
+
+  // DESKTOP: Trigger on mouse leaving viewport vertically
+  document.addEventListener('mouseleave', (e) => {
+    if (e.clientY <= 0) showExitIntent();
+  });
+
+  // MOBILE: Trigger on Back Button OR Fast Upward Scroll
+  if (window.innerWidth <= 768) {
+    // 1. History API Trick (Back Button Intercept)
+    history.pushState(null, null, location.href);
+    window.addEventListener('popstate', () => {
+      if (sessionStorage.getItem('lr_exit_intent_shown') !== 'true') {
+        showExitIntent();
+        history.pushState(null, null, location.href); // Keep them on the page this once
+      }
+    });
+
+    // 2. Fast Upward Scroll Detection
+    let lastScrollY = window.scrollY;
+    window.addEventListener('scroll', () => {
+      const currentScrollY = window.scrollY;
+      const scrollVelocity = lastScrollY - currentScrollY; // Positive = scrolling UP
+      if (currentScrollY > 300 && scrollVelocity > 80) showExitIntent(); // Rapid scroll upwards
+      lastScrollY = currentScrollY;
+    }, { passive: true });
+  }
+}
+
+function closeExitIntentPopup(e) {
+  if (e && e.target.id !== "exitIntentOverlay" && !e.target.closest('.modal-close') && !e.target.closest('.btn-primary')) return;
+  const popup = document.getElementById('exitIntentOverlay');
+  if (popup) popup.classList.remove('active');
+}
+
+// ===== EMOTIONAL FITNESS MESSAGING =====
+function initEmotionalMessaging() {
+  const messages = [
+    "Results don’t wait. Neither should you.",
+    "Your future physique depends on the choices you make today.",
+    "Serious results start with serious decisions."
+  ];
+  const el = document.getElementById('emotionalMessaging');
+  if (!el) return;
+  
+  let i = 0;
+  setInterval(() => {
+    el.style.opacity = 0;
+    setTimeout(() => {
+      i = (i + 1) % messages.length;
+      el.textContent = messages[i];
+      el.style.opacity = 1;
+    }, 500); // Wait for fade out before changing text
+  }, 5000); // Rotate every 5 seconds
 }
