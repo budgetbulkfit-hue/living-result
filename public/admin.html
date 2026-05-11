@@ -1572,22 +1572,38 @@
         async function checkAdminAuth() {
             try {
                 const res = await authFetch(`${API_URL}/auth/me`);
-                if (!res.ok) throw new Error('Not authorized');
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.message || 'Not authorized');
+                }
                 const data = await res.json();
-                if (!data.success) throw new Error();
+                if (!data.success || !data.data) throw new Error('Failed to retrieve user data');
+
+                // Explicit Admin Role Check
+                if (data.data.role !== 'admin') {
+                    showToast('Access Denied: Admin privileges required.', 'error');
+                    adminLogout(); // Force clear session
+                    return false;
+                }
 
                 document.getElementById('loginPanel').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'flex';
+                
                 const lastView = sessionStorage.getItem('adminCurrentView') || 'dashboard';
                 navigate(lastView);
+                
                 fetchAdminProducts();
                 fetchAdminCombos();
                 fetchOrders();
                 fetchGlobalSettings();
+                return true;
             } catch (err) {
-                console.warn('Admin check failed:', err);
+                console.error('Admin Auth Check Failed:', err);
+                showToast(err.message || 'Authentication failed. Please login again.', 'error');
+                
                 document.getElementById('appContainer').style.display = 'none';
                 document.getElementById('loginPanel').style.display = 'flex';
+                return false;
             }
         }
 
@@ -1610,7 +1626,7 @@
                     adminToken = data.token || '';
                     if (adminToken) localStorage.setItem('adminToken', adminToken);
                     showToast('Login successful', 'success');
-                    checkAdminAuth();
+                    await checkAdminAuth();
                 } else {
                     showToast(data.message || 'Login failed', 'error');
                 }
@@ -1631,6 +1647,7 @@
             } finally {
                 adminToken = '';
                 localStorage.removeItem('adminToken');
+                sessionStorage.removeItem('adminCurrentView');
                 window.location.reload();
             }
         }
