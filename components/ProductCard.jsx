@@ -124,22 +124,38 @@ export default function ProductCard({ product }) {
           {product.bestSeller && (
             <span className="quick-tag tag-best-seller">🔥 Best Seller</span>
           )}
+          {product.isBulking && (
+            <span className="quick-tag tag-bulking">💪 Bulking</span>
+          )}
+          {product.isMuscle && (
+            <span className="quick-tag tag-muscle">⚡ Lean Muscle</span>
+          )}
+          {product.isFatLoss && (
+            <span className="quick-tag tag-fat-loss">🔥 Fat Loss</span>
+          )}
+          {product.isStack && (
+            <span className="quick-tag tag-premium">✨ Premium Stack</span>
+          )}
           {product.glutenFree && (
             <span className="quick-tag tag-gluten-free">✓ Gluten Free</span>
           )}
           
-          {/* Automatic Category Tags based on name/description */}
-          {product.name.toLowerCase().includes('mass gainer') && (
-            <span className="quick-tag tag-bulking">💪 Bulking</span>
-          )}
-          {product.name.toLowerCase().includes('creatine') && (
-            <span className="quick-tag tag-muscle">⚡ Lean Muscle</span>
-          )}
-          {product.name.toLowerCase().includes('fat burner') && (
-            <span className="quick-tag tag-fat-loss">🔥 Fat Loss</span>
-          )}
-          {product.name.toLowerCase().includes('combo') && (
-            <span className="quick-tag tag-premium">✨ Premium Stack</span>
+          {/* Automatic Fallbacks (if no manual tag is selected) */}
+          {!product.isBulking && !product.isMuscle && !product.isFatLoss && !product.isStack && (
+            <>
+              {product.name.toLowerCase().includes('mass gainer') && (
+                <span className="quick-tag tag-bulking">💪 Bulking</span>
+              )}
+              {product.name.toLowerCase().includes('creatine') && (
+                <span className="quick-tag tag-muscle">⚡ Lean Muscle</span>
+              )}
+              {product.name.toLowerCase().includes('fat burner') && (
+                <span className="quick-tag tag-fat-loss">🔥 Fat Loss</span>
+              )}
+              {product.name.toLowerCase().includes('combo') && (
+                <span className="quick-tag tag-premium">✨ Premium Stack</span>
+              )}
+            </>
           )}
         </div>
 

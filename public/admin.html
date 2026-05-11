@@ -799,18 +799,33 @@
                             <div class="form-group" style="flex: 1;"><label>Manual Review Count</label><input
                                     type="number" id="ep-numreviews"></div>
                         </div>
-                        <div class="form-row" style="margin-bottom: 20px;">
-                            <div class="form-group" style="margin: 0;"><label>Base Stock</label><input type="number"
-                                    id="ep-stock" style="width:100px;"></div>
-                            <div class="form-group" style="margin: 0;"><label>Show Scarcity</label><label
-                                    class="toggle-switch"><input type="checkbox" id="ep-showscarcity"><span
-                                        class="toggle-slider"></span></label></div>
-                            <div class="form-group" style="margin: 0;"><label>Best Seller</label><label
-                                    class="toggle-switch"><input type="checkbox" id="ep-bestseller"><span
-                                        class="toggle-slider"></span></label></div>
-                            <div class="form-group" style="margin: 0;"><label>Gluten Free</label><label
-                                    class="toggle-switch"><input type="checkbox" id="ep-glutenfree"><span
-                                        class="toggle-slider"></span></label></div>
+                        <div class="form-row" style="margin-bottom: 20px; align-items: flex-end;">
+                            <div class="form-group" style="margin: 0;"><label>Stock</label><input type="number" id="ep-stock" style="width:100px;"></div>
+                            <div class="form-group" style="margin: 0;"><label>Show Scarcity</label><label class="toggle-switch"><input type="checkbox" id="ep-showscarcity"><span class="toggle-slider"></span></label></div>
+                            <div class="form-group" style="margin: 0;"><label>Best Seller</label><label class="toggle-switch"><input type="checkbox" id="ep-bestseller"><span class="toggle-slider"></span></label></div>
+                            <div class="form-group" style="margin: 0;"><label>Gluten Free</label><label class="toggle-switch"><input type="checkbox" id="ep-glutenfree"><span class="toggle-slider"></span></label></div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 25px;">
+                            <label style="margin-bottom: 10px; display: block;">Quick Tags (Manual)</label>
+                            <div style="display: flex; gap: 20px; flex-wrap: wrap; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <label class="toggle-switch"><input type="checkbox" id="ep-isbulking"><span class="toggle-slider"></span></label>
+                                    <span style="font-size:12px;">💪 Bulking</span>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <label class="toggle-switch"><input type="checkbox" id="ep-ismuscle"><span class="toggle-slider"></span></label>
+                                    <span style="font-size:12px;">⚡ Lean Muscle</span>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <label class="toggle-switch"><input type="checkbox" id="ep-isfatloss"><span class="toggle-slider"></span></label>
+                                    <span style="font-size:12px;">🔥 Fat Loss</span>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <label class="toggle-switch"><input type="checkbox" id="ep-isstack"><span class="toggle-slider"></span></label>
+                                    <span style="font-size:12px;">✨ Premium Stack</span>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group"><label>Description</label><textarea id="ep-desc" rows="3"></textarea>
                         </div>
@@ -1900,6 +1915,10 @@
             document.getElementById('ep-stock').value = epData.stockLeft || 0;
             document.getElementById('ep-showscarcity').checked = epData.showScarcity !== false;
             document.getElementById('ep-bestseller').checked = !!epData.bestSeller;
+            document.getElementById('ep-isbulking').checked = !!epData.isBulking;
+            document.getElementById('ep-ismuscle').checked = !!epData.isMuscle;
+            document.getElementById('ep-isfatloss').checked = !!epData.isFatLoss;
+            document.getElementById('ep-isstack').checked = !!epData.isStack;
             document.getElementById('ep-glutenfree').checked = !!epData.glutenFree;
             document.getElementById('ep-desc').value = epData.description || '';
             document.getElementById('ep-ingredients').value = epData.ingredients || '';
@@ -2128,7 +2147,11 @@
                 stockLeft: Number(document.getElementById('ep-stock').value),
                 showScarcity: document.getElementById('ep-showscarcity').checked,
                 bestSeller: document.getElementById('ep-bestseller').checked,
-                description: desc,
+                isBulking: document.getElementById('ep-isbulking').checked,
+                isMuscle: document.getElementById('ep-ismuscle').checked,
+                isFatLoss: document.getElementById('ep-isfatloss').checked,
+                isStack: document.getElementById('ep-isstack').checked,
+                glutenFree: document.getElementById('ep-glutenfree').checked,
                 ingredients: document.getElementById('ep-ingredients').value,
                 nutritionalFacts: document.getElementById('ep-nutrition').value.split('\n').filter(l => l.trim()),
                 sizes: sortedSizes,

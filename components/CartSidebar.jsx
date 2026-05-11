@@ -75,8 +75,8 @@ export default function CartSidebar({ isOpen, onClose, onCheckout }) {
 
                 {/* FOMO — Shaker Contest */}
                 <div style={{ background: 'rgba(255,106,0,0.05)', border: '1px solid rgba(255,106,0,0.2)', padding: '12px', borderRadius: '6px', marginBottom: '12px', textAlign: 'center' }}>
-                  <div style={{ color: '#fff', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>🎁 Chance to Win a Premium Shaker Worth ₹500!</div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '11px', fontStyle: 'italic' }}>Order now for a lucky draw entry! Payment for the shaker will be in WhatsApp checkout.</div>
+                  <div style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }}>⚡ BE ONE OF THE LUCKY 10!</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '11px', lineHeight: '1.4' }}>Grab a Premium Shaker (Worth ₹500) for just **₹50**! Only 10 lucky winners will be selected. Payment details via WhatsApp checkout.</div>
                 </div>
 
                 {/* FOMO — Urgency */}
