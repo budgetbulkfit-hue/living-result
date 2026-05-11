@@ -1308,6 +1308,7 @@
 
         // SPA NAVIGATION
         function navigate(viewId) {
+            sessionStorage.setItem('adminCurrentView', viewId);
             document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
 
@@ -1577,7 +1578,8 @@
 
                 document.getElementById('loginPanel').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'flex';
-                navigate('dashboard');
+                const lastView = sessionStorage.getItem('adminCurrentView') || 'dashboard';
+                navigate(lastView);
                 fetchAdminProducts();
                 fetchAdminCombos();
                 fetchOrders();
@@ -1686,7 +1688,7 @@
             if (!allCombos.length) return setTableState('adminComboTable', 7, 'No combos found');
             tb.innerHTML = allCombos.map(c => `
                 <tr>
-                    <td><img src="${c.images && c.images.length > 0 ? c.images[0] : (c.comboBanner || '')}" width="50" style="border-radius:4px; background:#fff;"></td>
+                    <td><img src="${(c.flavors && c.flavors.length > 0) ? c.flavors[0].image : (c.images && c.images.length > 0 ? c.images[0] : (c.comboBanner || ''))}" width="50" style="border-radius:4px; background:#fff;"></td>
                     <td style="font-weight: bold; color: var(--accent);">${c.comboName}</td>
                     <td style="font-size: 12px; color: var(--text-secondary);">${c.products.map(p => p.name).join(', ')}</td>
                     <td style="text-decoration: line-through; color: var(--text-muted);">₹${c.autoCalculatedMrp.toLocaleString()}</td>
