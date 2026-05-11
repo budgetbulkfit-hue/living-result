@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useCart from '@/lib/cartStore';
 import ImageGallery from './ImageGallery';
+import { subscribeToRestock } from '@/lib/api';
 
 function resolveImage(src) {
   if (!src) return null;
@@ -25,6 +26,9 @@ export default function ProductDetailClient({ product }) {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [notifyEmail, setNotifyEmail] = useState('');
+  const [showNotifyForm, setShowNotifyForm] = useState(false);
+  const [notifySuccess, setNotifySuccess] = useState(false);
 
   const flavors = product.flavors || [];
   const sizes = product.sizes || [];
@@ -39,17 +43,31 @@ export default function ProductDetailClient({ product }) {
   const isInStock = currentSize ? currentSize.inStock !== false : (currentFlavor?.inStock !== false);
 
   const handleAddToCart = () => {
-    const key = `${product._id}-${selectedFlavor}-${selectedSize}`;
-    addItem({
+    const key = product.isCombo ? `combo-${product._id}-${Date.now()}` : `${product._id}-${selectedFlavor}-${selectedSize}`;
+    
+    const itemData = {
       key,
       productId: product._id,
       name: product.name,
-      flavorName: currentFlavor?.name || 'Regular',
-      weight: currentSize?.weight || '',
+      flavorName: product.isCombo ? 'Combo Stack' : (currentFlavor?.name || 'Regular'),
+      weight: product.isCombo ? product.weight : (currentSize?.weight || ''),
       price,
-      image: resolveImage(currentFlavor?.image) || `/images/${product.slug}.png`,
+      image: product.isCombo ? product.image : (resolveImage(currentFlavor?.image) || `/images/${product.slug}.png`),
       qty,
-    });
+      isCombo: product.isCombo || false,
+    };
+
+    if (product.isCombo && product.products) {
+      // Default to first flavor for each product if isCombo
+      itemData.comboSelections = product.products.map(p => ({
+        productId: p._id,
+        name: p.name,
+        flavor: 'Regular',
+        quantity: p.quantity || 1
+      }));
+    }
+
+    addItem(itemData);
     setAddedFeedback(true);
     setTimeout(() => setAddedFeedback(false), 2000);
   };
@@ -66,6 +84,31 @@ export default function ProductDetailClient({ product }) {
       setReviewSubmitted(true);
     } catch (_) {
       setReviewSubmitted(true); // optimistic UX
+    }
+  };
+
+  const handleNotifySubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await subscribeToRestock({
+        email: notifyEmail,
+        productId: product._id,
+        variantKey: `${currentFlavor?.name || 'Regular'}-${currentSize?.weight || 'Default'}`
+      });
+      if (res.success) {
+        setNotifySuccess(true);
+        setNotifyEmail('');
+      }
+    } catch (err) {
+      console.error('Notification failed:', err);
+    }
+  };
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/');
     }
   };
 
@@ -100,7 +143,7 @@ export default function ProductDetailClient({ product }) {
 
         {/* Back */}
         <button
-          onClick={() => router.back()}
+          onClick={handleBack}
           style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px', padding: 0 }}
         >
           ← Back to Shop
@@ -166,7 +209,7 @@ export default function ProductDetailClient({ product }) {
         </div>
 
         {/* Flavor Selector */}
-        {flavors.length > 0 && (
+        {flavors.length > 0 && !product.isCombo && (
           <div className="flavor-selector">
             <span className="flavor-label">Flavor: <strong style={{ color: 'var(--text-primary)' }}>{flavors[selectedFlavor]?.name}</strong></span>
             <div className="flavor-pills">
@@ -181,6 +224,23 @@ export default function ProductDetailClient({ product }) {
                   {f.name}
                   {f.inStock === false && <span style={{ fontSize: '9px', marginLeft: '4px', color: '#e74c3c' }}>✗</span>}
                 </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Included in Stack (Combo only) */}
+        {product.isCombo && product.products && (
+          <div style={{ marginTop: '20px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: '12px', letterSpacing: '0.5px' }}>
+              Included in this Stack
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {product.products.map((p, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', borderBottom: i < product.products.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', paddingBottom: i < product.products.length - 1 ? '10px' : 0 }}>
+                  <span style={{ color: 'var(--text-primary)' }}>• {p.name}</span>
+                  <span style={{ color: 'var(--text-muted)' }}>x{p.quantity || 1}</span>
+                </div>
               ))}
             </div>
           </div>
@@ -221,7 +281,37 @@ export default function ProductDetailClient({ product }) {
               {addedFeedback ? '✓ Added to Cart!' : '🛒 Add to Cart'}
             </button>
           ) : (
-            <button className="btn-notify" style={{ flex: 1 }}>Notify When Available</button>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {!showNotifyForm && !notifySuccess && (
+                <button 
+                  className="btn-notify" 
+                  style={{ width: '100%' }}
+                  onClick={() => setShowNotifyForm(true)}
+                >
+                  Notify When Available
+                </button>
+              )}
+              
+              {showNotifyForm && !notifySuccess && (
+                <form onSubmit={handleNotifySubmit} style={{ display: 'flex', gap: '8px' }}>
+                  <input 
+                    type="email" 
+                    placeholder="Enter email" 
+                    value={notifyEmail}
+                    onChange={(e) => setNotifyEmail(e.target.value)}
+                    required
+                    style={{ flex: 1, padding: '10px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', fontSize: '13px' }}
+                  />
+                  <button type="submit" className="btn-primary" style={{ padding: '0 15px', fontSize: '12px' }}>Submit</button>
+                </form>
+              )}
+
+              {notifySuccess && (
+                <div style={{ color: 'var(--green)', fontSize: '13px', fontWeight: '600', padding: '10px', background: 'rgba(46, 204, 64, 0.1)', borderRadius: '6px', textAlign: 'center' }}>
+                  ✓ We'll notify you when restocked!
+                </div>
+              )}
+            </div>
           )}
         </div>
 

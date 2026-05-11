@@ -1988,6 +1988,19 @@ section {
   .modal-image-col {
     padding: 30px;
   }
+
+  /* Fixed Comparison Table on Mobile */
+  .market-comparison-card {
+    padding: 15px;
+    overflow-x: auto;
+  }
+  .market-comparison-card table {
+    min-width: 250px;
+  }
+  .market-comparison-card td {
+    padding: 8px 0;
+    font-size: 13px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -2021,6 +2034,23 @@ section {
 
   .modal-image-col {
     padding: 20px;
+  }
+
+  .modal-info-col h1 {
+    font-size: 22px !important;
+  }
+
+  .modal-content {
+    padding: 20px !important;
+  }
+
+  .flavor-pills {
+    gap: 6px !important;
+  }
+
+  .flavor-pill {
+    padding: 6px 12px !important;
+    font-size: 11px !important;
   }
 }
 
@@ -2207,6 +2237,25 @@ section {
 .react-share-btn:hover {
   background: var(--bg-card-hover);
   color: var(--accent);
+}
+
+/* ===== NOTIFY BUTTON ===== */
+.btn-notify {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-notify:hover {
+  background: #e74c3c;
+  color: #fff;
 }
 
 /* ===== FLOATING CART BUTTON ===== */

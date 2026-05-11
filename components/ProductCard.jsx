@@ -51,6 +51,12 @@ export default function ProductCard({ product }) {
 
   const [selectedFlavor, setSelectedFlavor] = useState(0);
   const [showFlavors, setShowFlavors] = useState(false);
+
+  // Set first in-stock flavor as default
+  useEffect(() => {
+    const firstInStock = flavors.findIndex(f => f.inStock !== false);
+    if (firstInStock !== -1) setSelectedFlavor(firstInStock);
+  }, [product.flavors]);
   const [addedFeedback, setAddedFeedback] = useState(false);
   const cardRef = useRef(null);
 
@@ -60,7 +66,9 @@ export default function ProductCard({ product }) {
   const flavors = product.flavors || [];
   const sizes = product.sizes || [];
   const hasMultipleFlavors = flavors.length > 1;
-  const isInStock = sizes.length > 0 ? sizes[0].inStock !== false : flavors[0]?.inStock !== false;
+  const isInStock = sizes.length > 0 
+    ? sizes.some(s => s.inStock !== false) 
+    : flavors.some(f => f.inStock !== false);
   const scarcity = product.scarcity;
 
   const handleAddToCart = (e) => {
@@ -179,9 +187,11 @@ export default function ProductCard({ product }) {
                 <button
                   key={idx}
                   className={`flavor-pill${selectedFlavor === idx ? ' active' : ''}`}
+                  disabled={f.inStock === false}
                   onClick={(e) => { e.stopPropagation(); setSelectedFlavor(idx); }}
+                  style={{ opacity: f.inStock === false ? 0.4 : 1, cursor: f.inStock === false ? 'not-allowed' : 'pointer' }}
                 >
-                  {f.name}
+                  {f.name} {f.inStock === false ? '(OOS)' : ''}
                 </button>
               ))}
             </div>
