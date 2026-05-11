@@ -3,13 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import useCart from '@/lib/cartStore';
-import ComboFlavorModal from './ComboFlavorModal';
 
 export default function ComboCard({ combo }) {
   const router = useRouter();
-  const [modalOpen, setModalOpen] = useState(false);
-  const [addedFeedback, setAddedFeedback] = useState(false);
-  const addItem = useCart((s) => s.addItem);
 
   const finalPrice = combo.sizes?.[0]?.price || combo.flavors?.[0]?.price || combo.finalPrice || combo.autoCalculatedPrice || 0;
   const oldPrice = combo.sizes?.[0]?.oldPrice || combo.autoCalculatedMrp || 0;
@@ -17,23 +13,6 @@ export default function ComboCard({ combo }) {
   const savingsPct = oldPrice > finalPrice ? Math.round(((oldPrice - finalPrice) / oldPrice) * 100) : 0;
   const bannerImage = combo.flavors?.[0]?.image || combo.comboBanner || combo.products?.[0]?.image || combo.images?.[0];
 
-  const handleAddToCart = ({ combo: c, comboSelections }) => {
-    const key = `combo-${c._id}-${Date.now()}`;
-    addItem({
-      key,
-      comboId: c._id,
-      name: c.comboName,
-      flavorName: 'Combo Stack',
-      weight: c.sizes?.[0]?.weight || c.totalWeight?.display || '',
-      price: c.sizes?.[0]?.price || c.flavors?.[0]?.price || c.finalPrice || c.autoCalculatedPrice || 0,
-      image: c.flavors?.[0]?.image || c.comboBanner || c.products?.[0]?.image || '',
-      qty: 1,
-      isCombo: true,
-      comboSelections,
-    });
-    setAddedFeedback(true);
-    setTimeout(() => setAddedFeedback(false), 2000);
-  };
 
   return (
     <>
@@ -103,23 +82,16 @@ export default function ComboCard({ combo }) {
             )}
           </div>
 
-          {/* Claim CTA */}
           <button
             className="btn-primary btn-combo"
-            onClick={() => setModalOpen(true)}
-            style={{ width: '100%', justifyContent: 'center', background: addedFeedback ? 'var(--green)' : 'linear-gradient(135deg, #9b59b6, #8e44ad)', boxShadow: '0 4px 20px rgba(155,89,182,0.3)' }}
+            onClick={(e) => { e.stopPropagation(); router.push(`/product/${combo.comboSlug}`); }}
+            style={{ width: '100%', justifyContent: 'center', background: 'linear-gradient(135deg, #9b59b6, #8e44ad)', boxShadow: '0 4px 20px rgba(155,89,182,0.3)' }}
           >
-            {addedFeedback ? '✓ Added to Cart!' : '⚡ Claim This Stack'}
+            ⚡ View Details
           </button>
         </div>
       </div>
 
-      <ComboFlavorModal
-        combo={combo}
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onAddToCart={handleAddToCart}
-      />
     </>
   );
 }

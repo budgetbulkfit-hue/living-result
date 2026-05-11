@@ -56,8 +56,8 @@ export default function ProductCard({ product }) {
   const flavors = product.flavors || [];
   const sizes = product.sizes || [];
   const hasMultipleFlavors = flavors.length > 1;
-  const isInStock = sizes.length > 0 
-    ? sizes.some(s => s.inStock !== false) 
+  const isInStock = sizes.length > 0
+    ? sizes.some(s => s.inStock !== false)
     : flavors.some(f => f.inStock !== false);
   const scarcity = product.scarcity;
 
@@ -102,7 +102,7 @@ export default function ProductCard({ product }) {
           {product.glutenFree && (
             <span className="quick-tag tag-gluten-free">✓ Gluten Free</span>
           )}
-          
+
           {/* Automatic Fallbacks (if no manual tag is selected) */}
           {!product.isBulking && !product.isMuscle && !product.isFatLoss && !product.isStack && (
             <>
@@ -166,7 +166,7 @@ export default function ProductCard({ product }) {
         {/* FOMO — Viewers */}
         {viewers && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', fontSize: '12px', color: 'var(--text-muted)' }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
             <span><strong style={{ color: 'var(--accent)' }}>{viewers}</strong> people viewing this right now</span>
           </div>
         )}

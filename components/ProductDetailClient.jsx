@@ -42,7 +42,8 @@ export default function ProductDetailClient({ product }) {
   const oldPrice = currentSize?.oldPrice || null;
   const savings = oldPrice && oldPrice > price ? Math.round(((oldPrice - price) / oldPrice) * 100) : 0;
   const isInStock = currentSize ? currentSize.inStock !== false : (currentFlavor?.inStock !== false);
-  const productsInCombo = product.isCombo ? (product.products || []) : [];
+  const isComboItem = product.isCombo || !!product.comboSlug;
+  const productsInCombo = isComboItem ? (product.products || product.comboProducts || []) : [];
 
   const handleComboFlavorSelect = (productId, flavorName) => {
     setComboSelections(prev => ({
@@ -52,22 +53,22 @@ export default function ProductDetailClient({ product }) {
   };
 
   const handleAddToCart = () => {
-    const key = product.isCombo ? `combo-${product._id}-${Date.now()}` : `${product._id}-${selectedFlavor}-${selectedSize}`;
+    const key = isComboItem ? `combo-${product._id}-${Date.now()}` : `${product._id}-${selectedFlavor}-${selectedSize}`;
 
     const itemData = {
       key,
       productId: product._id,
       name: product.name,
-      flavorName: product.isCombo ? (currentFlavor?.name || 'Combo Stack') : (currentFlavor?.name || 'Regular'),
-      weight: product.isCombo ? product.weight : (currentSize?.weight || ''),
+      flavorName: isComboItem ? (currentFlavor?.name || 'Combo Stack') : (currentFlavor?.name || 'Regular'),
+      weight: isComboItem ? product.weight : (currentSize?.weight || ''),
       price,
-      image: product.isCombo ? (resolveImage(currentFlavor?.image) || product.image) : (resolveImage(currentFlavor?.image) || `/images/${product.slug}.png`),
+      image: isComboItem ? (resolveImage(currentFlavor?.image) || product.image) : (resolveImage(currentFlavor?.image) || `/images/${product.slug}.png`),
       qty,
-      isCombo: product.isCombo || false,
+      isCombo: isComboItem || false,
     };
 
-    if (product.isCombo && product.products) {
-      itemData.comboSelections = product.products.map(p => ({
+    if (isComboItem && productsInCombo.length > 0) {
+      itemData.comboSelections = productsInCombo.map(p => ({
         productId: p._id,
         name: p.name,
         flavor: comboSelections[p._id] || (p.flavors?.[0]?.name || 'Regular'),
@@ -238,7 +239,7 @@ export default function ProductDetailClient({ product }) {
         )}
 
         {/* Included in Stack (Combo only) */}
-        {product.isCombo && productsInCombo.length > 0 && flavors.length === 0 && (
+        {isComboItem && productsInCombo.length > 0 && flavors.length === 0 && (
           <div style={{ marginTop: '20px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
             <div style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: '12px', letterSpacing: '0.5px' }}>
               Customize Your Stack
@@ -367,8 +368,8 @@ export default function ProductDetailClient({ product }) {
               </ul>
             </div>
           </details>
-          
-          {product.isCombo && productsInCombo.length > 0 && (
+
+          {isComboItem && productsInCombo.length > 0 && (
             <details className="accordion-item">
               <summary className="accordion-header">Stack Details / What&apos;s Included</summary>
               <div className="accordion-content">
