@@ -11,9 +11,9 @@ export default function ComboCard({ combo }) {
   const [addedFeedback, setAddedFeedback] = useState(false);
   const addItem = useCart((s) => s.addItem);
 
-  const finalPrice = combo.finalPrice || combo.autoCalculatedPrice || 0;
+  const finalPrice = combo.sizes?.[0]?.price || combo.flavors?.[0]?.price || combo.finalPrice || combo.autoCalculatedPrice || 0;
   const oldPrice = combo.sizes?.[0]?.oldPrice || combo.autoCalculatedMrp || 0;
-  const savings = combo.totalSavings || 0;
+  const savings = oldPrice > finalPrice ? oldPrice - finalPrice : (combo.totalSavings || 0);
   const savingsPct = oldPrice > finalPrice ? Math.round(((oldPrice - finalPrice) / oldPrice) * 100) : 0;
   const bannerImage = combo.flavors?.[0]?.image || combo.comboBanner || combo.products?.[0]?.image || combo.images?.[0];
 
@@ -24,8 +24,8 @@ export default function ComboCard({ combo }) {
       comboId: c._id,
       name: c.comboName,
       flavorName: 'Combo Stack',
-      weight: c.totalWeight?.display || '',
-      price: c.finalPrice || c.autoCalculatedPrice || 0,
+      weight: c.sizes?.[0]?.weight || c.totalWeight?.display || '',
+      price: c.sizes?.[0]?.price || c.flavors?.[0]?.price || c.finalPrice || c.autoCalculatedPrice || 0,
       image: c.flavors?.[0]?.image || c.comboBanner || c.products?.[0]?.image || '',
       qty: 1,
       isCombo: true,

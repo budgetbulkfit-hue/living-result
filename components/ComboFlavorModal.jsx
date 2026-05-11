@@ -4,6 +4,9 @@ import { useState } from 'react';
 
 export default function ComboFlavorModal({ combo, isOpen, onClose, onAddToCart }) {
   const [selections, setSelections] = useState({});
+  const displayPrice = combo.sizes?.[0]?.price || combo.flavors?.[0]?.price || combo.finalPrice || combo.autoCalculatedPrice || 0;
+  const oldPrice = combo.sizes?.[0]?.oldPrice || combo.autoCalculatedMrp || 0;
+  const displaySavings = oldPrice > displayPrice ? oldPrice - displayPrice : (combo.totalSavings || 0);
 
   if (!isOpen || !combo) return null;
 
@@ -85,12 +88,12 @@ export default function ComboFlavorModal({ combo, isOpen, onClose, onAddToCart }
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', padding: '12px', background: 'rgba(155,89,182,0.08)', borderRadius: '8px', border: '1px dashed rgba(155,89,182,0.3)' }}>
           <div>
             <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Stack Total</div>
-            <div style={{ fontSize: '20px', fontWeight: '700', color: '#9b59b6' }}>₹{(combo.finalPrice || combo.autoCalculatedPrice || 0).toLocaleString()}</div>
+            <div style={{ fontSize: '20px', fontWeight: '700', color: '#9b59b6' }}>₹{displayPrice.toLocaleString()}</div>
           </div>
-          {combo.totalSavings > 0 && (
+          {displaySavings > 0 && (
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>You Save</div>
-              <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--green)' }}>₹{combo.totalSavings.toLocaleString()}</div>
+              <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--green)' }}>₹{displaySavings.toLocaleString()}</div>
             </div>
           )}
         </div>
