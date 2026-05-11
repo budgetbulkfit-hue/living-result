@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import useCart from '@/lib/cartStore';
+import { EmptyCart } from './EmptyStates';
 
 export default function CartSidebar({ isOpen, onClose, onCheckout }) {
   const items = useCart((s) => s.items);
@@ -29,17 +30,7 @@ export default function CartSidebar({ isOpen, onClose, onCheckout }) {
 
         <div className="cart-sidebar-body" id="cartBody">
           {items.length === 0 ? (
-            /* ── Empty State ── */
-            <div className="cart-empty">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="1.5">
-                <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-              </svg>
-              <p>Your cart is empty</p>
-              <button className="btn-primary" onClick={onClose} style={{ fontSize: '12px', padding: '10px 24px' }}>
-                Browse Products
-              </button>
-            </div>
+            <EmptyCart onClose={onClose} />
           ) : (
             <>
               {/* ── Cart Items ── */}

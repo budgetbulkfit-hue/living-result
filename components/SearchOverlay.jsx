@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { getProducts } from '@/lib/api';
+import { EmptySearch } from './EmptyStates';
 
 export default function SearchOverlay({ isOpen, onClose }) {
   const [query, setQuery] = useState('');
@@ -79,7 +80,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
             <div className="search-no-results">Start typing to search products...</div>
           )}
           {query.trim() !== '' && results.length === 0 && (
-            <div className="search-no-results">No products found for &quot;{query}&quot;</div>
+            <EmptySearch query={query} />
           )}
           {results.map((p) => (
             <Link

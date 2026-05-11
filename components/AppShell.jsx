@@ -8,6 +8,8 @@ import CheckoutModal from './CheckoutModal';
 import SearchOverlay from './SearchOverlay';
 import SocialProofPopup from './SocialProofPopup';
 import ExitIntentWrapper from './ExitIntentWrapper';
+import MobileTrustRow from './MobileTrustRow';
+import WhatsAppQuickBuy from './WhatsAppQuickBuy';
 import useCart from '@/lib/cartStore';
 import useSettings from '@/lib/useSettings';
 
@@ -64,12 +66,18 @@ export default function AppShell({ children }) {
         </div>
       )}
 
+      {/* MOBILE TRUST ROW */}
+      <MobileTrustRow />
+
       {/* NAVBAR */}
       <Navbar
         cartCount={totalItems}
         onSearchOpen={() => setSearchOpen(true)}
         onCartOpen={() => setCartOpen(true)}
       />
+
+      {/* WHATSAPP QUICK BUY (Mobile Only) */}
+      <WhatsAppQuickBuy />
 
       {/* CART SIDEBAR */}
       {mounted && (

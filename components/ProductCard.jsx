@@ -119,25 +119,43 @@ export default function ProductCard({ product }) {
           style={{ maxHeight: '180px', objectFit: 'contain', transition: '0.3s ease' }}
         />
 
-        {/* Badges */}
-        {product.bestSeller && (
-          <span className="best-seller-badge">🔥 Best Seller</span>
-        )}
-        {product.glutenFree && (
-          <span className="gluten-free-badge">✓ Gluten Free</span>
-        )}
+        {/* Badges & Quick Tags */}
+        <div className="card-badge-container">
+          {product.bestSeller && (
+            <span className="quick-tag tag-best-seller">🔥 Best Seller</span>
+          )}
+          {product.glutenFree && (
+            <span className="quick-tag tag-gluten-free">✓ Gluten Free</span>
+          )}
+          
+          {/* Automatic Category Tags based on name/description */}
+          {product.name.toLowerCase().includes('mass gainer') && (
+            <span className="quick-tag tag-bulking">💪 Bulking</span>
+          )}
+          {product.name.toLowerCase().includes('creatine') && (
+            <span className="quick-tag tag-muscle">⚡ Lean Muscle</span>
+          )}
+          {product.name.toLowerCase().includes('fat burner') && (
+            <span className="quick-tag tag-fat-loss">🔥 Fat Loss</span>
+          )}
+          {product.name.toLowerCase().includes('combo') && (
+            <span className="quick-tag tag-premium">✨ Premium Stack</span>
+          )}
+        </div>
 
-        {/* Scarcity badge */}
-        {scarcity > 0 && scarcity <= 10 && (
-          <span className="stock-badge out-of-stock" style={{ top: product.bestSeller ? '40px' : '12px', right: '12px' }}>
-            Only {scarcity} left!
-          </span>
-        )}
-        {(!scarcity || scarcity > 10) && (
-          <span className={`stock-badge ${isInStock ? 'in-stock' : 'out-of-stock'}`} style={{ opacity: 0.8 }}>
-            {isInStock ? 'In Stock' : 'Out of Stock'}
-          </span>
-        )}
+        {/* Scarcity / Stock badge */}
+        <div className="stock-badge-container">
+          {scarcity > 0 && scarcity <= 10 && (
+            <span className="stock-badge scarcity-tag">
+              Only {scarcity} left!
+            </span>
+          )}
+          {(!scarcity || scarcity > 10) && (
+            <span className={`stock-badge ${isInStock ? 'in-stock' : 'out-of-stock'}`}>
+              {isInStock ? 'In Stock' : 'Out of Stock'}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* ── Info Section ── */}

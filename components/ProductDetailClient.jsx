@@ -266,7 +266,7 @@ export default function ProductDetailClient({ product }) {
         )}
 
         {/* Qty + Add to Cart */}
-        <div style={{ display: 'flex', gap: '12px', marginTop: '24px', alignItems: 'center' }}>
+        <div className="buy-actions-container" style={{ display: 'flex', gap: '12px', marginTop: '24px', alignItems: 'center' }}>
           <div className="qty-control">
             <button className="qty-btn" onClick={() => setQty((q) => Math.max(1, q - 1))}>−</button>
             <span className="qty-num">{qty}</span>
@@ -298,6 +298,61 @@ export default function ProductDetailClient({ product }) {
                     type="email" 
                     placeholder="Enter email" 
                     value={notifyEmail}
+                    onChange={(e) => setNotifyEmail(e.target.value)}
+                    required
+                    style={{ flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: '#fff' }}
+                  />
+                  <button type="submit" className="btn-primary" style={{ padding: '10px 20px' }}>Join</button>
+                </form>
+              )}
+              {notifySuccess && <div style={{ color: 'var(--green)', fontSize: '14px', textAlign: 'center', padding: '10px' }}>✓ You&apos;re on the list!</div>}
+            </div>
+          )}
+        </div>
+
+        {/* MOBILE STICKY BOTTOM BAR */}
+        <div className="mobile-sticky-buy-bar">
+          <div className="sticky-price-info">
+            <span className="sticky-price">₹{price.toLocaleString()}</span>
+            <span className="sticky-variant">{currentFlavor?.name || currentSize?.weight || ''}</span>
+          </div>
+          {isInStock ? (
+            <button className="btn-add-cart sticky-cta" onClick={handleAddToCart}>
+              {addedFeedback ? '✓ Added' : '🛒 Buy Now'}
+            </button>
+          ) : (
+            <button className="btn-notify sticky-cta" onClick={() => setShowNotifyForm(true)}>Notify</button>
+          )}
+        </div>
+
+        {/* Expandable Tabs/Sections */}
+        <div className="product-details-accordion" style={{ marginTop: '30px' }}>
+          <details className="accordion-item" open>
+            <summary className="accordion-header">Description</summary>
+            <div className="accordion-content">
+              <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{product.description}</p>
+            </div>
+          </details>
+
+          <details className="accordion-item">
+            <summary className="accordion-header">Benefits & Usage</summary>
+            <div className="accordion-content">
+              <ul style={{ paddingLeft: '20px', color: 'var(--text-secondary)' }}>
+                <li>✓ Professional Grade Formula</li>
+                <li>✓ Maximizes Nutrient Absorption</li>
+                <li>✓ Authentic & Lab Tested</li>
+                <li>✓ Performance Oriented</li>
+              </ul>
+            </div>
+          </details>
+
+          <details className="accordion-item">
+            <summary className="accordion-header">Shipping & Returns</summary>
+            <div className="accordion-content">
+              <p style={{ color: 'var(--text-muted)' }}>Fast delivery across India. Shipping calculated at checkout. Easy returns on damaged or wrong products.</p>
+            </div>
+          </details>
+        </div>
                     onChange={(e) => setNotifyEmail(e.target.value)}
                     required
                     style={{ flex: 1, padding: '10px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', fontSize: '13px' }}

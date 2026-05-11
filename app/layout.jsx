@@ -18,6 +18,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
+        {/* PRELOAD CRITICAL ASSETS */}
+        <link rel="preload" href="/images/logo.png" as="image" />
+        <link rel="preload" href="/images/hero-athlete.png" as="image" />
+
         {/* Google Analytics */}
         <script
           async
