@@ -82,7 +82,7 @@ export default function ImageGallery({ images = [], flavors = [], selectedFlavor
         ref={mainRef}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        style={{ width: '100%', position: 'relative', minHeight: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '8px', background: 'rgba(255,255,255,0.02)' }}
+        style={{ width: '100%', position: 'relative', minHeight: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '8px', background: 'rgba(255,255,255,0.02)' }}
       >
         {/* Magnifying Glass */}
         {showMagnifier && (
@@ -117,7 +117,7 @@ export default function ImageGallery({ images = [], flavors = [], selectedFlavor
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           onClick={() => setIsLightboxOpen(true)}
-          style={{ maxHeight: '360px', maxWidth: '100%', objectFit: 'contain', transition: 'opacity 0.2s ease', cursor: 'zoom-in', zIndex: 1 }}
+          style={{ maxHeight: '550px', maxWidth: '100%', objectFit: 'contain', transition: 'opacity 0.2s ease', cursor: 'zoom-in', zIndex: 1 }}
           onError={(e) => { e.target.src = '/images/hydra-whey-protein.png'; e.target.onerror = null; }}
         />
 

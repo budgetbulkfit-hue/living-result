@@ -29,6 +29,7 @@ export default function ProductDetailClient({ product }) {
   const [notifyEmail, setNotifyEmail] = useState('');
   const [showNotifyForm, setShowNotifyForm] = useState(false);
   const [notifySuccess, setNotifySuccess] = useState(false);
+  const [comboSelections, setComboSelections] = useState({});
 
   const flavors = product.flavors || [];
   const sizes = product.sizes || [];
@@ -41,6 +42,14 @@ export default function ProductDetailClient({ product }) {
   const oldPrice = currentSize?.oldPrice || null;
   const savings = oldPrice && oldPrice > price ? Math.round(((oldPrice - price) / oldPrice) * 100) : 0;
   const isInStock = currentSize ? currentSize.inStock !== false : (currentFlavor?.inStock !== false);
+  const productsInCombo = product.isCombo ? (product.products || []) : [];
+
+  const handleComboFlavorSelect = (productId, flavorName) => {
+    setComboSelections(prev => ({
+      ...prev,
+      [productId]: flavorName
+    }));
+  };
 
   const handleAddToCart = () => {
     const key = product.isCombo ? `combo-${product._id}-${Date.now()}` : `${product._id}-${selectedFlavor}-${selectedSize}`;
@@ -58,11 +67,10 @@ export default function ProductDetailClient({ product }) {
     };
 
     if (product.isCombo && product.products) {
-      // Default to first flavor for each product if isCombo
       itemData.comboSelections = product.products.map(p => ({
         productId: p._id,
         name: p.name,
-        flavor: 'Regular',
+        flavor: comboSelections[p._id] || (p.flavors?.[0]?.name || 'Regular'),
         quantity: p.quantity || 1
       }));
     }
@@ -230,16 +238,34 @@ export default function ProductDetailClient({ product }) {
         )}
 
         {/* Included in Stack (Combo only) */}
-        {product.isCombo && product.products && (
+        {product.isCombo && productsInCombo.length > 0 && (
           <div style={{ marginTop: '20px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
             <div style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: '12px', letterSpacing: '0.5px' }}>
-              Included in this Stack
+              Customize Your Stack
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {product.products.map((p, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', borderBottom: i < product.products.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', paddingBottom: i < product.products.length - 1 ? '10px' : 0 }}>
-                  <span style={{ color: 'var(--text-primary)' }}>• {p.name}</span>
-                  <span style={{ color: 'var(--text-muted)' }}>x{p.quantity || 1}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {productsInCombo.map((p, i) => (
+                <div key={i} style={{ borderBottom: i < productsInCombo.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', paddingBottom: i < productsInCombo.length - 1 ? '16px' : 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '8px' }}>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{p.name}</span>
+                    <span style={{ color: 'var(--text-muted)' }}>x{p.quantity || 1}</span>
+                  </div>
+                  {p.flavors && p.flavors.length > 0 ? (
+                    <div className="flavor-pills" style={{ marginTop: '8px' }}>
+                      {p.flavors.map((f, fi) => (
+                        <button
+                          key={fi}
+                          className={`flavor-pill${(comboSelections[p._id] === f.name || (!comboSelections[p._id] && fi === 0)) ? ' active' : ''}`}
+                          onClick={() => handleComboFlavorSelect(p._id, f.name)}
+                          style={{ fontSize: '11px', padding: '4px 10px' }}
+                        >
+                          {f.name}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Regular Flavor</div>
+                  )}
                 </div>
               ))}
             </div>

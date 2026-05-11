@@ -15,7 +15,7 @@ export default function ComboCard({ combo }) {
   const oldPrice = combo.sizes?.[0]?.oldPrice || combo.autoCalculatedMrp || 0;
   const savings = combo.totalSavings || 0;
   const savingsPct = oldPrice > finalPrice ? Math.round(((oldPrice - finalPrice) / oldPrice) * 100) : 0;
-  const bannerImage = combo.comboBanner || combo.images?.[0] || combo.products?.[0]?.image;
+  const bannerImage = combo.comboBanner || combo.products?.[0]?.image || combo.images?.[0];
 
   const handleAddToCart = ({ combo: c, comboSelections }) => {
     const key = `combo-${c._id}-${Date.now()}`;
