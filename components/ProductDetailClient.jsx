@@ -366,12 +366,6 @@ export default function ProductDetailClient({ product }) {
             </details>
           )}
 
-          <details className="accordion-item">
-            <summary className="accordion-header">Shipping & Returns</summary>
-            <div className="accordion-content">
-              <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Fast delivery across India. Shipping calculated at checkout. Easy returns on damaged or wrong products.</p>
-            </div>
-          </details>
 
           <details className="accordion-item">
             <summary className="accordion-header">Customer Reviews ({reviews.length})</summary>
