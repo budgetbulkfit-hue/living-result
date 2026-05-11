@@ -116,8 +116,8 @@ export default function ImageGallery({ images = [], flavors = [], selectedFlavor
           onMouseMove={handleMouseMove}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          onClick={() => window.innerWidth > 900 && setIsLightboxOpen(true)}
-          style={{ maxHeight: '360px', maxWidth: '100%', objectFit: 'contain', transition: 'opacity 0.2s ease', cursor: window.innerWidth > 900 ? 'zoom-in' : 'pointer', zIndex: 1 }}
+          onClick={() => setIsLightboxOpen(true)}
+          style={{ maxHeight: '360px', maxWidth: '100%', objectFit: 'contain', transition: 'opacity 0.2s ease', cursor: 'zoom-in', zIndex: 1 }}
           onError={(e) => { e.target.src = '/images/hydra-whey-protein.png'; e.target.onerror = null; }}
         />
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import ComboCard from './ComboCard';
 
@@ -15,6 +15,28 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
   const [viewAll, setViewAll] = useState(false);
   const [activeSubCat, setActiveSubCat] = useState('All');
   const scrollRef = useRef(null);
+
+  // Restore state from sessionStorage on mount
+  useEffect(() => {
+    const savedTab = sessionStorage.getItem('lr_activeTab');
+    const savedSubCat = sessionStorage.getItem('lr_activeSubCat');
+    if (savedTab) setActiveTab(savedTab);
+    if (savedSubCat) setActiveSubCat(savedSubCat);
+  }, []);
+
+  // Save state to sessionStorage on change
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setViewAll(false);
+    setActiveSubCat('All');
+    sessionStorage.setItem('lr_activeTab', tab);
+    sessionStorage.setItem('lr_activeSubCat', 'All');
+  };
+
+  const handleSubCatChange = (cat) => {
+    setActiveSubCat(cat);
+    sessionStorage.setItem('lr_activeSubCat', cat);
+  };
 
   let baseProducts = [];
   if (activeTab === 'unique') baseProducts = uniqueProducts;
@@ -69,13 +91,13 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
 
         {/* ── Tab Bar ── */}
         <div style={{ display: 'flex', gap: '4px', borderBottom: '1px solid var(--border)', marginBottom: '24px', overflowX: 'auto' }}>
-          <button style={tabStyle('unique')} onClick={() => { setActiveTab('unique'); setViewAll(false); setActiveSubCat('All'); }}>
+          <button style={tabStyle('unique')} onClick={() => handleTabChange('unique')}>
             Unique Collection
           </button>
-          <button style={tabStyle('common')} onClick={() => { setActiveTab('common'); setViewAll(false); setActiveSubCat('All'); }}>
+          <button style={tabStyle('common')} onClick={() => handleTabChange('common')}>
             Everyday Essentials
           </button>
-          <button style={tabStyle('combos')} onClick={() => { setActiveTab('combos'); setViewAll(true); setActiveSubCat('All'); }}>
+          <button style={tabStyle('combos')} onClick={() => handleTabChange('combos')}>
             💎 Premium Stacks
           </button>
         </div>
@@ -124,7 +146,7 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
               <button
                 key={cat}
                 className={`flavor-pill${activeSubCat === cat ? ' active' : ''}`}
-                onClick={() => setActiveSubCat(cat)}
+                onClick={() => handleSubCatChange(cat)}
                 style={{ padding: '8px 18px', fontSize: '13px' }}
               >
                 {cat}

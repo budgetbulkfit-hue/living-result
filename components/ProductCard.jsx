@@ -126,7 +126,7 @@ export default function ProductCard({ product }) {
           </span>
         )}
         {(!scarcity || scarcity > 10) && (
-          <span className="stock-badge in-stock" style={{ opacity: 0.8 }}>
+          <span className={`stock-badge ${isInStock ? 'in-stock' : 'out-of-stock'}`} style={{ opacity: 0.8 }}>
             {isInStock ? 'In Stock' : 'Out of Stock'}
           </span>
         )}

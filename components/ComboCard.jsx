@@ -35,7 +35,7 @@ export default function ComboCard({ combo }) {
 
   return (
     <>
-      <div className="product-card combo-card" style={{ position: 'relative' }}>
+      <div className="product-card combo-card" onClick={() => setModalOpen(true)} style={{ position: 'relative', cursor: 'pointer' }}>
         {/* Purple Stack badge */}
         <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'linear-gradient(135deg, #9b59b6, #8e44ad)', color: '#fff', padding: '4px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', zIndex: 2, boxShadow: '0 2px 8px rgba(155,89,182,0.4)' }}>
           💎 Premium Stack
