@@ -44,7 +44,7 @@ export default function ProductDetailClient({ product }) {
 
   const handleAddToCart = () => {
     const key = product.isCombo ? `combo-${product._id}-${Date.now()}` : `${product._id}-${selectedFlavor}-${selectedSize}`;
-    
+
     const itemData = {
       key,
       productId: product._id,
@@ -162,7 +162,7 @@ export default function ProductDetailClient({ product }) {
           <button
             onClick={() => {
               if (navigator.share) {
-                navigator.share({ title: product.name, url: window.location.href }).catch(()=>{});
+                navigator.share({ title: product.name, url: window.location.href }).catch(() => { });
               } else {
                 navigator.clipboard.writeText(window.location.href);
                 alert('Link copied to clipboard!');
@@ -173,8 +173,8 @@ export default function ProductDetailClient({ product }) {
             aria-label="Share"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
             </svg>
           </button>
         </div>
@@ -283,20 +283,20 @@ export default function ProductDetailClient({ product }) {
           ) : (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {!showNotifyForm && !notifySuccess && (
-                <button 
-                  className="btn-notify" 
+                <button
+                  className="btn-notify"
                   style={{ width: '100%' }}
                   onClick={() => setShowNotifyForm(true)}
                 >
                   Notify When Available
                 </button>
               )}
-              
+
               {showNotifyForm && !notifySuccess && (
                 <form onSubmit={handleNotifySubmit} style={{ display: 'flex', gap: '8px' }}>
-                  <input 
-                    type="email" 
-                    placeholder="Enter email" 
+                  <input
+                    type="email"
+                    placeholder="Enter email"
                     value={notifyEmail}
                     onChange={(e) => setNotifyEmail(e.target.value)}
                     required
@@ -325,19 +325,15 @@ export default function ProductDetailClient({ product }) {
           )}
         </div>
 
-        {/* Expandable Tabs/Sections */}
+        {/* Product Information Accordion (Mobile Friendly) */}
         <div className="product-details-accordion" style={{ marginTop: '30px' }}>
           <details className="accordion-item" open>
-            <summary className="accordion-header">Description</summary>
+            <summary className="accordion-header">Description & About</summary>
             <div className="accordion-content">
-              <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{product.description}</p>
-            </div>
-          </details>
-
-          <details className="accordion-item">
-            <summary className="accordion-header">Benefits & Usage</summary>
-            <div className="accordion-content">
-              <ul style={{ paddingLeft: '20px', color: 'var(--text-secondary)' }}>
+              <p style={{ color: 'var(--text-secondary)', lineHeight: '1.6', fontSize: '14px' }}>
+                {product.description || 'Premium quality supplement for serious athletes.'}
+              </p>
+              <ul style={{ marginTop: '15px', paddingLeft: '20px', color: 'var(--text-secondary)', fontSize: '13px' }}>
                 <li>✓ Professional Grade Formula</li>
                 <li>✓ Maximizes Nutrient Absorption</li>
                 <li>✓ Authentic & Lab Tested</li>
@@ -346,135 +342,89 @@ export default function ProductDetailClient({ product }) {
             </div>
           </details>
 
+          {product.nutritionalFacts && product.nutritionalFacts.length > 0 && (
+            <details className="accordion-item">
+              <summary className="accordion-header">Nutritional Facts</summary>
+              <div className="accordion-content">
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {product.nutritionalFacts.map((line, idx) => (
+                    <div key={idx} style={{ padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-secondary)', fontSize: '13px' }}>
+                      {line}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </details>
+          )}
+
+          {product.ingredients && (
+            <details className="accordion-item">
+              <summary className="accordion-header">Ingredients</summary>
+              <div className="accordion-content">
+                <p style={{ color: 'var(--text-secondary)', fontSize: '13px', lineHeight: '1.6' }}>{product.ingredients}</p>
+              </div>
+            </details>
+          )}
+
           <details className="accordion-item">
             <summary className="accordion-header">Shipping & Returns</summary>
             <div className="accordion-content">
-              <p style={{ color: 'var(--text-muted)' }}>Fast delivery across India. Shipping calculated at checkout. Easy returns on damaged or wrong products.</p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Fast delivery across India. Shipping calculated at checkout. Easy returns on damaged or wrong products.</p>
+            </div>
+          </details>
+
+          <details className="accordion-item">
+            <summary className="accordion-header">Customer Reviews ({reviews.length})</summary>
+            <div className="accordion-content">
+              {reviews.length === 0 && !reviewSubmitted && (
+                <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No reviews yet. Be the first!</p>
+              )}
+              {reviews.slice(0, 5).map((r, i) => (
+                <div key={i} style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <span style={{ fontWeight: '600', fontSize: '13px' }}>{r.name}</span>
+                    <span style={{ color: '#f5a623', fontSize: '12px' }}>{'★'.repeat(r.rating)}</span>
+                  </div>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>{r.comment}</p>
+                </div>
+              ))}
+
+              {reviewSubmitted ? (
+                <div style={{ color: 'var(--green)', fontSize: '13px', fontWeight: '600', marginTop: '16px' }}>✓ Thank you! Review submitted.</div>
+              ) : (
+                <form onSubmit={handleSubmitReview} style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <input value={reviewName} onChange={(e) => setReviewName(e.target.value)} required placeholder="Your name" style={{ padding: '10px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', fontSize: '12px' }} />
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <button key={s} type="button" onClick={() => setReviewRating(s)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: s <= reviewRating ? '#f5a623' : 'var(--border)' }}>★</button>
+                    ))}
+                  </div>
+                  <textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} required placeholder="Your feedback..." rows={2} style={{ padding: '10px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', fontSize: '12px' }} />
+                  <button type="submit" className="btn-primary" style={{ padding: '8px 20px', fontSize: '12px' }}>Submit</button>
+                </form>
+              )}
             </div>
           </details>
         </div>
-                    onChange={(e) => setNotifyEmail(e.target.value)}
-                    required
-                    style={{ flex: 1, padding: '10px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', fontSize: '13px' }}
-                  />
-                  <button type="submit" className="btn-primary" style={{ padding: '0 15px', fontSize: '12px' }}>Submit</button>
-                </form>
-              )}
 
-              {notifySuccess && (
-                <div style={{ color: 'var(--green)', fontSize: '13px', fontWeight: '600', padding: '10px', background: 'rgba(46, 204, 64, 0.1)', borderRadius: '6px', textAlign: 'center' }}>
-                  ✓ We'll notify you when restocked!
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Market Comparison */}
+        {/* Market Comparison Card (Trust Factor) */}
         {oldPrice && oldPrice > price && (
           <div className="market-comparison-card">
-            <table>
+            <table style={{ width: '100%' }}>
               <tbody>
                 <tr>
-                  <td style={{ color: 'var(--text-muted)' }}>Market Price (MRP)</td>
-                  <td style={{ textAlign: 'right', textDecoration: 'line-through', color: 'var(--text-muted)' }}>₹{oldPrice.toLocaleString()}</td>
+                  <td style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Market Price (MRP)</td>
+                  <td style={{ textAlign: 'right', textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '13px' }}>₹{oldPrice.toLocaleString()}</td>
                 </tr>
                 <tr>
-                  <td style={{ color: '#fff', fontWeight: 'bold' }}>Living Result Price</td>
-                  <td style={{ textAlign: 'right', color: 'var(--accent)', fontWeight: 'bold' }}>₹{price.toLocaleString()}</td>
+                  <td style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>Living Result Price</td>
+                  <td style={{ textAlign: 'right', color: 'var(--accent)', fontWeight: 'bold', fontSize: '16px' }}>₹{price.toLocaleString()}</td>
                 </tr>
               </tbody>
             </table>
-            <div style={{ marginTop: '8px', textAlign: 'center', fontSize: '13px', color: 'var(--green)', fontWeight: 'bold' }}>
-              💰 You save ₹{(oldPrice - price).toLocaleString()}!
+            <div style={{ marginTop: '10px', textAlign: 'center', fontSize: '13px', color: 'var(--green)', fontWeight: 'bold' }}>
+              💰 Instant Savings of ₹{(oldPrice - price).toLocaleString()}!
             </div>
-          </div>
-        )}
-
-        {/* Scarcity */}
-        {product.scarcity > 0 && product.scarcity <= 10 && (
-          <div style={{ color: '#e74c3c', fontSize: '13px', fontWeight: '600', marginTop: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            ⚡ Only {product.scarcity} left in stock — order soon!
-          </div>
-        )}
-
-        {/* Info Tabs */}
-        <div className="modal-tabs" style={{ marginTop: '28px' }}>
-          {['about', 'nutrition', 'ingredients', 'reviews'].map((tab) => (
-            <button key={tab} style={tabBtnStyle(tab)} onClick={() => setActiveTab(tab)}>
-              {tab === 'about' ? 'About' : tab === 'nutrition' ? 'Nutritional Facts' : tab === 'ingredients' ? 'Ingredients' : `Reviews (${reviews.length})`}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab: About */}
-        {activeTab === 'about' && (
-          <div className="modal-tab-content active" style={{ display: 'block' }}>
-            <p style={{ lineHeight: 1.8, fontSize: '14px', color: 'var(--text-secondary)' }}>{product.description || 'Premium quality supplement for serious athletes.'}</p>
-          </div>
-        )}
-
-        {/* Tab: Nutrition */}
-        {activeTab === 'nutrition' && (
-          <div className="modal-tab-content active" style={{ display: 'block' }}>
-            {product.nutritionalFacts && product.nutritionalFacts.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {product.nutritionalFacts.map((line, idx) => (
-                  <div key={idx} style={{ padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-secondary)', fontSize: '14px' }}>
-                    {line}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p style={{ color: 'var(--text-muted)', fontSize: '14px', fontStyle: 'italic' }}>Nutrition details not available. Please check the product label.</p>
-            )}
-          </div>
-        )}
-
-        {/* Tab: Ingredients */}
-        {activeTab === 'ingredients' && (
-          <div className="modal-tab-content active" style={{ display: 'block' }}>
-            {product.ingredients ? (
-              <p style={{ lineHeight: 1.8, fontSize: '14px', color: 'var(--text-secondary)' }}>{product.ingredients}</p>
-            ) : (
-              <p style={{ color: 'var(--text-muted)', fontSize: '14px', fontStyle: 'italic' }}>
-                Ingredients not listed.
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Tab: Reviews */}
-        {activeTab === 'reviews' && (
-          <div className="modal-tab-content active" style={{ display: 'block' }}>
-            {reviews.length === 0 && !reviewSubmitted && (
-              <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px' }}>No reviews yet. Be the first!</p>
-            )}
-            {reviews.slice(0, 5).map((r, i) => (
-              <div key={i} style={{ padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <span style={{ fontWeight: '600', fontSize: '14px' }}>{r.name}</span>
-                  <span style={{ color: '#f5a623', fontSize: '13px' }}>{'★'.repeat(r.rating)}</span>
-                </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>{r.comment}</p>
-              </div>
-            ))}
-            {/* Review Form */}
-            {reviewSubmitted ? (
-              <div style={{ color: 'var(--green)', fontSize: '14px', fontWeight: '600', marginTop: '16px' }}>✓ Thank you for your review!</div>
-            ) : (
-              <form onSubmit={handleSubmitReview} style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>Write a Review</div>
-                <input value={reviewName} onChange={(e) => setReviewName(e.target.value)} required placeholder="Your name" style={{ padding: '10px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', fontSize: '13px' }} />
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <button key={s} type="button" onClick={() => setReviewRating(s)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: s <= reviewRating ? '#f5a623' : 'var(--border)' }}>★</button>
-                  ))}
-                </div>
-                <textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} required placeholder="Share your experience..." rows={3} style={{ padding: '10px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', fontSize: '13px', resize: 'vertical' }} />
-                <button type="submit" className="btn-primary" style={{ alignSelf: 'flex-start', padding: '10px 24px', fontSize: '13px' }}>Submit Review</button>
-              </form>
-            )}
           </div>
         )}
       </div>
