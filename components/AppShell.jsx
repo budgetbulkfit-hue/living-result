@@ -45,7 +45,7 @@ export default function AppShell({ children }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.97)' }}>
           <div style={{ textAlign: 'center', padding: '40px', background: '#0a0a0a', borderRadius: '12px', border: '1px solid var(--border)', maxWidth: '500px', margin: 'auto' }}>
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" style={{ marginBottom: '20px' }}>
-              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
             </svg>
             <h1 style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', textTransform: 'uppercase', marginBottom: '20px', fontSize: '28px' }}>
               Maintenance <span style={{ color: 'var(--accent)' }}>Break</span>
@@ -107,7 +107,10 @@ export default function AppShell({ children }) {
 
       {/* SOCIAL PROOF POPUP — fires after 12–18s */}
       {mounted && (
-        <SocialProofPopup enabled={fomoSettings?.socialProof !== false} />
+        <SocialProofPopup
+          enabled={fomoSettings?.socialProof !== false}
+          interval={fomoSettings?.popupInterval || 35}
+        />
       )}
 
       {/* EXIT INTENT */}
@@ -126,8 +129,8 @@ export default function AppShell({ children }) {
           onClick={() => setCartOpen(true)}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
           </svg>
           View Cart
           <span className="floating-cart-count">{totalItems}</span>

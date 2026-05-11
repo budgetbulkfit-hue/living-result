@@ -7,7 +7,7 @@ const NAMES = ['Rohan', 'Priya', 'Arjun', 'Kavya', 'Rahul', 'Neha', 'Vikram', 'S
 const KOLKATA_LOCATIONS = ['Salt Lake', 'New Town', 'Park Street', 'Ballygunge', 'Howrah', 'Jadavpur', 'Behala', 'Gariahat', 'Dum Dum', 'Rajarhat'];
 const FALLBACK_PRODUCTS = ['Hydra Whey Protein', 'Hydra Mass Gainer', 'ISO Plasma Zero', 'Hulk Mass Gainer', 'Creatine Monohydrate', 'Whey Protein Blend'];
 
-export default function SocialProofPopup({ enabled = true }) {
+export default function SocialProofPopup({ enabled = true, interval = 35 }) {
   const [visible, setVisible] = useState(false);
   const [message, setMessage] = useState('');
   const [orders, setOrders] = useState([]);
@@ -28,16 +28,16 @@ export default function SocialProofPopup({ enabled = true }) {
       if (orders.length > 0) {
         const order = orders[indexRef.current % orders.length];
         const productName = order.products?.[0]?.name || FALLBACK_PRODUCTS[Math.floor(Math.random() * FALLBACK_PRODUCTS.length)];
-        
+
         // Extract city/location from order, fallback to a random Kolkata location
         let location = order.customerDetails?.address?.split(',').pop()?.trim() || '';
         if (!location || location.toLowerCase() === 'india' || location.toLowerCase() === 'in') {
           location = KOLKATA_LOCATIONS[Math.floor(Math.random() * KOLKATA_LOCATIONS.length)];
         }
-        
+
         // Use a random name instead of 'Someone'
         const randomName = NAMES[Math.floor(Math.random() * NAMES.length)];
-        
+
         msg = `${randomName} just ordered ${productName} from ${location}!`;
         indexRef.current++;
       } else {
@@ -52,19 +52,29 @@ export default function SocialProofPopup({ enabled = true }) {
       setTimeout(() => setVisible(false), 4000);
     };
 
-    // First popup after 12–18s (jitter)
-    const firstDelay = 12000 + Math.random() * 6000;
-    const firstTimer = setTimeout(() => {
+    const scheduleNext = () => {
+      const baseIntervalMs = interval * 1000;
+      // Add +/- 40% jitter to make it feel organic
+      const jitter = baseIntervalMs * 0.4 * (Math.random() * 2 - 1);
+      const nextDelay = Math.max(10000, baseIntervalMs + jitter);
+
+      timerRef.current = setTimeout(() => {
+        showNext();
+        scheduleNext();
+      }, nextDelay);
+    };
+
+    // Initial start with a random delay between 10-20 seconds
+    const firstDelay = 10000 + Math.random() * 10000;
+    timerRef.current = setTimeout(() => {
       showNext();
-      // Then repeat every 25–40s
-      timerRef.current = setInterval(() => showNext(), 25000 + Math.random() * 15000);
+      scheduleNext();
     }, firstDelay);
 
     return () => {
-      clearTimeout(firstTimer);
-      clearInterval(timerRef.current);
+      clearTimeout(timerRef.current);
     };
-  }, [enabled, orders]);
+  }, [enabled, orders, interval]);
 
   return (
     <div
@@ -74,7 +84,7 @@ export default function SocialProofPopup({ enabled = true }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div style={{ width: '40px', height: '40px', background: 'rgba(255,106,0,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" />
           </svg>
         </div>
         <div>
