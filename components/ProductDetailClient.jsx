@@ -367,6 +367,25 @@ export default function ProductDetailClient({ product }) {
               </ul>
             </div>
           </details>
+          
+          {product.isCombo && productsInCombo.length > 0 && (
+            <details className="accordion-item">
+              <summary className="accordion-header">Stack Details / What&apos;s Included</summary>
+              <div className="accordion-content">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {productsInCombo.map((p, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', borderBottom: i < productsInCombo.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                      {p.image && <img src={resolveImage(p.image)} alt={p.name} style={{ width: '40px', height: '40px', objectFit: 'contain', background: '#fff', borderRadius: '4px', padding: '2px' }} />}
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{p.name}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Quantity: {p.quantity || 1}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </details>
+          )}
 
           {product.nutritionalFacts && product.nutritionalFacts.length > 0 && (
             <details className="accordion-item">

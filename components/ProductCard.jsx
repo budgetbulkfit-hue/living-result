@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import useCart from '@/lib/cartStore';
 
 // Random viewer count between 3 and 27 — client-only, set on mount to avoid hydration mismatch
 function useViewerCount() {
@@ -45,18 +44,9 @@ function getSavingsPercent(price, oldPrice) {
 
 export default function ProductCard({ product }) {
   const router = useRouter();
-  const addItem = useCart((s) => s.addItem);
   const viewers = useViewerCount();
   const reviewCount = useReviewCount(product.reviewCount ?? product.reviews?.length ?? null);
 
-  const [selectedFlavor, setSelectedFlavor] = useState(0);
-  const [showFlavors, setShowFlavors] = useState(false);
-
-  // Set first in-stock flavor as default
-  useEffect(() => {
-    const firstInStock = flavors.findIndex(f => f.inStock !== false);
-    if (firstInStock !== -1) setSelectedFlavor(firstInStock);
-  }, [product.flavors]);
   const [addedFeedback, setAddedFeedback] = useState(false);
   const cardRef = useRef(null);
 
@@ -71,33 +61,6 @@ export default function ProductCard({ product }) {
     : flavors.some(f => f.inStock !== false);
   const scarcity = product.scarcity;
 
-  const handleAddToCart = (e) => {
-    e.stopPropagation();
-    // If multiple flavors — show inline flavor picker
-    if (hasMultipleFlavors && !showFlavors) {
-      setShowFlavors(true);
-      return;
-    }
-    // Add to cart
-    const flavor = flavors[selectedFlavor] || flavors[0] || {};
-    const size = sizes[0];
-    const itemPrice = size?.price || flavor.price || price;
-    const weight = size?.weight || '';
-    const key = `${product._id}-${selectedFlavor}-0`;
-    addItem({
-      key,
-      productId: product._id,
-      name: product.name,
-      flavorName: flavor.name || 'Regular',
-      weight,
-      price: itemPrice,
-      image: getProductImage(product, selectedFlavor),
-      qty: 1,
-    });
-    setShowFlavors(false);
-    setAddedFeedback(true);
-    setTimeout(() => setAddedFeedback(false), 1500);
-  };
 
   const handleCardClick = () => {
     router.push(`/product/${product.slug}`);
@@ -113,7 +76,7 @@ export default function ProductCard({ product }) {
       {/* ── Image Section ── */}
       <div className="product-image">
         <img
-          src={getProductImage(product, selectedFlavor)}
+          src={getProductImage(product, 0)}
           alt={product.name}
           onError={(e) => { e.target.src = `/images/${product.slug}.png`; e.target.onerror = null; }}
           style={{ maxHeight: '180px', objectFit: 'contain', transition: '0.3s ease' }}
@@ -208,56 +171,15 @@ export default function ProductCard({ product }) {
           </div>
         )}
 
-        {/* Inline Flavor Picker (shown when user clicks Add) */}
-        {showFlavors && (
-          <div
-            className="flavor-selector"
-            onClick={(e) => e.stopPropagation()}
-            style={{ marginBottom: '10px' }}
-          >
-            <span className="flavor-label">Select Flavor:</span>
-            <div className="flavor-pills">
-              {flavors.map((f, idx) => (
-                <button
-                  key={idx}
-                  className={`flavor-pill${selectedFlavor === idx ? ' active' : ''}`}
-                  disabled={f.inStock === false}
-                  onClick={(e) => { e.stopPropagation(); setSelectedFlavor(idx); }}
-                  style={{ opacity: f.inStock === false ? 0.4 : 1, cursor: f.inStock === false ? 'not-allowed' : 'pointer' }}
-                >
-                  {f.name} {f.inStock === false ? '(OOS)' : ''}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
-        {/* Add to Cart Button */}
-        {isInStock ? (
-          <button
-            className="btn-add-cart"
-            onClick={handleAddToCart}
-            style={{ width: '100%', background: addedFeedback ? 'var(--green)' : 'var(--accent)' }}
-          >
-            {addedFeedback ? (
-              <>✓ Added to Cart</>
-            ) : showFlavors ? (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
-                Confirm &amp; Add
-              </>
-            ) : (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                Add to Cart
-              </>
-            )}
-          </button>
-        ) : (
-          <button className="btn-notify" onClick={(e) => e.stopPropagation()}>
-            Notify When Available
-          </button>
-        )}
+        {/* View Product Button */}
+        <button
+          className="btn-add-cart"
+          onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
+          style={{ width: '100%', background: 'var(--accent)', justifyContent: 'center', textTransform: 'uppercase', fontWeight: '800', letterSpacing: '1px' }}
+        >
+          ⚡ View Details
+        </button>
       </div>
     </div>
   );
