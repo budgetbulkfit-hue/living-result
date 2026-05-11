@@ -58,10 +58,10 @@ export default function ProductDetailClient({ product }) {
       key,
       productId: product._id,
       name: product.name,
-      flavorName: product.isCombo ? 'Combo Stack' : (currentFlavor?.name || 'Regular'),
+      flavorName: product.isCombo ? (currentFlavor?.name || 'Combo Stack') : (currentFlavor?.name || 'Regular'),
       weight: product.isCombo ? product.weight : (currentSize?.weight || ''),
       price,
-      image: product.isCombo ? product.image : (resolveImage(currentFlavor?.image) || `/images/${product.slug}.png`),
+      image: product.isCombo ? (resolveImage(currentFlavor?.image) || product.image) : (resolveImage(currentFlavor?.image) || `/images/${product.slug}.png`),
       qty,
       isCombo: product.isCombo || false,
     };
@@ -217,7 +217,7 @@ export default function ProductDetailClient({ product }) {
         </div>
 
         {/* Flavor Selector */}
-        {flavors.length > 0 && !product.isCombo && (
+        {flavors.length > 0 && (
           <div className="flavor-selector">
             <span className="flavor-label">Flavor: <strong style={{ color: 'var(--text-primary)' }}>{flavors[selectedFlavor]?.name}</strong></span>
             <div className="flavor-pills">
@@ -238,7 +238,7 @@ export default function ProductDetailClient({ product }) {
         )}
 
         {/* Included in Stack (Combo only) */}
-        {product.isCombo && productsInCombo.length > 0 && (
+        {product.isCombo && productsInCombo.length > 0 && flavors.length === 0 && (
           <div style={{ marginTop: '20px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
             <div style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: '12px', letterSpacing: '0.5px' }}>
               Customize Your Stack

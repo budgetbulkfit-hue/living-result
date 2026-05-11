@@ -15,7 +15,7 @@ export default function ComboCard({ combo }) {
   const oldPrice = combo.sizes?.[0]?.oldPrice || combo.autoCalculatedMrp || 0;
   const savings = combo.totalSavings || 0;
   const savingsPct = oldPrice > finalPrice ? Math.round(((oldPrice - finalPrice) / oldPrice) * 100) : 0;
-  const bannerImage = combo.comboBanner || combo.products?.[0]?.image || combo.images?.[0];
+  const bannerImage = combo.flavors?.[0]?.image || combo.comboBanner || combo.products?.[0]?.image || combo.images?.[0];
 
   const handleAddToCart = ({ combo: c, comboSelections }) => {
     const key = `combo-${c._id}-${Date.now()}`;
@@ -26,7 +26,7 @@ export default function ComboCard({ combo }) {
       flavorName: 'Combo Stack',
       weight: c.totalWeight?.display || '',
       price: c.finalPrice || c.autoCalculatedPrice || 0,
-      image: c.comboBanner || c.products?.[0]?.image || '',
+      image: c.flavors?.[0]?.image || c.comboBanner || c.products?.[0]?.image || '',
       qty: 1,
       isCombo: true,
       comboSelections,
