@@ -574,9 +574,11 @@
                 <a class="nav-item" id="nav-products" onclick="navigate('products')">Products</a>
                 <a class="nav-item" id="nav-combos" onclick="navigate('combos')">Combos</a>
                 <a class="nav-item" id="nav-orders" onclick="navigate('orders')">Orders</a>
-                <a class="nav-item" id="nav-notifications" onclick="navigate('notifications')" style="display: flex; justify-content: space-between; align-items: center;">
+                <a class="nav-item" id="nav-notifications" onclick="navigate('notifications')"
+                    style="display: flex; justify-content: space-between; align-items: center;">
                     Restock Requests
-                    <span id="sidebar-notify-badge" style="background: #e74c3c; color: #fff; border-radius: 50%; padding: 2px 6px; font-size: 10px; display: none;">0</span>
+                    <span id="sidebar-notify-badge"
+                        style="background: #e74c3c; color: #fff; border-radius: 50%; padding: 2px 6px; font-size: 10px; display: none;">0</span>
                 </a>
                 <a class="nav-item" id="nav-settings" onclick="navigate('settings')">Settings</a>
             </nav>
@@ -609,7 +611,8 @@
                             style="font-size: 13px; color: #3498db; border-color: #3498db;">☁ Sync to Sheets</button>
                         <button class="btn-outline" onclick="refreshDashboard()" style="font-size: 13px;">⟳ Refresh
                             List</button>
-                    <button class="btn-outline" onclick="openLiveSiteBypass()" style="font-size: 13px;">View Live Site</button>
+                        <button class="btn-outline" onclick="openLiveSiteBypass()" style="font-size: 13px;">View Live
+                            Site</button>
                     </div>
                 </div>
                 <div class="dashboard-cards">
@@ -629,7 +632,8 @@
                         <div class="dash-card-title">Avg Conversion</div>
                         <div class="dash-card-value" id="dash-conversion">0%</div>
                     </div>
-                    <div class="dash-card" style="border-left: 3px solid #e74c3c; cursor: pointer;" onclick="navigate('notifications')">
+                    <div class="dash-card" style="border-left: 3px solid #e74c3c; cursor: pointer;"
+                        onclick="navigate('notifications')">
                         <div class="dash-card-title" style="color: #e74c3c;">Restock Requests</div>
                         <div class="dash-card-value" id="dash-notifications">0</div>
                     </div>
@@ -663,10 +667,12 @@
             <div id="view-notifications" class="page-view">
                 <div class="header-title">
                     <span>Restock Requests</span>
-                    <button class="btn-outline" onclick="refreshNotifications()" style="font-size: 13px;">⟳ Refresh List</button>
+                    <button class="btn-outline" onclick="refreshNotifications()" style="font-size: 13px;">⟳ Refresh
+                        List</button>
                 </div>
                 <div class="panel-card">
-                    <p style="color: var(--text-muted); font-size: 13px;">Customer email list waiting for products to be restocked.</p>
+                    <p style="color: var(--text-muted); font-size: 13px;">Customer email list waiting for products to be
+                        restocked.</p>
                 </div>
                 <div class="table-responsive">
                     <table>
@@ -758,9 +764,15 @@
                     <!-- Basic Info -->
                     <div id="section-basic" class="editor-section active">
                         <div class="form-row">
-                            <div class="form-group" style="flex: 1;"><label>Cart ID (Num)</label><input type="number" id="ep-id"></div>
-                            <div class="form-group" style="flex: 2;"><label>Product Name</label><input type="text" id="ep-name" oninput="if(!document.getElementById('ep-slug').dataset.manual) document.getElementById('ep-slug').value = generateSlug(this.value)"></div>
-                            <div class="form-group" style="flex: 1;"><label>URL Slug</label><input type="text" id="ep-slug" placeholder="Auto-generates as you type" oninput="this.dataset.manual = 'true'"></div>
+                            <div class="form-group" style="flex: 1;"><label>Cart ID (Num)</label><input type="number"
+                                    id="ep-id"></div>
+                            <div class="form-group" style="flex: 2;"><label>Product Name</label><input type="text"
+                                    id="ep-name"
+                                    oninput="if(!document.getElementById('ep-slug').dataset.manual) document.getElementById('ep-slug').value = generateSlug(this.value)">
+                            </div>
+                            <div class="form-group" style="flex: 1;"><label>URL Slug</label><input type="text"
+                                    id="ep-slug" placeholder="Auto-generates as you type"
+                                    oninput="this.dataset.manual = 'true'"></div>
                         </div>
                         <div class="form-row">
                             <div class="form-group" style="flex: 1;"><label>Discount (%)</label><input type="number"
@@ -800,29 +812,41 @@
                                     type="number" id="ep-numreviews"></div>
                         </div>
                         <div class="form-row" style="margin-bottom: 20px; align-items: flex-end;">
-                            <div class="form-group" style="margin: 0;"><label>Stock</label><input type="number" id="ep-stock" style="width:100px;"></div>
-                            <div class="form-group" style="margin: 0;"><label>Show Scarcity</label><label class="toggle-switch"><input type="checkbox" id="ep-showscarcity"><span class="toggle-slider"></span></label></div>
-                            <div class="form-group" style="margin: 0;"><label>Best Seller</label><label class="toggle-switch"><input type="checkbox" id="ep-bestseller"><span class="toggle-slider"></span></label></div>
-                            <div class="form-group" style="margin: 0;"><label>Gluten Free</label><label class="toggle-switch"><input type="checkbox" id="ep-glutenfree"><span class="toggle-slider"></span></label></div>
+                            <div class="form-group" style="margin: 0;"><label>Stock</label><input type="number"
+                                    id="ep-stock" style="width:100px;"></div>
+                            <div class="form-group" style="margin: 0;"><label>Show Scarcity</label><label
+                                    class="toggle-switch"><input type="checkbox" id="ep-showscarcity"><span
+                                        class="toggle-slider"></span></label></div>
+                            <div class="form-group" style="margin: 0;"><label>Best Seller</label><label
+                                    class="toggle-switch"><input type="checkbox" id="ep-bestseller"><span
+                                        class="toggle-slider"></span></label></div>
+                            <div class="form-group" style="margin: 0;"><label>Gluten Free</label><label
+                                    class="toggle-switch"><input type="checkbox" id="ep-glutenfree"><span
+                                        class="toggle-slider"></span></label></div>
                         </div>
 
                         <div class="form-group" style="margin-bottom: 25px;">
                             <label style="margin-bottom: 10px; display: block;">Quick Tags (Manual)</label>
-                            <div style="display: flex; gap: 20px; flex-wrap: wrap; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                            <div
+                                style="display: flex; gap: 20px; flex-wrap: wrap; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
                                 <div style="display:flex; align-items:center; gap:8px;">
-                                    <label class="toggle-switch"><input type="checkbox" id="ep-isbulking"><span class="toggle-slider"></span></label>
+                                    <label class="toggle-switch"><input type="checkbox" id="ep-isbulking"><span
+                                            class="toggle-slider"></span></label>
                                     <span style="font-size:12px;">💪 Bulking</span>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:8px;">
-                                    <label class="toggle-switch"><input type="checkbox" id="ep-ismuscle"><span class="toggle-slider"></span></label>
+                                    <label class="toggle-switch"><input type="checkbox" id="ep-ismuscle"><span
+                                            class="toggle-slider"></span></label>
                                     <span style="font-size:12px;">⚡ Lean Muscle</span>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:8px;">
-                                    <label class="toggle-switch"><input type="checkbox" id="ep-isfatloss"><span class="toggle-slider"></span></label>
+                                    <label class="toggle-switch"><input type="checkbox" id="ep-isfatloss"><span
+                                            class="toggle-slider"></span></label>
                                     <span style="font-size:12px;">🔥 Fat Loss</span>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:8px;">
-                                    <label class="toggle-switch"><input type="checkbox" id="ep-isstack"><span class="toggle-slider"></span></label>
+                                    <label class="toggle-switch"><input type="checkbox" id="ep-isstack"><span
+                                            class="toggle-slider"></span></label>
                                     <span style="font-size:12px;">✨ Premium Stack</span>
                                 </div>
                             </div>
@@ -908,7 +932,8 @@
             <div id="view-combos" class="page-view">
                 <div class="header-title">
                     <span>Combo Bundles</span>
-                    <button class="btn-primary" onclick="openComboEditor()" style="background: #9b59b6; border-color: #9b59b6; font-size: 13px;">+ Create Combo</button>
+                    <button class="btn-primary" onclick="openComboEditor()"
+                        style="background: #9b59b6; border-color: #9b59b6; font-size: 13px;">+ Create Combo</button>
                 </div>
                 <div class="table-responsive">
                     <table>
@@ -924,7 +949,9 @@
                             </tr>
                         </thead>
                         <tbody id="adminComboTable">
-                            <tr><td colspan="7" style="text-align: center;">Loading combos...</td></tr>
+                            <tr>
+                                <td colspan="7" style="text-align: center;">Loading combos...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -934,55 +961,81 @@
             <div id="view-edit-combo" class="page-view">
                 <div class="header-title">
                     <span id="comboEditorTitle">Build Combo</span>
-                    <button class="btn-outline" onclick="navigate('combos')" style="font-size: 13px;">Cancel & Go Back</button>
+                    <button class="btn-outline" onclick="navigate('combos')" style="font-size: 13px;">Cancel & Go
+                        Back</button>
                 </div>
                 <div class="panel-card">
                     <div class="editor-tabs">
-                        <div class="editor-tab active" id="tab-c-basic" onclick="switchComboEditorTab('basic')">Basic Info</div>
-                        <div class="editor-tab" id="tab-c-variants" onclick="switchComboEditorTab('variants')">Variants & Sizes</div>
+                        <div class="editor-tab active" id="tab-c-basic" onclick="switchComboEditorTab('basic')">Basic
+                            Info</div>
+                        <div class="editor-tab" id="tab-c-variants" onclick="switchComboEditorTab('variants')">Variants
+                            & Sizes</div>
                         <div class="editor-tab" id="tab-c-images" onclick="switchComboEditorTab('images')">Images</div>
-                        <div class="editor-tab" id="tab-c-flavors" onclick="switchComboEditorTab('flavors')">Flavors</div>
+                        <div class="editor-tab" id="tab-c-flavors" onclick="switchComboEditorTab('flavors')">Flavors
+                        </div>
                     </div>
 
                     <!-- Basic Info -->
                     <div id="section-c-basic" class="editor-section active">
                         <div class="form-row">
-                            <div class="form-group" style="flex: 2;"><label>Combo Name</label><input type="text" id="ec-name" oninput="if(!document.getElementById('ec-slug').dataset.manual) document.getElementById('ec-slug').value = generateSlug(this.value)"></div>
-                            <div class="form-group" style="flex: 1;"><label>URL Slug</label><input type="text" id="ec-slug" placeholder="Auto-generates as you type" oninput="this.dataset.manual = 'true'"></div>
+                            <div class="form-group" style="flex: 2;"><label>Combo Name</label><input type="text"
+                                    id="ec-name"
+                                    oninput="if(!document.getElementById('ec-slug').dataset.manual) document.getElementById('ec-slug').value = generateSlug(this.value)">
+                            </div>
+                            <div class="form-group" style="flex: 1;"><label>URL Slug</label><input type="text"
+                                    id="ec-slug" placeholder="Auto-generates as you type"
+                                    oninput="this.dataset.manual = 'true'"></div>
                         </div>
-                        <div class="form-group"><label>Description</label><textarea id="ec-desc" rows="2"></textarea></div>
-                        
+                        <div class="form-group"><label>Description</label><textarea id="ec-desc" rows="2"></textarea>
+                        </div>
+
                         <hr style="border: 0; border-top: 1px solid var(--border); margin: 25px 0;">
-                        
-                        <h4 style="color: var(--accent); margin-bottom: 15px; text-transform: uppercase;">Dynamic Product Selection</h4>
+
+                        <h4 style="color: var(--accent); margin-bottom: 15px; text-transform: uppercase;">Dynamic
+                            Product Selection</h4>
                         <div class="form-row" style="align-items: flex-end;">
                             <div class="form-group" style="flex: 3;">
                                 <label>Select Product from Database</label>
                                 <select id="ec-product-select"></select>
                             </div>
-                            <div class="form-group" style="flex: 1;"><label>Qty</label><input type="number" id="ec-product-qty" value="1" min="1"></div>
-                            <button class="btn-outline" onclick="addComboProduct()" style="margin-bottom: 18px;">Add to Bundle</button>
+                            <div class="form-group" style="flex: 1;"><label>Qty</label><input type="number"
+                                    id="ec-product-qty" value="1" min="1"></div>
+                            <button class="btn-outline" onclick="addComboProduct()" style="margin-bottom: 18px;">Add to
+                                Bundle</button>
                         </div>
 
                         <div class="table-responsive" style="margin-bottom: 20px;">
                             <table>
-                                <thead><tr><th>Product Name</th><th>Quantity</th><th>Actions</th></tr></thead>
+                                <thead>
+                                    <tr>
+                                        <th>Product Name</th>
+                                        <th>Quantity</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
                                 <tbody id="ec-selected-products"></tbody>
                             </table>
                         </div>
 
                         <hr style="border: 0; border-top: 1px solid var(--border); margin: 25px 0;">
-                        
-                        <div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; border: 1px dashed var(--border);">
-                            <h4 style="color: #fff; margin-bottom: 15px; text-transform: uppercase;">Pricing & Validation</h4>
+
+                        <div
+                            style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; border: 1px dashed var(--border);">
+                            <h4 style="color: #fff; margin-bottom: 15px; text-transform: uppercase;">Pricing &
+                                Validation</h4>
                             <div class="form-row">
-                                <div class="form-group" style="flex: 1;"><label>Manual Price Override (₹)</label><input type="number" id="ec-override" placeholder="Leave blank to use auto-price"></div>
-                                <div class="form-group" style="flex: 1; display:flex; align-items:center; gap:10px; margin-top:25px;">
-                                    <label class="toggle-switch"><input type="checkbox" id="ec-published" checked><span class="toggle-slider"></span></label>
+                                <div class="form-group" style="flex: 1;"><label>Manual Price Override (₹)</label><input
+                                        type="number" id="ec-override" placeholder="Leave blank to use auto-price">
+                                </div>
+                                <div class="form-group"
+                                    style="flex: 1; display:flex; align-items:center; gap:10px; margin-top:25px;">
+                                    <label class="toggle-switch"><input type="checkbox" id="ec-published" checked><span
+                                            class="toggle-slider"></span></label>
                                     <span style="font-size:13px; font-weight:bold;">Publish Combo</span>
                                 </div>
                             </div>
-                            <div style="display: flex; gap: 20px; font-size: 14px; color: var(--text-secondary); margin-top: 10px;" id="ec-live-stats">
+                            <div style="display: flex; gap: 20px; font-size: 14px; color: var(--text-secondary); margin-top: 10px;"
+                                id="ec-live-stats">
                                 <!-- Calculated via JS -->
                                 <div>Auto MRP: <strong style="color:#fff;">₹0</strong></div>
                                 <div>Auto Price: <strong style="color:var(--accent);">₹0</strong></div>
@@ -992,8 +1045,10 @@
 
                     <!-- Variants (Sizes) -->
                     <div id="section-c-variants" class="editor-section">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <p style="color: var(--text-muted); font-size: 13px; margin: 0;">Define different sizes/weights for this combo.</p>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <p style="color: var(--text-muted); font-size: 13px; margin: 0;">Define different
+                                sizes/weights for this combo.</p>
                             <button class="btn-outline" onclick="openVariantModal()">+ Add Variant</button>
                         </div>
                         <div class="table-responsive">
@@ -1015,11 +1070,13 @@
 
                     <!-- Images -->
                     <div id="section-c-images" class="editor-section">
-                        <div class="form-group" style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; border: 1px dashed var(--border);">
+                        <div class="form-group"
+                            style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 6px; border: 1px dashed var(--border);">
                             <label style="color: var(--accent);">Upload Combo Image</label>
                             <div style="display: flex; gap: 10px;">
                                 <input type="file" id="ec-image-upload" accept="image/*" style="flex: 2; padding: 8px;">
-                                <button type="button" class="btn-outline" style="flex: 1;" onclick="uploadComboImage()">Upload & Add</button>
+                                <button type="button" class="btn-outline" style="flex: 1;"
+                                    onclick="uploadComboImage()">Upload & Add</button>
                             </div>
                         </div>
                         <div class="img-grid" id="ec-images-grid"></div>
@@ -1027,8 +1084,10 @@
 
                     <!-- Flavors -->
                     <div id="section-c-flavors" class="editor-section">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <p style="color: var(--text-muted); font-size: 13px; margin: 0;">Define flavors and their specific tub images.</p>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <p style="color: var(--text-muted); font-size: 13px; margin: 0;">Define flavors and their
+                                specific tub images.</p>
                             <button class="btn-outline" onclick="openFlavorModal()">+ Add Flavor</button>
                         </div>
                         <div class="table-responsive">
@@ -1046,7 +1105,9 @@
                         </div>
                     </div>
 
-                    <button class="btn-primary" onclick="saveComboEditor()" style="width: 100%; justify-content: center; font-size: 16px; padding: 15px; background: #9b59b6; border-color: #9b59b6; margin-top: 20px;">Save Combo Bundle</button>
+                    <button class="btn-primary" onclick="saveComboEditor()"
+                        style="width: 100%; justify-content: center; font-size: 16px; padding: 15px; background: #9b59b6; border-color: #9b59b6; margin-top: 20px;">Save
+                        Combo Bundle</button>
                 </div>
             </div>
 
@@ -1098,10 +1159,12 @@
                 <div class="settings-grid">
                     <!-- NEW LAUNCH CONTROL -->
                     <div class="panel-card" style="border-color: #2ecc71; text-align: center; padding: 30px;">
-                        <h3 style="margin: 0 0 10px 0; color: #f39c12; font-family: var(--font-heading); text-transform: uppercase; font-size: 24px;">
+                        <h3
+                            style="margin: 0 0 10px 0; color: #f39c12; font-family: var(--font-heading); text-transform: uppercase; font-size: 24px;">
                             Maintenance Mode</h3>
                         <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 25px;">
-                            Enable maintenance mode to show a 'Maintenance Break' screen to users while you push updates. Disable it to return the site to normal.
+                            Enable maintenance mode to show a 'Maintenance Break' screen to users while you push
+                            updates. Disable it to return the site to normal.
                         </p>
                         <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
                             <button type="button" class="btn-outline" style="border-color: #f39c12; color: #f39c12;"
@@ -1131,33 +1194,41 @@
                     <!-- FOMO & CONVERSION CONTROLS -->
                     <div class="panel-card" style="border-color: var(--accent);">
                         <h3 style="margin: 0 0 10px 0; color: var(--accent);">FOMO & Conversion Rules</h3>
-                        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Control psychology triggers and urgency indicators.</p>
+                        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Control psychology
+                            triggers and urgency indicators.</p>
                         <form onsubmit="saveFomoSettings(event)">
                             <div class="form-row">
                                 <div class="form-group" style="display:flex; align-items:center; gap:10px; flex:1;">
-                                    <label class="toggle-switch"><input type="checkbox" id="fomoLaunchPricing" checked><span class="toggle-slider"></span></label>
+                                    <label class="toggle-switch"><input type="checkbox" id="fomoLaunchPricing"
+                                            checked><span class="toggle-slider"></span></label>
                                     <span style="font-size:13px; font-weight:bold;">Launch Pricing Badges</span>
                                 </div>
                                 <div class="form-group" style="display:flex; align-items:center; gap:10px; flex:1;">
-                                    <label class="toggle-switch"><input type="checkbox" id="fomoSocialProof" checked><span class="toggle-slider"></span></label>
+                                    <label class="toggle-switch"><input type="checkbox" id="fomoSocialProof"
+                                            checked><span class="toggle-slider"></span></label>
                                     <span style="font-size:13px; font-weight:bold;">Social Proof Popups</span>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group" style="display:flex; align-items:center; gap:10px; flex:1;">
-                                    <label class="toggle-switch"><input type="checkbox" id="fomoScarcity" checked><span class="toggle-slider"></span></label>
+                                    <label class="toggle-switch"><input type="checkbox" id="fomoScarcity" checked><span
+                                            class="toggle-slider"></span></label>
                                     <span style="font-size:13px; font-weight:bold;">Scarcity Indicators</span>
                                 </div>
                                 <div class="form-group" style="display:flex; align-items:center; gap:10px; flex:1;">
-                                    <label class="toggle-switch"><input type="checkbox" id="fomoExitIntent" checked><span class="toggle-slider"></span></label>
+                                    <label class="toggle-switch"><input type="checkbox" id="fomoExitIntent"
+                                            checked><span class="toggle-slider"></span></label>
                                     <span style="font-size:13px; font-weight:bold;">Exit Intent Popup</span>
                                 </div>
                             </div>
                             <div class="form-row" style="margin-top: 15px;">
-                                <div class="form-group" style="flex:1;"><label>Popup Interval (Sec)</label><input type="number" id="fomoPopupInterval" value="35"></div>
-                                <div class="form-group" style="flex:1;"><label>Countdown Duration (Min)</label><input type="number" id="fomoTimerDuration" value="10"></div>
+                                <div class="form-group" style="flex:1;"><label>Popup Interval (Sec)</label><input
+                                        type="number" id="fomoPopupInterval" value="35"></div>
+                                <div class="form-group" style="flex:1;"><label>Countdown Duration (Min)</label><input
+                                        type="number" id="fomoTimerDuration" value="10"></div>
                             </div>
-                            <button type="submit" class="btn-primary" style="margin-top: 10px;">Save FOMO Settings</button>
+                            <button type="submit" class="btn-primary" style="margin-top: 10px;">Save FOMO
+                                Settings</button>
                         </form>
                     </div>
 
@@ -1219,9 +1290,11 @@
             <div class="form-group">
                 <label>Weight/Size (e.g. 1 kg)</label>
                 <input type="text" id="vm-weight">
-                <div id="vm-weight-suggestions" style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;"></div>
+                <div id="vm-weight-suggestions"
+                    style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;"></div>
             </div>
-            <div id="vm-combo-selectors" style="display:none; margin-bottom: 15px; gap: 10px; flex-direction: column;"></div>
+            <div id="vm-combo-selectors" style="display:none; margin-bottom: 15px; gap: 10px; flex-direction: column;">
+            </div>
             <div class="form-row">
                 <div class="form-group" style="flex:1;"><label>Price (₹)</label><input type="number" id="vm-price">
                 </div>
@@ -1233,10 +1306,12 @@
                 <input type="text" id="vm-flavors" placeholder="Chocolate, Vanilla">
             </div>
             <div class="form-group" style="display:flex; align-items:center; gap:10px;">
-                <label class="toggle-switch"><input type="checkbox" id="vm-stock" checked><span class="toggle-slider"></span></label>
+                <label class="toggle-switch"><input type="checkbox" id="vm-stock" checked><span
+                        class="toggle-slider"></span></label>
                 <span style="font-size:13px; font-weight:bold;">In Stock</span>
             </div>
-            <button class="btn-primary" style="width:100%; justify-content:center;" onclick="saveVariant()">Save Variant</button>
+            <button class="btn-primary" style="width:100%; justify-content:center;" onclick="saveVariant()">Save
+                Variant</button>
         </div>
     </div>
 
@@ -1258,7 +1333,8 @@
                         class="toggle-slider"></span></label>
                 <span style="font-size:13px; font-weight:bold;">In Stock</span>
             </div>
-            <button class="btn-primary" style="width:100%; justify-content:center;" onclick="saveFlavor()">Save Flavor</button>
+            <button class="btn-primary" style="width:100%; justify-content:center;" onclick="saveFlavor()">Save
+                Flavor</button>
         </div>
     </div>
 
@@ -1273,7 +1349,7 @@
         let allCombos = [];
         let editingComboId = null;
         let ecData = { products: [], sizes: [], images: [], flavors: [] };
-        
+
         const generateSlug = (text) => (text || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
         // PRODUCT EDITOR STATE
@@ -1364,7 +1440,7 @@
                 if (data.success) {
                     const pending = data.data.filter(n => n.status === 'pending').length;
                     document.getElementById('dash-notifications').textContent = pending;
-                    
+
                     const badge = document.getElementById('sidebar-notify-badge');
                     if (pending > 0) {
                         badge.textContent = pending;
@@ -1373,7 +1449,7 @@
                         badge.style.display = 'none';
                     }
                 }
-            }).catch(() => {});
+            }).catch(() => { });
 
             renderProductPerformance();
         }
@@ -1588,10 +1664,10 @@
 
                 document.getElementById('loginPanel').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'flex';
-                
+
                 const lastView = sessionStorage.getItem('adminCurrentView') || 'dashboard';
                 navigate(lastView);
-                
+
                 fetchAdminProducts();
                 fetchAdminCombos();
                 fetchOrders();
@@ -1600,7 +1676,7 @@
             } catch (err) {
                 console.error('Admin Auth Check Failed:', err);
                 showToast(err.message || 'Authentication failed. Please login again.', 'error');
-                
+
                 document.getElementById('appContainer').style.display = 'none';
                 document.getElementById('loginPanel').style.display = 'flex';
                 return false;
@@ -1665,10 +1741,10 @@
                             const match = p.description.match(/ ?<!--\[IMAGES:(.*?)\]-->/);
                             if (match && match[1]) { try { p.images = JSON.parse(match[1]); } catch (e) { } p.description = p.description.replace(match[0], ''); }
                         }
-                            if (p.description && p.description.includes('<!--[SUBCAT:')) {
-                                const match = p.description.match(/ ?<!--\[SUBCAT:(.*?)\]-->/);
-                                if (match && match[1]) { p.subCategory = match[1]; p.description = p.description.replace(match[0], ''); }
-                            }
+                        if (p.description && p.description.includes('<!--[SUBCAT:')) {
+                            const match = p.description.match(/ ?<!--\[SUBCAT:(.*?)\]-->/);
+                            if (match && match[1]) { p.subCategory = match[1]; p.description = p.description.replace(match[0], ''); }
+                        }
                         return p;
                     });
                     applyProductFilters();
@@ -1748,7 +1824,7 @@
             if (!combo) return;
             currentEditorContext = 'combo';
             editingComboId = id;
-            ecData = { 
+            ecData = {
                 products: combo.products.map(p => ({ productId: p._id || p.productId?._id || p.productId, name: p.name, quantity: p.quantity })),
                 sizes: combo.sizes || [],
                 images: combo.images || (combo.comboBanner ? [combo.comboBanner] : []),
@@ -1845,9 +1921,9 @@
                     autoPrice += basePrice * p.quantity;
                 }
             });
-            
+
             const statsEl = document.getElementById('ec-live-stats');
-            if(statsEl) {
+            if (statsEl) {
                 statsEl.innerHTML = `
                     <div>Auto MRP: <strong style="color:#fff;">₹${autoMrp.toLocaleString()}</strong></div>
                     <div>Auto Price: <strong style="color:var(--accent);">₹${autoPrice.toLocaleString()}</strong></div>
@@ -1968,7 +2044,7 @@
         function openVariantModal(index = -1) {
             editingVariantIndex = index;
             const targetData = currentEditorContext === 'product' ? epData : ecData;
-            
+
             const weightGroup = document.getElementById('vm-weight').parentElement;
             const comboSelectors = document.getElementById('vm-combo-selectors');
 
@@ -1990,7 +2066,7 @@
                 document.getElementById('vm-oldprice').value = ''; document.getElementById('vm-flavors').value = '';
                 document.getElementById('vm-stock').checked = true;
             }
-            
+
             if (currentEditorContext === 'combo' && ecData.products.length > 0 && comboSelectors) {
                 let html = '<div style="font-size: 12px; color: var(--accent); margin-bottom: -5px;">Select sizes for each item:</div>';
                 ecData.products.forEach((p, idx) => {
@@ -2069,7 +2145,7 @@
             };
             const targetData = currentEditorContext === 'product' ? epData : ecData;
             if (!targetData.sizes) targetData.sizes = [];
-            if (editingVariantIndex > -1) { targetData.sizes[editingVariantIndex] = variantData; } 
+            if (editingVariantIndex > -1) { targetData.sizes[editingVariantIndex] = variantData; }
             else { targetData.sizes.push(variantData); }
             targetData.sizes.sort((a, b) => (a.price || 0) - (b.price || 0)); // Auto-sort by price ascending
             document.getElementById('variantModal').classList.remove('active');
@@ -2128,10 +2204,10 @@
             const targetData = currentEditorContext === 'product' ? epData : ecData;
             if (!targetData.flavors) targetData.flavors = [];
             const flavorData = { name: document.getElementById('fm-name').value, image: imgUrl, inStock: document.getElementById('fm-stock').checked };
-            
-            if (editingFlavorIndex > -1) { targetData.flavors[editingFlavorIndex] = flavorData; } 
+
+            if (editingFlavorIndex > -1) { targetData.flavors[editingFlavorIndex] = flavorData; }
             else { targetData.flavors.push(flavorData); }
-            
+
             document.getElementById('flavorModal').classList.remove('active');
             if (currentEditorContext === 'product') renderEpFlavors();
             else renderComboFlavors();
@@ -2141,7 +2217,7 @@
             let desc = document.getElementById('ep-desc').value;
             if (document.getElementById('ep-glutenfree').checked) desc += ' <!--[GF]-->';
             if (epData.images && epData.images.length) desc += ` <!--[IMAGES:${JSON.stringify(epData.images)}]-->`;
-            
+
             if (document.getElementById('ep-category').value === 'common') {
                 const sub = document.getElementById('ep-subcategory').value;
                 if (sub) desc += ` <!--[SUBCAT:${sub}]-->`;
@@ -2171,6 +2247,7 @@
                 isFatLoss: document.getElementById('ep-isfatloss').checked,
                 isStack: document.getElementById('ep-isstack').checked,
                 glutenFree: document.getElementById('ep-glutenfree').checked,
+                description: desc,
                 ingredients: document.getElementById('ep-ingredients').value,
                 nutritionalFacts: document.getElementById('ep-nutrition').value.split('\n').filter(l => l.trim()),
                 sizes: sortedSizes,
