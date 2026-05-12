@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import useCart from '@/lib/cartStore';
 import { createOrder } from '@/lib/api';
+import { orderOnWhatsApp } from '@/lib/whatsapp';
 import PrivacyModal from './PrivacyModal';
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '917003714398';
@@ -51,8 +52,7 @@ export default function CheckoutModal({ isOpen, onClose, fomoSettings = {} }) {
     const email = e.target.checkoutEmail.value.trim();
     const address = e.target.checkoutAddress.value.trim();
     const coupon = e.target.checkoutCoupon?.value.trim() || '';
-    // Open blank tab BEFORE any await — critical popup blocker fix
-    const waWindow = typeof window !== 'undefined' ? window.open('about:blank', '_blank') : null;
+    
     try {
       const orderData = await createOrder({
         customerDetails: { name, phone, email, address, coupon },
@@ -79,8 +79,6 @@ export default function CheckoutModal({ isOpen, onClose, fomoSettings = {} }) {
       if (coupon) msg += `🎟️ *Coupon:* ${coupon}\n\n`;
       msg += `Please confirm my order! 🙏`;
 
-      const waLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
-
       // Google Sheets logging (fire-and-forget)
       if (GOOGLE_SHEET_URL) {
         fetch(GOOGLE_SHEET_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' },
@@ -91,9 +89,10 @@ export default function CheckoutModal({ isOpen, onClose, fomoSettings = {} }) {
       clearCart();
       onClose();
       setShowSuccess(true);
-      if (waWindow) { waWindow.location.href = waLink; } else { window.location.href = waLink; }
+      
+      // Trigger the robust WhatsApp deep link redirect
+      orderOnWhatsApp(msg);
     } catch (err) {
-      if (waWindow) waWindow.close();
       alert(`Checkout Failed: ${err.message}`);
     } finally {
       setIsSubmitting(false);
