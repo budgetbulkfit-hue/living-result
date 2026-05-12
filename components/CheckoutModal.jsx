@@ -57,7 +57,7 @@ export default function CheckoutModal({ isOpen, onClose, fomoSettings = {} }) {
       const orderData = await createOrder({
         customerDetails: { name, phone, email, address, coupon },
         products: items.map((i) => i.isCombo
-          ? { comboId: i.comboId, isCombo: true, name: i.name, flavor: i.flavorName, comboSelections: i.comboSelections, weight: i.weight || '', quantity: i.qty, price: i.price }
+          ? { comboId: i.comboId || i.productId, isCombo: true, name: i.name, flavor: i.flavorName, comboSelections: i.comboSelections, weight: i.weight || '', quantity: i.qty, price: i.price }
           : { productId: i.productId, name: i.name, flavor: i.flavorName, weight: i.weight || '', quantity: i.qty, price: i.price }),
         totalAmount: total,
       });
