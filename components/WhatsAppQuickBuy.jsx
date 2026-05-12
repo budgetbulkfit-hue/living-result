@@ -1,7 +1,7 @@
 'use client';
 
 export default function WhatsAppQuickBuy() {
-  const whatsappNumber = '919518179974'; // Your business number
+  const whatsappNumber = '917003714398'; // Your business number
   const message = 'Hello Living Result! I want to quick buy a supplement. Can you help me?';
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
