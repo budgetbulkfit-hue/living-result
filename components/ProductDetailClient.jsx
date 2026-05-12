@@ -53,12 +53,14 @@ export default function ProductDetailClient({ product }) {
   };
 
   const handleAddToCart = () => {
-    const key = isComboItem ? `combo-${product._id}-${Date.now()}` : `${product._id}-${selectedFlavor}-${selectedSize}`;
+    const safeId = product._id || product.id;
+    const key = isComboItem ? `combo-${safeId}-${Date.now()}` : `${safeId}-${selectedFlavor}-${selectedSize}`;
 
     const itemData = {
       key,
-      productId: product._id,
-      name: product.name,
+      productId: safeId,
+      comboId: isComboItem ? safeId : undefined,
+      name: product.name || product.comboName || 'Premium Stack',
       flavorName: isComboItem ? (currentFlavor?.name || 'Combo Stack') : (currentFlavor?.name || 'Regular'),
       weight: isComboItem ? product.weight : (currentSize?.weight || ''),
       price,
@@ -68,12 +70,15 @@ export default function ProductDetailClient({ product }) {
     };
 
     if (isComboItem && productsInCombo.length > 0) {
-      itemData.comboSelections = productsInCombo.map(p => ({
-        productId: p._id,
-        name: p.name,
-        flavor: comboSelections[p._id] || (p.flavors?.[0]?.name || 'Regular'),
-        quantity: p.quantity || 1
-      }));
+      itemData.comboSelections = productsInCombo.map(p => {
+        const pId = p._id || p.id;
+        return {
+          productId: pId,
+          name: p.name,
+          flavor: comboSelections[pId] || (p.flavors?.[0]?.name || 'Regular'),
+          quantity: p.quantity || 1
+        };
+      });
     }
 
     addItem(itemData);
@@ -253,16 +258,19 @@ export default function ProductDetailClient({ product }) {
                   </div>
                   {p.flavors && p.flavors.length > 0 ? (
                     <div className="flavor-pills" style={{ marginTop: '8px' }}>
-                      {p.flavors.map((f, fi) => (
-                        <button
-                          key={fi}
-                          className={`flavor-pill${(comboSelections[p._id] === f.name || (!comboSelections[p._id] && fi === 0)) ? ' active' : ''}`}
-                          onClick={() => handleComboFlavorSelect(p._id, f.name)}
-                          style={{ fontSize: '11px', padding: '4px 10px' }}
-                        >
-                          {f.name}
-                        </button>
-                      ))}
+                        {p.flavors.map((f, fi) => {
+                          const pId = p._id || p.id;
+                          return (
+                            <button
+                              key={fi}
+                              className={`flavor-pill${(comboSelections[pId] === f.name || (!comboSelections[pId] && fi === 0)) ? ' active' : ''}`}
+                              onClick={() => handleComboFlavorSelect(pId, f.name)}
+                              style={{ fontSize: '11px', padding: '4px 10px' }}
+                            >
+                              {f.name}
+                            </button>
+                          );
+                        })}
                     </div>
                   ) : (
                     <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Regular Flavor</div>

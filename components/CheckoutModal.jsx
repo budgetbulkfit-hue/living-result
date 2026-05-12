@@ -56,9 +56,12 @@ export default function CheckoutModal({ isOpen, onClose, fomoSettings = {} }) {
     try {
       const orderData = await createOrder({
         customerDetails: { name, phone, email, address, coupon },
-        products: items.map((i) => i.isCombo
-          ? { comboId: i.comboId || i.productId, isCombo: true, name: i.name, flavor: i.flavorName, comboSelections: i.comboSelections, weight: i.weight || '', quantity: i.qty, price: i.price }
-          : { productId: i.productId, name: i.name, flavor: i.flavorName, weight: i.weight || '', quantity: i.qty, price: i.price }),
+        products: items.map((i) => {
+          const safeId = i.comboId || i.productId || i.id;
+          return i.isCombo
+            ? { comboId: safeId, isCombo: true, name: i.name || 'Premium Stack', flavor: i.flavorName, comboSelections: i.comboSelections, weight: i.weight || '', quantity: i.qty, price: i.price }
+            : { productId: safeId, name: i.name, flavor: i.flavorName, weight: i.weight || '', quantity: i.qty, price: i.price };
+        }),
         totalAmount: total,
       });
       if (!orderData.success) throw new Error(orderData.message || 'Order failed');
