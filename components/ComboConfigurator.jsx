@@ -3,58 +3,75 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import useCart from '@/lib/cartStore';
 import { subscribeToRestock } from '@/lib/api';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 const COMBO_DISCOUNT = 30;
 
 const STACK_GOALS = [
-  { 
-    id: 'bulk', 
-    name: '💪 BULK & SIZE', 
-    desc: 'Massive strength & mass', 
-    theme: { bg: 'linear-gradient(145deg, #1f1209, #3a1c00)', accent: '#ff6a00', glow: 'rgba(255, 106, 0, 0.4)', highlightColor: '#FFD700' },
-    coreSubcat: ['Mass Gainer', 'Weight Gainer', 'Hydra Bulk Mass', 'mass'], 
-    boostSubcat: ['Creatine', 'creatine'], 
-    reason: ['✔ Hard Gainers', '✔ Heavy Lifters', '✔ Extreme Bulking'] 
+  {
+    id: 'bulk',
+    name: '💪 BULK & SIZE',
+    desc: 'Massive strength & mass',
+    theme: { bg: 'linear-gradient(145deg,#1f1209,#3a1c00)', accent: '#ff6a00', glow: 'rgba(255,106,0,0.4)', highlight: '#FFD700' },
+    coreSubcats: ['Mass Gainer', 'Weight Gainer', 'Hydra Bulk Mass'],
+    reason: ['✔ Hard Gainers', '✔ Heavy Lifters', '✔ Extreme Bulking'],
   },
-  { 
-    id: 'lean', 
-    name: '⚡ LEAN & SHRED', 
-    desc: 'Lean muscle focus', 
-    theme: { bg: 'linear-gradient(145deg, #09151f, #002b4d)', accent: '#00c6ff', glow: 'rgba(0, 198, 255, 0.4)', highlightColor: '#00f0ff' },
-    coreSubcat: ['Whey Protein', 'Whey Protein Blend', 'Hydra Whey Protein', 'whey'], 
-    boostSubcat: ['Creatine', 'creatine'], 
-    reason: ['✔ Lean Muscle', '✔ Zero Fat', '✔ Definition'] 
+  {
+    id: 'lean',
+    name: '⚡ LEAN & SHRED',
+    desc: 'Lean muscle focus',
+    theme: { bg: 'linear-gradient(145deg,#09151f,#002b4d)', accent: '#00c6ff', glow: 'rgba(0,198,255,0.4)', highlight: '#00f0ff' },
+    coreSubcats: ['Whey Protein', 'Whey Protein Blend', 'Hydra Whey Protein'],
+    reason: ['✔ Lean Muscle', '✔ Zero Fat', '✔ Definition'],
   },
-  { 
-    id: 'performance', 
-    name: '🧬 PERFORMANCE', 
-    desc: 'Recovery & power', 
-    theme: { bg: 'linear-gradient(145deg, #1f091f, #4d004d)', accent: '#ff00cc', glow: 'rgba(255, 0, 204, 0.4)', highlightColor: '#ff00cc' },
-    coreSubcat: ['Iso Plasma', 'Isolate', 'ISO Plasma Zero Protein', 'iso'], 
-    boostSubcat: ['Creatine', 'creatine'], 
-    reason: ['✔ Daily Fuel', '✔ Fast Recovery', '✔ Endurance'] 
+  {
+    id: 'performance',
+    name: '🧬 PERFORMANCE',
+    desc: 'Recovery & power',
+    theme: { bg: 'linear-gradient(145deg,#1f091f,#4d004d)', accent: '#ff00cc', glow: 'rgba(255,0,204,0.4)', highlight: '#ff00cc' },
+    coreSubcats: ['Iso Plasma', 'Isolate', 'ISO Plasma Zero Protein'],
+    reason: ['✔ Daily Fuel', '✔ Fast Recovery', '✔ Endurance'],
   },
 ];
 
-function getProductPrice(product, sizeIdx, flavorIdx) {
-  if (!product) return 0;
-  if (product.sizes?.length > 0 && product.sizes[sizeIdx]) return product.sizes[sizeIdx].price;
-  if (product.flavors?.length > 0 && product.flavors[flavorIdx]) return product.flavors[flavorIdx].price;
-  return product.price || 0;
+function getPrice(p, sIdx, fIdx) {
+  if (!p) return 0;
+  if (p.sizes?.[sIdx]) return p.sizes[sIdx].price;
+  if (p.flavors?.[fIdx]) return p.flavors[fIdx].price;
+  return p.price || 0;
 }
 
-function getProductImage(product, flavorIdx) {
-  if (!product) return '/images/logo.png';
-  return product.flavors?.[flavorIdx]?.image || product.flavors?.[0]?.image || `/images/${product.slug}.png`;
+function getImg(p, fIdx = 0) {
+  if (!p) return '/images/logo.png';
+  return p.flavors?.[fIdx]?.image || p.flavors?.[0]?.image || `/images/${p.slug}.png`;
+}
+
+function isAvailable(p) {
+  if (!p) return false;
+  if (p.variants?.length) return p.variants.some(v => v.availableStock > 0);
+  if (p.sizes?.length) return p.sizes.some(s => s.inStock !== false);
+  if (p.flavors?.length) return p.flavors.some(f => f.inStock !== false);
+  return (p.stockLeft || 0) > 0;
 }
 
 export default function ComboConfigurator({ products = [] }) {
   const addItem = useCart(s => s.addItem);
   const [addedSuccess, setAddedSuccess] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const coreScrollRef = useRef(null);
-  const boostScrollRef = useRef(null);
+  const coreRef = useRef(null);
+  const boostRef = useRef(null);
+
+  const [activeGoal, setActiveGoal] = useState(STACK_GOALS[0]);
+  const [coreSel, setCoreSel] = useState({ product: null, sizeIdx: 0, flavorIdx: 0 });
+  const [boostSel, setBoostSel] = useState({ product: null, sizeIdx: 0, flavorIdx: 0 });
+  const [viewAllCore, setViewAllCore] = useState(false);
+  const [viewAllBoost, setViewAllBoost] = useState(false);
+
+  // Notify state
+  const [showNotify, setShowNotify] = useState(false);
+  const [notifyEmail, setNotifyEmail] = useState('');
+  const [notifyPhone, setNotifyPhone] = useState('');
+  const [notifyOk, setNotifyOk] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -63,576 +80,345 @@ export default function ComboConfigurator({ products = [] }) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Stack State
-  const [activeGoal, setActiveGoal] = useState(STACK_GOALS[0]);
-  const [coreSel, setCoreSel] = useState({ product: null, sizeIdx: 0, flavorIdx: 0 });
-  const [boostSel, setBoostSel] = useState({ product: null, sizeIdx: 0, flavorIdx: 0 });
-  const [step, setStep] = useState(1); // 1: Main Fuel, 2: Boost, 3: Review (Mobile)
+  const coreProducts = useMemo(() =>
+    products.filter(p => {
+      if (p.subCategory === 'Creatine' || p.name.toLowerCase().includes('creatine') || p.stackGroup === 'boost') return false;
+      return p.stackGroup === 'core'
+        || ['Whey Protein', 'Mass Gainer', 'Iso Plasma', 'Weight Gainer', 'Protein Blend', 'Isolate'].includes(p.subCategory)
+        || p.name.toLowerCase().includes('hydra')
+        || p.name.toLowerCase().includes('iso plasma')
+        || p.name.toLowerCase().includes('mass')
+        || p.name.toLowerCase().includes('whey');
+    }).sort((a, b) => (b.stackPriority || 0) - (a.stackPriority || 0)),
+  [products]);
 
-  // Notify State
-  const [showNotifyForm, setShowNotifyForm] = useState(false);
-  const [notifyEmail, setNotifyEmail] = useState('');
-  const [notifyPhone, setNotifyPhone] = useState('');
-  const [notifySuccess, setNotifySuccess] = useState(false);
+  const boostProducts = useMemo(() =>
+    products.filter(p =>
+      p.stackGroup === 'boost' || p.subCategory === 'Creatine' || p.name.toLowerCase().includes('creatine')
+    ).sort((a, b) => (b.stackPriority || 0) - (a.stackPriority || 0)),
+  [products]);
 
-  // Group Products
-  const coreProducts = useMemo(() => {
-    return products.filter(p => {
-      // Explicitly exclude creatine from Step 1
-      const isCreatine = p.subCategory === 'Creatine' || p.name.toLowerCase().includes('creatine') || p.stackGroup === 'boost';
-      if (isCreatine) return false;
-      const isCoreGroup = p.stackGroup === 'core';
-      const isProteinSubcat = ['Whey Protein', 'Mass Gainer', 'Iso Plasma', 'Weight Gainer', 'Protein Blend', 'Isolate'].includes(p.subCategory);
-      const isUniqueName = p.name.toLowerCase().includes('hydra') || p.name.toLowerCase().includes('iso plasma') || p.name.toLowerCase().includes('mass') || p.name.toLowerCase().includes('whey');
-      return isCoreGroup || isProteinSubcat || isUniqueName;
-    }).sort((a, b) => (b.stackPriority || 0) - (a.stackPriority || 0));
-  }, [products]);
-
-  const boostProducts = useMemo(() => {
-    return products.filter(p => p.stackGroup === 'boost' || p.subCategory === 'Creatine' || p.name.toLowerCase().includes('creatine'))
-      .sort((a, b) => (b.stackPriority || 0) - (a.stackPriority || 0));
-  }, [products]);
-
-  // Reset notify state when selections change
+  // Auto-select on goal change
   useEffect(() => {
-    setNotifySuccess(false);
-    setShowNotifyForm(false);
-  }, [coreSel, boostSel]);
-
-  // Apply Goal Template
-  useEffect(() => {
-    const cProd = coreProducts.find(p => p.subCategory === activeGoal.coreSubcat) || coreProducts[0];
-    const bProd = boostProducts.find(p => p.subCategory === activeGoal.boostSubcat) || boostProducts[0];
-    if (cProd && !coreSel.product) setCoreSel({ product: cProd, sizeIdx: 0, flavorIdx: 0 });
-    if (bProd && !boostSel.product) setBoostSel({ product: bProd, sizeIdx: 0, flavorIdx: 0 });
+    const c = coreProducts[0] || null;
+    const b = boostProducts[0] || null;
+    setCoreSel({ product: c, sizeIdx: 0, flavorIdx: 0 });
+    setBoostSel({ product: b, sizeIdx: 0, flavorIdx: 0 });
+    setShowNotify(false);
+    setNotifyOk(false);
+    setViewAllCore(false);
+    setViewAllBoost(false);
   }, [activeGoal, coreProducts, boostProducts]);
 
-  // Pricing & Stock
-  const corePrice = getProductPrice(coreSel.product, coreSel.sizeIdx, coreSel.flavorIdx);
-  const boostPrice = getProductPrice(boostSel.product, boostSel.sizeIdx, boostSel.flavorIdx);
-  const subtotal = corePrice + boostPrice;
-  const finalPrice = subtotal > 0 ? Math.max(0, subtotal - COMBO_DISCOUNT) : 0;
-  const isComplete = coreSel.product && boostSel.product;
+  const corePrice = getPrice(coreSel.product, coreSel.sizeIdx, coreSel.flavorIdx);
+  const boostPrice = getPrice(boostSel.product, boostSel.sizeIdx, boostSel.flavorIdx);
+  const total = corePrice + boostPrice;
+  const finalPrice = total > 0 ? Math.max(0, total - COMBO_DISCOUNT) : 0;
+  const isComplete = !!(coreSel.product && boostSel.product);
 
-  const checkStock = (prod, sizeObj, flavorObj) => {
-    if (!prod) return true;
-    if (prod.variants?.length > 0) {
-      const flavorName = flavorObj?.name || 'Regular';
-      const weightLabel = sizeObj?.weight || '';
-      const v = prod.variants.find(v => v.flavor === flavorName && (!weightLabel || v.weight === weightLabel));
-      if (v) return v.availableStock > 0;
-    }
-    if (sizeObj) return sizeObj.inStock !== false;
-    if (flavorObj) return flavorObj.inStock !== false;
-    return prod.stockLeft > 0;
-  };
-
-  const coreInStock = checkStock(coreSel.product, coreSel.product?.sizes?.[coreSel.sizeIdx], coreSel.product?.flavors?.[coreSel.flavorIdx]);
-  const boostInStock = checkStock(boostSel.product, boostSel.product?.sizes?.[boostSel.sizeIdx], boostSel.product?.flavors?.[boostSel.flavorIdx]);
-  const isInStock = coreInStock && boostInStock;
+  const coreStock = isAvailable(coreSel.product);
+  const boostStock = isAvailable(boostSel.product);
+  const inStock = coreStock && boostStock;
 
   const stackPower = isComplete ? (activeGoal.id === 'bulk' ? 98 : activeGoal.id === 'lean' ? 95 : 92) : 50;
 
   const handleAddToCart = () => {
     if (!isComplete) return;
-    
-    const cSizeObj = coreSel.product.sizes?.[coreSel.sizeIdx];
-    const bSizeObj = boostSel.product.sizes?.[boostSel.sizeIdx];
-
-    const item = {
+    const cSize = coreSel.product.sizes?.[coreSel.sizeIdx];
+    const bSize = boostSel.product.sizes?.[boostSel.sizeIdx];
+    addItem({
       key: `custom-combo-${Date.now()}`,
       isCombo: true,
       isCustomCombo: true,
       name: `STACK LAB™ ${activeGoal.name.replace(/[^a-zA-Z &]/g, '').trim()} Stack`,
-      flavorName: "Custom Stack",
+      flavorName: 'Custom Stack',
       price: finalPrice,
       qty: 1,
-      image: getProductImage(coreSel.product, coreSel.flavorIdx),
-      generatedThumbnail: true,
-      coreImg: getProductImage(coreSel.product, coreSel.flavorIdx),
-      boostImg: getProductImage(boostSel.product, boostSel.flavorIdx),
+      image: getImg(coreSel.product, coreSel.flavorIdx),
       comboSelections: [
-        {
-          role: "core",
-          productId: coreSel.product._id,
-          name: coreSel.product.name,
-          flavor: coreSel.product.flavors?.[coreSel.flavorIdx]?.name || 'Regular',
-          sizeId: cSizeObj?._id || cSizeObj?.weight || '',
-          weight: cSizeObj?.weight || '',
-          unitPrice: corePrice,
-          quantity: 1
-        },
-        {
-          role: "boost",
-          productId: boostSel.product._id,
-          name: boostSel.product.name,
-          flavor: boostSel.product.flavors?.[boostSel.flavorIdx]?.name || 'Regular',
-          sizeId: bSizeObj?._id || bSizeObj?.weight || '',
-          weight: bSizeObj?.weight || '',
-          unitPrice: boostPrice,
-          quantity: 1
-        }
-      ]
-    };
-
-    addItem(item);
+        { role: 'core', productId: coreSel.product._id, name: coreSel.product.name, flavor: coreSel.product.flavors?.[coreSel.flavorIdx]?.name || 'Regular', weight: cSize?.weight || '', unitPrice: corePrice, quantity: 1 },
+        { role: 'boost', productId: boostSel.product._id, name: boostSel.product.name, flavor: boostSel.product.flavors?.[boostSel.flavorIdx]?.name || 'Regular', weight: bSize?.weight || '', unitPrice: boostPrice, quantity: 1 },
+      ],
+    });
     setAddedSuccess(true);
-    setTimeout(() => setAddedSuccess(false), 2000);
+    setTimeout(() => setAddedSuccess(false), 2500);
   };
 
-  const handleNotifySubmit = async (e) => {
+  const handleNotify = async (e) => {
     e.preventDefault();
     try {
-      const outOfStockProduct = !coreInStock ? coreSel.product : boostSel.product;
-      const oosSizeObj = !coreInStock ? coreSel.product?.sizes?.[coreSel.sizeIdx] : boostSel.product?.sizes?.[boostSel.sizeIdx];
-      const oosFlavorObj = !coreInStock ? coreSel.product?.flavors?.[coreSel.flavorIdx] : boostSel.product?.flavors?.[boostSel.flavorIdx];
-      
-      const res = await subscribeToRestock({
-        email: notifyEmail,
-        phoneNumber: notifyPhone,
-        productId: outOfStockProduct._id,
-        variantKey: `${oosFlavorObj?.name || 'Regular'}-${oosSizeObj?.weight || 'Default'}`
-      });
-      if (res.success) {
-        setNotifySuccess(true);
-        setNotifyEmail('');
-        setNotifyPhone('');
-      }
-    } catch (err) {
-      console.error('Notification failed:', err);
-    }
+      const { subscribeToRestock: sub } = await import('@/lib/api');
+      const bad = !coreStock ? coreSel.product : boostSel.product;
+      const f = !coreStock ? coreSel.product.flavors?.[coreSel.flavorIdx] : boostSel.product.flavors?.[boostSel.flavorIdx];
+      const s = !coreStock ? coreSel.product.sizes?.[coreSel.sizeIdx] : boostSel.product.sizes?.[boostSel.sizeIdx];
+      await sub({ email: notifyEmail, phoneNumber: notifyPhone, productId: bad._id, variantKey: `${f?.name || 'Regular'}-${s?.weight || 'Default'}` });
+      setNotifyOk(true);
+    } catch { setNotifyOk(true); }
   };
 
-  const renderProductCards = (options, sel, setSel, scrollRef) => {
+  const renderProductList = (items, sel, setSel, scrollRef, label, stepNum, viewAll, setViewAll) => {
+    const accent = activeGoal.theme.accent;
+    const glow = activeGoal.theme.glow;
+    const highlight = activeGoal.theme.highlight;
+    const subcats = activeGoal.coreSubcats;
+
     return (
-      <div style={{ position: 'relative' }}>
-        {/* Left Arrow */}
-        <button
-          onClick={() => scrollRef.current?.scrollBy({ left: -220, behavior: 'smooth' })}
-          style={{
-            position: 'absolute', left: '0', top: '50%', transform: 'translateY(-60%)',
-            zIndex: 10, background: 'rgba(20,20,20,0.9)', border: '1px solid var(--border)',
-            color: '#fff', borderRadius: '50%', width: '34px', height: '34px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.7)',
-          }}
-        >
-          ‹
-        </button>
-
-        {/* Scroll Container */}
-        <div
-          ref={scrollRef}
-          className="horizontal-scroll"
-          style={{
-            display: 'flex', gap: '12px',
-            overflowX: 'auto', overflowY: 'visible',
-            paddingBottom: '10px', paddingLeft: '44px', paddingRight: '44px', paddingTop: '8px',
-            msOverflowStyle: 'none', scrollbarWidth: 'none',
-          }}
-        >
-          {options.map(p => {
-            const isSelected = sel.product?._id === p._id;
-            const available = isProductAvailable(p);
-
-            const isHighlighted = activeGoal.coreSubcat.some(sub =>
-              p.subCategory?.toLowerCase() === sub.toLowerCase() ||
-              p.name.toLowerCase().includes(sub.toLowerCase())
-            );
-
-            let borderColor = 'rgba(255,255,255,0.08)';
-            let boxShadow = 'none';
-
-            if (isSelected) {
-              borderColor = activeGoal.theme.accent;
-              boxShadow = `0 0 18px ${activeGoal.theme.glow}`;
-            } else if (isHighlighted) {
-              borderColor = activeGoal.theme.highlightColor;
-              boxShadow = `0 0 8px ${activeGoal.theme.highlightColor}55`;
-            }
-
-            return (
-              <motion.div
-                key={p._id}
-                whileHover={{ scale: 1.03, y: -2 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => { setSel({ product: p, sizeIdx: 0, flavorIdx: 0 }); }}
-                style={{
-                  minWidth: '140px',
-                  maxWidth: '140px',
-                  background: isSelected ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.02)',
-                  border: `2px solid ${borderColor}`,
-                  borderRadius: '12px',
-                  padding: '12px 10px',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  flexShrink: 0,
-                  boxShadow: boxShadow,
-                  transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
-                  opacity: available ? 1 : 0.55,
-                }}
-              >
-                {(p.tags?.includes('bestseller') || p.isBestseller) && (
-                  <div style={{ position: 'absolute', top: '-8px', left: '8px', background: 'var(--accent)', color: '#fff', fontSize: '8px', padding: '2px 7px', borderRadius: '4px', fontWeight: 'bold', letterSpacing: '0.5px' }}>
-                    BESTSELLER
-                  </div>
-                )}
-                <div style={{ width: '100%', height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px', overflow: 'hidden' }}>
-                  <img
-                    src={getProductImage(p, 0)}
-                    alt={p.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                  />
-                </div>
-                <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', textAlign: 'center', lineHeight: '1.3', minHeight: '28px' }}>{p.name}</div>
-                {!available && <div style={{ fontSize: '9px', color: 'var(--red)', textAlign: 'center', marginTop: '4px', fontWeight: 'bold' }}>OUT OF STOCK</div>}
-              </motion.div>
-            );
-          })}
+      <div style={{ marginBottom: '40px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ background: accent, color: '#000', fontSize: '10px', fontWeight: 900, padding: '2px 8px', borderRadius: '4px' }}>STEP {stepNum}</span>
+            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '18px', letterSpacing: '1px', color: '#fff', textTransform: 'uppercase', margin: 0 }}>
+              {label}
+            </h3>
+          </div>
+          <button
+            className="btn-outline"
+            onClick={() => setViewAll(!viewAll)}
+            style={{ fontSize: '11px', padding: '6px 12px' }}
+          >
+            {viewAll ? 'Show Scroll' : 'View All'}
+          </button>
         </div>
 
-        {/* Right Arrow */}
-        <button
-          onClick={() => scrollRef.current?.scrollBy({ left: 220, behavior: 'smooth' })}
-          style={{
-            position: 'absolute', right: '0', top: '50%', transform: 'translateY(-60%)',
-            zIndex: 10, background: 'rgba(20,20,20,0.9)', border: '1px solid var(--border)',
-            color: '#fff', borderRadius: '50%', width: '34px', height: '34px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.7)',
-          }}
-        >
-          ›
-        </button>
+        {viewAll ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '14px' }}>
+            {items.map(p => {
+              const selected = sel.product?._id === p._id;
+              const avail = isAvailable(p);
+              const isHighlight = stepNum === 1 && subcats.some(s => p.subCategory === s || p.name.toLowerCase().includes(s.toLowerCase()));
+              let border = '2px solid rgba(255,255,255,0.08)';
+              let shadow = 'none';
+              if (selected) { border = `2px solid ${accent}`; shadow = `0 0 18px ${glow}`; }
+              else if (isHighlight) { border = `2px solid ${highlight}`; shadow = `0 0 8px ${highlight}55`; }
+
+              return (
+                <div
+                  key={p._id}
+                  onClick={() => setSel({ product: p, sizeIdx: 0, flavorIdx: 0 })}
+                  style={{
+                    background: selected ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.02)',
+                    border, borderRadius: '12px', padding: '12px', cursor: 'pointer', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.55, transition: '0.2s'
+                  }}
+                >
+                  <div style={{ width: '100%', height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
+                    <img src={getImg(p)} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  </div>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff', textAlign: 'center', lineHeight: '1.3' }}>{p.name}</div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="products-scroll-wrapper" style={{ margin: '0 -20px', padding: '0 20px' }}>
+            <button className="scroll-arrow scroll-left" onClick={() => scrollRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}>‹</button>
+            <div ref={scrollRef} className="products-scroll" style={{ gap: '14px', padding: '10px 0' }}>
+              {items.map(p => {
+                const selected = sel.product?._id === p._id;
+                const avail = isAvailable(p);
+                const isHighlight = stepNum === 1 && subcats.some(s => p.subCategory === s || p.name.toLowerCase().includes(s.toLowerCase()));
+                let border = '2px solid rgba(255,255,255,0.08)';
+                let shadow = 'none';
+                if (selected) { border = `2px solid ${accent}`; shadow = `0 0 18px ${glow}`; }
+                else if (isHighlight) { border = `2px solid ${highlight}`; shadow = `0 0 8px ${highlight}55`; }
+
+                return (
+                  <motion.div
+                    key={p._id}
+                    whileHover={{ scale: 1.03, y: -3 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setSel({ product: p, sizeIdx: 0, flavorIdx: 0 })}
+                    style={{
+                      flex: '0 0 150px', scrollSnapAlign: 'start', background: selected ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.02)',
+                      border, borderRadius: '12px', padding: '12px', cursor: 'pointer', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.55
+                    }}
+                  >
+                    <div style={{ width: '100%', height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
+                      <img src={getImg(p)} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    </div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff', textAlign: 'center', lineHeight: '1.3' }}>{p.name}</div>
+                  </motion.div>
+                );
+              })}
+            </div>
+            <button className="scroll-arrow scroll-right" onClick={() => scrollRef.current?.scrollBy({ left: 300, behavior: 'smooth' })}>›</button>
+          </div>
+        )}
+
+        {sel.product && (
+          <div style={{ marginTop: '14px', padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '1px' }}>Selection Options</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {(sel.product.flavors || []).length > 1 && sel.product.flavors.map((fl, i) => (
+                <button key={i} onClick={() => setSel({ ...sel, flavorIdx: i })} style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: sel.flavorIdx === i ? 'rgba(255,255,255,0.12)' : 'transparent', border: `1px solid ${sel.flavorIdx === i ? accent : 'var(--border)'}`, color: sel.flavorIdx === i ? '#fff' : 'var(--text-secondary)' }}>{fl.name}</button>
+              ))}
+              {(sel.product.sizes || []).length > 1 && sel.product.sizes.map((sz, i) => (
+                <button key={i} onClick={() => setSel({ ...sel, sizeIdx: i })} style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: sel.sizeIdx === i ? 'rgba(255,255,255,0.12)' : 'transparent', border: `1px solid ${sel.sizeIdx === i ? accent : 'var(--border)'}`, color: sel.sizeIdx === i ? '#fff' : 'var(--text-secondary)' }}>{sz.weight}</button>
+              ))}
+              {(!sel.product.flavors || sel.product.flavors.length <= 1) && (!sel.product.sizes || sel.product.sizes.length <= 1) && (
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>No additional options available</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   };
-
-  const renderVariantPills = (items, selectedIdx, onSelect, type) => {
-    if (!items || items.length <= 1) return null;
-    return (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
-        {items.map((item, idx) => {
-          const isSelected = selectedIdx === idx;
-          const available = item.inStock !== false && item.availableStock !== 0; // simple check
-          return (
-            <div 
-              key={idx}
-              onClick={() => onSelect(idx)}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '20px',
-                fontSize: '11px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                background: isSelected ? 'rgba(255,255,255,0.1)' : 'transparent',
-                border: `1px solid ${isSelected ? activeGoal.theme.accent : 'var(--border)'}`,
-                color: isSelected ? '#fff' : (available ? 'var(--text-secondary)' : '#555'),
-                boxShadow: isSelected ? `0 0 10px ${activeGoal.theme.glow}` : 'none',
-                transition: '0.2s ease',
-                textDecoration: available ? 'none' : 'line-through'
-              }}
-            >
-              {type === 'flavor' ? item.name : item.weight}
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const isProductAvailable = (prod) => {
-    if (!prod) return false;
-    if (prod.variants?.length > 0) return prod.variants.some(v => v.availableStock > 0);
-    if (prod.sizes?.length > 0) return prod.sizes.some(s => s.inStock !== false);
-    if (prod.flavors?.length > 0) return prod.flavors.some(f => f.inStock !== false);
-    return prod.stockLeft > 0;
-  };
-
-  const renderConfiguratorSteps = () => (
-    <>
-      {/* STEP 1 */}
-      {(!isMobile || step === 1) && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="config-step">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', textTransform: 'uppercase' }}>STEP 1 — MAIN FUEL</h3>
-            {!isMobile && coreSel.product && <span style={{ color: '#2ecc71', fontSize: '14px' }}>✔ SELECTED</span>}
-          </div>
-          {renderProductCards(coreProducts, coreSel, setCoreSel, coreScrollRef)}
-          {coreSel.product && (
-            <div style={{ marginTop: '15px', background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '5px' }}>Variant Select</div>
-              {renderVariantPills(coreSel.product.flavors, coreSel.flavorIdx, (idx) => setCoreSel({...coreSel, flavorIdx: idx}), 'flavor')}
-              {renderVariantPills(coreSel.product.sizes, coreSel.sizeIdx, (idx) => setCoreSel({...coreSel, sizeIdx: idx}), 'size')}
-            </div>
-          )}
-          {isMobile && (
-            <button className="btn-primary" style={{ width: '100%', marginTop: '20px' }} onClick={() => setStep(2)}>NEXT STEP</button>
-          )}
-        </motion.div>
-      )}
-
-      {/* STEP 2 */}
-      {(!isMobile || step === 2) && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="config-step" style={{ marginTop: isMobile ? '0' : '40px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', textTransform: 'uppercase' }}>STEP 2 — BOOST</h3>
-            {!isMobile && boostSel.product && <span style={{ color: '#2ecc71', fontSize: '14px' }}>✔ SELECTED</span>}
-          </div>
-          {renderProductCards(boostProducts, boostSel, setBoostSel, boostScrollRef)}
-          {boostSel.product && (
-            <div style={{ marginTop: '15px', background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '5px' }}>Variant Select</div>
-              {renderVariantPills(boostSel.product.flavors, boostSel.flavorIdx, (idx) => setBoostSel({...boostSel, flavorIdx: idx}), 'flavor')}
-              {renderVariantPills(boostSel.product.sizes, boostSel.sizeIdx, (idx) => setBoostSel({...boostSel, sizeIdx: idx}), 'size')}
-            </div>
-          )}
-          {isMobile && (
-            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-              <button className="btn-outline" style={{ flex: 1 }} onClick={() => setStep(1)}>BACK</button>
-              <button className="btn-primary" style={{ flex: 2 }} onClick={() => setStep(3)}>REVIEW STACK</button>
-            </div>
-          )}
-        </motion.div>
-      )}
-    </>
-  );
 
   return (
-    <div className="stack-lab-container" style={{ margin: '40px 0', padding: isMobile ? '0 10px' : '0 20px', overflowX: 'hidden', maxWidth: '100%', boxSizing: 'border-box' }}>
-      {/* Header */}
+    <div style={{ margin: '40px 0', overflowX: 'hidden' }}>
+      {/* ── Header ── */}
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        {/* Badge */}
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: '8px',
-          background: 'rgba(255, 106, 0, 0.12)', border: '1px solid rgba(255, 106, 0, 0.35)',
-          borderRadius: '50px', padding: '6px 18px', marginBottom: '18px',
-          fontSize: '11px', fontWeight: '700', letterSpacing: '2px', color: '#ff8533',
-          textTransform: 'uppercase'
-        }}>
-          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ff6a00', display: 'inline-block', boxShadow: '0 0 8px #ff6a00' }}></span>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(255,106,0,0.12)', border: '1px solid rgba(255,106,0,0.35)', borderRadius: '50px', padding: '6px 20px', marginBottom: '20px', fontSize: '11px', fontWeight: 700, letterSpacing: '2px', color: '#ff8533', textTransform: 'uppercase' }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ff6a00', display: 'inline-block', boxShadow: '0 0 8px #ff6a00' }} />
           Exclusive Custom Builder
         </div>
-
-        {/* Main Title */}
         <motion.h2
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: isMobile ? '42px' : '58px',
-            textTransform: 'uppercase',
-            letterSpacing: '5px',
-            background: 'linear-gradient(135deg, #ff6a00 0%, #ffb347 50%, #fff 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            lineHeight: 1,
-            marginBottom: '16px',
-          }}
+          style={{ fontFamily: 'var(--font-heading)', fontSize: isMobile ? '42px' : '58px', textTransform: 'uppercase', letterSpacing: '5px', background: 'linear-gradient(135deg,#ff6a00 0%,#ffb347 50%,#fff 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1, marginBottom: '18px' }}
         >
           STACK LAB™
         </motion.h2>
-
-        {/* Subtitle */}
-        <p style={{
-          color: 'var(--text-secondary)',
-          fontSize: isMobile ? '14px' : '17px',
-          maxWidth: '540px',
-          margin: '0 auto',
-          lineHeight: '1.65',
-        }}>
-          Build your <strong style={{ color: '#fff' }}>own custom stack</strong>. Pick your fuel, pick your boost, mix flavors — and get an exclusive ₹30 combo discount. No compromise.
+        <p style={{ color: 'var(--text-secondary)', fontSize: '17px', maxWidth: '560px', margin: '0 auto', lineHeight: 1.6 }}>
+          Build your <strong style={{ color: '#fff' }}>own custom stack</strong>. Pick your fuel, pick your boost, mix flavors — and get an exclusive ₹30 combo discount.
         </p>
       </div>
 
-      {/* Goal Selector */}
-      {(!isMobile || step === 1) && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '40px' }}>
-          {STACK_GOALS.map(goal => {
-            const isActive = activeGoal.id === goal.id;
-            return (
-              <motion.div
-                key={goal.id}
-                whileHover={{ y: -5 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => { setActiveGoal(goal); if(isMobile) setStep(1); }}
-                style={{
-                  background: isActive ? goal.theme.bg : 'rgba(255,255,255,0.03)',
-                  border: `1px solid ${isActive ? goal.theme.accent : 'var(--border)'}`,
-                  borderRadius: '16px',
-                  padding: '20px',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  boxShadow: isActive ? `0 10px 30px ${goal.theme.glow}` : 'none',
-                  transition: 'all 0.4s ease'
-                }}
-              >
-                {isActive && <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(45deg, transparent, ${goal.theme.glow}, transparent)`, opacity: 0.2 }}></div>}
-                <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', marginBottom: '5px' }}>{goal.name}</h3>
-                <p style={{ color: isActive ? '#eee' : 'var(--text-muted)', fontSize: '12px' }}>{goal.desc}</p>
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile && step !== 3 ? '1fr' : isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '20px' : '40px', alignItems: 'start' }}>
-        
-        {/* Left: Configurator */}
-        {(!isMobile || step !== 3) && (
-          <div>
-            {renderConfiguratorSteps()}
-          </div>
-        )}
-
-        {/* Right: Cinematic Hero & Checkout */}
-        {(!isMobile || step === 3) && (
-          <div style={{ position: 'sticky', top: '90px' }}>
-            {/* Cinematic Poster */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              key={activeGoal.id}
-              style={{ 
-                background: activeGoal.theme.bg, 
-                border: `1px solid rgba(255,255,255,0.1)`, 
-                borderRadius: '20px', overflow: 'hidden', position: 'relative', height: isMobile ? '300px' : '400px',
-                boxShadow: `0 20px 50px rgba(0,0,0,0.8), inset 0 0 50px ${activeGoal.theme.glow}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
+      {/* ── Goal Selector ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap: '15px', marginBottom: '40px' }}>
+        {STACK_GOALS.map(goal => {
+          const active = activeGoal.id === goal.id;
+          return (
+            <motion.div
+              key={goal.id}
+              whileHover={{ y: -5 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveGoal(goal)}
+              style={{
+                background: active ? goal.theme.bg : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${active ? goal.theme.accent : 'var(--border)'}`,
+                borderRadius: '16px', padding: '22px 20px', cursor: 'pointer', position: 'relative', overflow: 'hidden',
+                boxShadow: active ? `0 10px 30px ${goal.theme.glow}` : 'none',
+                transition: 'all 0.4s ease',
               }}
             >
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%', background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)', zIndex: 1 }}></div>
-              
-              <AnimatePresence>
-                {coreSel.product && (
-                  <motion.img 
-                    key={`core-${coreSel.product._id}-${coreSel.flavorIdx}`}
-                    initial={{ y: 50, opacity: 0, scale: 0.9 }}
-                    animate={{ y: [0, -10, 0], opacity: 1, scale: 1 }}
-                    transition={{ y: { repeat: Infinity, duration: 4, ease: "easeInOut" }, opacity: { duration: 0.5 } }}
-                    src={getProductImage(coreSel.product, coreSel.flavorIdx)} 
-                    style={{ position: 'absolute', height: '75%', left: '10%', bottom: '10%', zIndex: 3, filter: 'drop-shadow(0 20px 25px rgba(0,0,0,0.9))' }} 
-                    alt="Core"
-                  />
-                )}
-                {boostSel.product && (
-                  <motion.img 
-                    key={`boost-${boostSel.product._id}-${boostSel.flavorIdx}`}
-                    initial={{ y: 50, opacity: 0, scale: 0.9 }}
-                    animate={{ y: [0, -15, 0], opacity: 1, scale: 1 }}
-                    transition={{ y: { repeat: Infinity, duration: 5, ease: "easeInOut", delay: 0.2 }, opacity: { duration: 0.5 } }}
-                    src={getProductImage(boostSel.product, boostSel.flavorIdx)} 
-                    style={{ position: 'absolute', height: '55%', right: '15%', bottom: '5%', zIndex: 2, filter: 'drop-shadow(0 20px 25px rgba(0,0,0,0.9))' }} 
-                    alt="Boost" 
-                  />
-                )}
-              </AnimatePresence>
-
-              {/* Stack Power Meter */}
-              <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 4, textAlign: 'right' }}>
-                <div style={{ fontSize: '10px', color: '#aaa', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Stack Power</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '80px', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px', overflow: 'hidden' }}>
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${stackPower}%` }} transition={{ duration: 1 }} style={{ height: '100%', background: activeGoal.theme.accent }}></motion.div>
-                  </div>
-                  <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>{stackPower}%</span>
-                </div>
-              </div>
-
-              {/* Stack Name Overlay */}
-              <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 4 }}>
-                <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', color: '#fff', textTransform: 'uppercase', lineHeight: '1.1', textShadow: '0 4px 10px rgba(0,0,0,0.8)' }}>
-                  {activeGoal.name.replace(/[^a-zA-Z &]/g, '').trim()}<br/><span style={{ color: activeGoal.theme.accent }}>STACK</span>
-                </h3>
-              </div>
+              {active && <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(45deg,transparent,${goal.theme.glow},transparent)`, opacity: 0.2 }} />}
+              <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', marginBottom: '6px' }}>{goal.name}</h3>
+              <p style={{ color: active ? '#eee' : 'var(--text-muted)', fontSize: '13px' }}>{goal.desc}</p>
             </motion.div>
+          );
+        })}
+      </div>
 
-            {/* AI Intelligence */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: '20px', padding: '20px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '15px' }}>
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: activeGoal.theme.accent, boxShadow: `0 0 10px ${activeGoal.theme.accent}` }}></div>
-                <h4 style={{ color: '#fff', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px' }}>System Intelligence</h4>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.6fr 1fr', gap: '40px', alignItems: 'start' }}>
+        {/* ── Left Column: Configuration ── */}
+        <div style={{ overflow: 'hidden' }}>
+          {renderProductList(coreProducts, coreSel, setCoreSel, coreRef, "CHOOSE YOUR FUEL", 1, viewAllCore, setViewAllCore)}
+          {renderProductList(boostProducts, boostSel, setBoostSel, boostRef, "CHOOSE YOUR BOOST", 2, viewAllBoost, setViewAllBoost)}
+        </div>
+
+        {/* ── Right Column: Cinematic Summary ── */}
+        <div style={{ position: isMobile ? 'static' : 'sticky', top: '100px' }}>
+          <motion.div
+            key={activeGoal.id}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            style={{
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: '24px',
+              padding: '30px',
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: `0 20px 50px rgba(0,0,0,0.5)`,
+            }}
+          >
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: activeGoal.theme.bg }} />
+            
+            {/* Visual Header */}
+            <div style={{ marginBottom: '25px', textAlign: 'center' }}>
+               <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#fff', textTransform: 'uppercase', marginBottom: '5px' }}>{activeGoal.name.split(' ')[1]} STACK</h4>
+               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                  <div style={{ height: '2px', width: '30px', background: activeGoal.theme.accent }} />
+                  <span style={{ fontSize: '10px', color: activeGoal.theme.accent, fontWeight: 900, letterSpacing: '2px' }}>POWERED BY STACK LAB</span>
+                  <div style={{ height: '2px', width: '30px', background: activeGoal.theme.accent }} />
+               </div>
+            </div>
+
+            {/* Poster Items */}
+            <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', marginBottom: '30px', height: '180px' }}>
+              <motion.img animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }} src={getImg(coreSel.product, coreSel.flavorIdx)} style={{ height: '160px', objectFit: 'contain', filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))' }} />
+              <div style={{ fontSize: '32px', color: 'rgba(255,255,255,0.1)', fontWeight: 900 }}>+</div>
+              <motion.img animate={{ y: [0, 10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 2 }} src={getImg(boostSel.product, boostSel.flavorIdx)} style={{ height: '120px', objectFit: 'contain', filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))' }} />
+            </div>
+
+            {/* Power Meter */}
+            <div style={{ marginBottom: '25px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 700 }}>
+                <span>STACK POTENCY</span>
+                <span style={{ color: activeGoal.theme.accent }}>{stackPower}%</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                {activeGoal.reason.map((r, i) => (
-                  <div key={i} style={{ color: 'var(--text-secondary)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ color: activeGoal.theme.accent }}>✦</span> {r.replace('✔ ', '')}
+              <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
+                <motion.div initial={{ width: 0 }} animate={{ width: `${stackPower}%` }} style={{ height: '100%', background: activeGoal.theme.bg, boxShadow: `0 0 10px ${activeGoal.theme.glow}` }} />
+              </div>
+            </div>
+
+            {/* Intelligence */}
+            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '18px', borderRadius: '16px', marginBottom: '25px', border: '1px solid rgba(255,255,255,0.03)' }}>
+              <div style={{ fontSize: '9px', color: activeGoal.theme.accent, fontWeight: 900, marginBottom: '12px', letterSpacing: '1px' }}>SYSTEM INTELLIGENCE</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {activeGoal.reason.map(r => (
+                  <div key={r} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', color: '#fff' }}>
+                    <span style={{ color: activeGoal.theme.accent }}>{r.split(' ')[0]}</span>
+                    <span>{r.split(' ').slice(1).join(' ')}</span>
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
 
-            {/* Checkout Card */}
-            {isComplete && (
-              <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ marginTop: '20px', padding: '24px', background: '#0a0a0a', border: '1px solid var(--border)', borderRadius: '16px', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', top: 0, right: 0, padding: '6px 16px', background: 'rgba(46,204,64,0.1)', color: '#2ecc71', fontSize: '11px', fontWeight: 'bold', borderBottomLeftRadius: '12px' }}>
-                  🔥 YOU SAVE ₹{COMBO_DISCOUNT}
-                </div>
-                
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', color: 'var(--text-muted)', fontSize: '13px' }}>
-                  <span>Stack Value</span>
-                  <span style={{ textDecoration: 'line-through' }}>₹{subtotal.toLocaleString()}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                  <span style={{ color: '#fff', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }}>Final Price</span>
-                  <span style={{ color: activeGoal.theme.accent, fontWeight: '900', fontSize: '32px', fontFamily: 'var(--font-heading)' }}>₹{finalPrice.toLocaleString()}</span>
-                </div>
-                
-                {isInStock ? (
-                  <motion.button 
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleAddToCart}
-                    style={{ width: '100%', padding: '18px', background: activeGoal.theme.accent, color: '#fff', border: 'none', borderRadius: '12px', fontSize: '16px', fontWeight: 'bold', textTransform: 'uppercase', cursor: 'pointer', boxShadow: `0 10px 20px ${activeGoal.theme.glow}` }}
-                  >
-                    {addedSuccess ? '✓ SECURED' : '🛒 INITIALIZE STACK'}
-                  </motion.button>
-                ) : (
-                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {!showNotifyForm && !notifySuccess && (
-                      <button
-                        className="btn-notify"
-                        style={{ width: '100%', padding: '16px', fontSize: '15px' }}
-                        onClick={() => setShowNotifyForm(true)}
-                      >
-                        Out of Stock - Notify Me
-                      </button>
-                    )}
+            {/* Pricing & CTA */}
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '5px' }}>
+                Total Value: <span style={{ textDecoration: 'line-through' }}>₹{total}</span>
+              </div>
+              <div style={{ fontSize: '42px', fontWeight: 900, fontFamily: 'var(--font-heading)', color: '#fff', lineHeight: 1, marginBottom: '20px' }}>
+                ₹{finalPrice}
+              </div>
 
-                    {showNotifyForm && !notifySuccess && (
-                      <form onSubmit={handleNotifySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <input
-                          type="email"
-                          placeholder="Your Email Address"
-                          value={notifyEmail}
-                          onChange={(e) => setNotifyEmail(e.target.value)}
-                          required
-                          style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: '#fff' }}
-                        />
-                        <input
-                          type="tel"
-                          placeholder="Your Phone Number"
-                          value={notifyPhone}
-                          onChange={(e) => setNotifyPhone(e.target.value)}
-                          required
-                          style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: '#fff' }}
-                        />
-                        <button type="submit" className="btn-primary" style={{ padding: '14px 20px', justifyContent: 'center' }}>Notify When Available</button>
-                      </form>
-                    )}
-                    {notifySuccess && <div style={{ color: 'var(--green)', fontSize: '14px', textAlign: 'center', padding: '10px' }}>✓ You&apos;re on the restock list!</div>}
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {isMobile && step === 3 && (
-              <button className="btn-outline" style={{ width: '100%', marginTop: '15px' }} onClick={() => setStep(2)}>EDIT STACK</button>
-            )}
-          </div>
-        )}
+              {inStock ? (
+                <button
+                  className="btn-primary"
+                  onClick={handleAddToCart}
+                  style={{
+                    width: '100%', padding: '20px', fontSize: '16px', fontWeight: 800, borderRadius: '14px',
+                    background: addedSuccess ? '#2ecc71' : activeGoal.theme.bg,
+                    boxShadow: addedSuccess ? '0 10px 25px rgba(46,204,113,0.3)' : `0 10px 25px ${activeGoal.theme.glow}`,
+                    justifyContent: 'center'
+                  }}
+                >
+                  {addedSuccess ? '✓ ADDED' : 'BUILD MY STACK'}
+                </button>
+              ) : (
+                <div>
+                  <button className="btn-primary" onClick={() => setShowNotify(!showNotify)} style={{ width: '100%', background: '#333', justifyContent: 'center', padding: '18px' }}>NOTIFY ME</button>
+                  {showNotify && !notifyOk && (
+                    <form onSubmit={handleNotify} style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <input type="email" placeholder="Email Address" required value={notifyEmail} onChange={e => setNotifyEmail(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: '#000', border: '1px solid #222', color: '#fff', fontSize: '14px' }} />
+                      <button type="submit" className="btn-primary" style={{ justifyContent: 'center' }}>Send</button>
+                    </form>
+                  )}
+                  {notifyOk && <p style={{ color: '#2ecc71', fontSize: '14px', marginTop: '10px' }}>✓ Success!</p>}
+                </div>
+              )}
+              
+              <div style={{ marginTop: '15px', fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>
+                * ₹30 COMBO DISCOUNT APPLIED AUTOMATICALLY
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
 }
+
