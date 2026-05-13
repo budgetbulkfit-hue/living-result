@@ -12,27 +12,27 @@ const STACK_GOALS = [
     id: 'bulk', 
     name: '💪 BULK & SIZE', 
     desc: 'Massive strength & mass', 
-    theme: { bg: 'linear-gradient(145deg, #1f1209, #3a1c00)', accent: '#ff6a00', glow: 'rgba(255, 106, 0, 0.4)' },
-    coreSubcat: 'Mass Gainer', 
-    boostSubcat: 'Creatine', 
+    theme: { bg: 'linear-gradient(145deg, #1f1209, #3a1c00)', accent: '#ff6a00', glow: 'rgba(255, 106, 0, 0.4)', highlightColor: '#FFD700' },
+    coreSubcat: ['Mass Gainer', 'Weight Gainer', 'Hydra Bulk Mass', 'mass'], 
+    boostSubcat: ['Creatine', 'creatine'], 
     reason: ['✔ Hard Gainers', '✔ Heavy Lifters', '✔ Extreme Bulking'] 
   },
   { 
     id: 'lean', 
     name: '⚡ LEAN & SHRED', 
     desc: 'Lean muscle focus', 
-    theme: { bg: 'linear-gradient(145deg, #09151f, #002b4d)', accent: '#00c6ff', glow: 'rgba(0, 198, 255, 0.4)' },
-    coreSubcat: 'Iso Plasma', 
-    boostSubcat: 'Creatine', 
+    theme: { bg: 'linear-gradient(145deg, #09151f, #002b4d)', accent: '#00c6ff', glow: 'rgba(0, 198, 255, 0.4)', highlightColor: '#00f0ff' },
+    coreSubcat: ['Whey Protein', 'Whey Protein Blend', 'Hydra Whey Protein', 'whey'], 
+    boostSubcat: ['Creatine', 'creatine'], 
     reason: ['✔ Lean Muscle', '✔ Zero Fat', '✔ Definition'] 
   },
   { 
     id: 'performance', 
     name: '🧬 PERFORMANCE', 
     desc: 'Recovery & power', 
-    theme: { bg: 'linear-gradient(145deg, #1f091f, #4d004d)', accent: '#ff00cc', glow: 'rgba(255, 0, 204, 0.4)' },
-    coreSubcat: 'Whey Protein', 
-    boostSubcat: 'Creatine', 
+    theme: { bg: 'linear-gradient(145deg, #1f091f, #4d004d)', accent: '#ff00cc', glow: 'rgba(255, 0, 204, 0.4)', highlightColor: '#ff00cc' },
+    coreSubcat: ['Iso Plasma', 'Isolate', 'ISO Plasma Zero Protein', 'iso'], 
+    boostSubcat: ['Creatine', 'creatine'], 
     reason: ['✔ Daily Fuel', '✔ Fast Recovery', '✔ Endurance'] 
   },
 ];
@@ -75,12 +75,16 @@ export default function ComboConfigurator({ products = [] }) {
 
   // Group Products
   const coreProducts = useMemo(() => {
-    return products.filter(p => p.stackGroup === 'core' || ['Whey Protein', 'Mass Gainer', 'Iso Plasma'].includes(p.subCategory))
-      .sort((a, b) => (b.stackPriority || 0) - (a.stackPriority || 0));
+    return products.filter(p => {
+      const isCoreGroup = p.stackGroup === 'core';
+      const isProteinSubcat = ['Whey Protein', 'Mass Gainer', 'Iso Plasma', 'Weight Gainer', 'Protein Blend', 'Isolate'].includes(p.subCategory);
+      const isUniqueName = p.name.toLowerCase().includes('hydra') || p.name.toLowerCase().includes('iso plasma') || p.name.toLowerCase().includes('mass') || p.name.toLowerCase().includes('whey');
+      return isCoreGroup || isProteinSubcat || isUniqueName;
+    }).sort((a, b) => (b.stackPriority || 0) - (a.stackPriority || 0));
   }, [products]);
 
   const boostProducts = useMemo(() => {
-    return products.filter(p => p.stackGroup === 'boost' || p.subCategory === 'Creatine')
+    return products.filter(p => p.stackGroup === 'boost' || p.subCategory === 'Creatine' || p.name.toLowerCase().includes('creatine'))
       .sort((a, b) => (b.stackPriority || 0) - (a.stackPriority || 0));
   }, [products]);
 
@@ -196,42 +200,97 @@ export default function ComboConfigurator({ products = [] }) {
 
   const renderProductCards = (options, sel, setSel) => {
     return (
-      <div className="horizontal-scroll" style={{ display: 'flex', gap: '15px', overflowX: 'auto', paddingBottom: '15px', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-        {options.map(p => {
-          const isSelected = sel.product?._id === p._id;
-          const available = isProductAvailable(p);
-          return (
-            <motion.div 
-              key={p._id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => { setSel({ product: p, sizeIdx: 0, flavorIdx: 0 }); }}
-              style={{
-                minWidth: '160px',
-                background: isSelected ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)',
-                border: `1px solid ${isSelected ? activeGoal.theme.accent : 'var(--border)'}`,
-                borderRadius: '12px',
-                padding: '15px',
-                cursor: 'pointer',
-                position: 'relative',
-                boxShadow: isSelected ? `0 0 20px ${activeGoal.theme.glow}` : 'none',
-                transition: '0.3s ease',
-                opacity: available ? 1 : 0.5
-              }}
-            >
-              {(p.tags?.includes('bestseller') || p.isBestseller) && (
-                <div style={{ position: 'absolute', top: '-8px', left: '10px', background: 'var(--accent)', color: '#fff', fontSize: '9px', padding: '3px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
-                  BESTSELLER
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+        {/* Left Arrow */}
+        <button 
+          onClick={(e) => {
+            const scrollContainer = e.currentTarget.nextElementSibling;
+            if (scrollContainer) scrollContainer.scrollBy({ left: -250, behavior: 'smooth' });
+          }}
+          style={{
+            position: 'absolute', left: '-15px', zIndex: 10,
+            background: 'var(--bg-secondary)', border: '1px solid var(--border)', 
+            color: '#fff', borderRadius: '50%', width: '32px', height: '32px', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+          }}
+        >
+          &lt;
+        </button>
+
+        {/* Scroll Container */}
+        <div className="horizontal-scroll" style={{ display: 'flex', gap: '15px', overflowX: 'auto', paddingBottom: '15px', paddingLeft: '10px', paddingRight: '10px', msOverflowStyle: 'none', scrollbarWidth: 'none', scrollBehavior: 'smooth', width: '100%' }}>
+          {options.map(p => {
+            const isSelected = sel.product?._id === p._id;
+            const available = isProductAvailable(p);
+            
+            // Check if this product belongs to the active goal's highlighted subcategories
+            const isHighlighted = activeGoal.coreSubcat.some(sub => 
+              p.subCategory?.toLowerCase() === sub.toLowerCase() || 
+              p.name.toLowerCase().includes(sub.toLowerCase())
+            );
+
+            let borderColor = 'var(--border)';
+            let boxShadow = 'none';
+
+            if (isSelected) {
+              borderColor = activeGoal.theme.accent;
+              boxShadow = `0 0 20px ${activeGoal.theme.glow}`;
+            } else if (isHighlighted) {
+              borderColor = activeGoal.theme.highlightColor;
+              boxShadow = `0 0 10px ${activeGoal.theme.highlightColor}40`;
+            }
+
+            return (
+              <motion.div 
+                key={p._id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => { setSel({ product: p, sizeIdx: 0, flavorIdx: 0 }); }}
+                style={{
+                  minWidth: '160px',
+                  background: isSelected ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)',
+                  border: `1px solid ${borderColor}`,
+                  borderRadius: '12px',
+                  padding: '15px',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  boxShadow: boxShadow,
+                  transition: '0.3s ease',
+                  opacity: available ? 1 : 0.5
+                }}
+              >
+                {(p.tags?.includes('bestseller') || p.isBestseller) && (
+                  <div style={{ position: 'absolute', top: '-8px', left: '10px', background: 'var(--accent)', color: '#fff', fontSize: '9px', padding: '3px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                    BESTSELLER
+                  </div>
+                )}
+                <div style={{ height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
+                  <img src={getProductImage(p, 0)} alt={p.name} style={{ maxHeight: '100%', objectFit: 'contain' }} />
                 </div>
-              )}
-              <div style={{ height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
-                <img src={getProductImage(p, 0)} alt={p.name} style={{ maxHeight: '100%', objectFit: 'contain' }} />
-              </div>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff', textAlign: 'center', lineHeight: '1.2' }}>{p.name}</div>
-              {!available && <div style={{ fontSize: '10px', color: 'var(--red)', textAlign: 'center', marginTop: '4px', fontWeight: 'bold' }}>OUT OF STOCK</div>}
-            </motion.div>
-          );
-        })}
+                <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff', textAlign: 'center', lineHeight: '1.2' }}>{p.name}</div>
+                {!available && <div style={{ fontSize: '10px', color: 'var(--red)', textAlign: 'center', marginTop: '4px', fontWeight: 'bold' }}>OUT OF STOCK</div>}
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Right Arrow */}
+        <button 
+          onClick={(e) => {
+            const scrollContainer = e.currentTarget.previousElementSibling;
+            if (scrollContainer) scrollContainer.scrollBy({ left: 250, behavior: 'smooth' });
+          }}
+          style={{
+            position: 'absolute', right: '-15px', zIndex: 10,
+            background: 'var(--bg-secondary)', border: '1px solid var(--border)', 
+            color: '#fff', borderRadius: '50%', width: '32px', height: '32px', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center', 
+            cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+          }}
+        >
+          &gt;
+        </button>
       </div>
     );
   };
