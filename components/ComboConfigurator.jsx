@@ -181,7 +181,7 @@ export default function ComboConfigurator({ products = [] }) {
         </div>
 
         {viewAll ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '14px' }}>
             {items.map(p => {
               const selected = sel.product?._id === p._id;
               const avail = isAvailable(p);
@@ -200,7 +200,7 @@ export default function ComboConfigurator({ products = [] }) {
                     border, borderRadius: '12px', padding: '12px', cursor: 'pointer', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.55, transition: '0.2s'
                   }}
                 >
-                  <div style={{ width: '100%', height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
+                  <div style={{ width: '100%', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
                     <img src={getImg(p)} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                   </div>
                   <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff', textAlign: 'center', lineHeight: '1.3' }}>{p.name}</div>
@@ -209,9 +209,29 @@ export default function ComboConfigurator({ products = [] }) {
             })}
           </div>
         ) : (
-          <div className="products-scroll-wrapper" style={{ margin: '0 -20px', padding: '0 20px' }}>
-            <button className="scroll-arrow scroll-left" onClick={() => scrollRef.current?.scrollBy({ left: -300, behavior: 'smooth' })}>‹</button>
-            <div ref={scrollRef} className="products-scroll" style={{ gap: '14px', padding: '10px 0' }}>
+          <div className="products-scroll-wrapper" style={{ margin: '0', padding: '0', position: 'relative' }}>
+            {/* Custom high-visibility arrows */}
+            <button
+              className="scroll-arrow"
+              onClick={() => scrollRef.current?.scrollBy({ left: -400, behavior: 'smooth' })}
+              style={{
+                left: '-15px',
+                zIndex: 20,
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                backdropFilter: 'blur(10px)',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.5)'
+              }}
+            >
+              ‹
+            </button>
+            
+            <div ref={scrollRef} className="products-scroll" style={{ gap: '16px', padding: '10px 40px' }}>
               {items.map(p => {
                 const selected = sel.product?._id === p._id;
                 const avail = isAvailable(p);
@@ -228,19 +248,38 @@ export default function ComboConfigurator({ products = [] }) {
                     whileTap={{ scale: 0.97 }}
                     onClick={() => setSel({ product: p, sizeIdx: 0, flavorIdx: 0 })}
                     style={{
-                      flex: '0 0 150px', scrollSnapAlign: 'start', background: selected ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.02)',
-                      border, borderRadius: '12px', padding: '12px', cursor: 'pointer', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.55
+                      flex: '0 0 190px', scrollSnapAlign: 'start', background: selected ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.02)',
+                      border, borderRadius: '12px', padding: '15px', cursor: 'pointer', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.55
                     }}
                   >
-                    <div style={{ width: '100%', height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
+                    <div style={{ width: '100%', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
                       <img src={getImg(p)} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </div>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff', textAlign: 'center', lineHeight: '1.3' }}>{p.name}</div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#fff', textAlign: 'center', lineHeight: '1.3' }}>{p.name}</div>
                   </motion.div>
                 );
               })}
             </div>
-            <button className="scroll-arrow scroll-right" onClick={() => scrollRef.current?.scrollBy({ left: 300, behavior: 'smooth' })}>›</button>
+
+            <button
+              className="scroll-arrow"
+              onClick={() => scrollRef.current?.scrollBy({ left: 400, behavior: 'smooth' })}
+              style={{
+                right: '-15px',
+                zIndex: 20,
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                backdropFilter: 'blur(10px)',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.5)'
+              }}
+            >
+              ›
+            </button>
           </div>
         )}
 
