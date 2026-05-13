@@ -1555,7 +1555,6 @@
                 const res = await authFetch(`${API_URL}/notifications`);
                 const data = await res.json();
                 if (data.success) {
-                    console.log('Fetched notifications:', data.data);
                     renderNotificationTable(data.data);
                 } else showToast('Failed to fetch notifications', 'error');
             } catch (err) { showToast('Error fetching notifications', 'error'); }
@@ -1576,7 +1575,7 @@
                 <tr>
                     <td>${new Date(n.createdAt).toLocaleDateString()}</td>
                     <td style="font-weight:bold; color:var(--accent);">${n.email}</td>
-                    <td style="color:#fff;" title='${JSON.stringify(n)}'>${n.phoneNumber || '-'}</td>
+                    <td style="color:#fff;">${n.phoneNumber || 'N/A'}</td>
                     <td>${n.productName}</td>
                     <td><span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:12px;">${n.variantKey}</span></td>
                     <td><span style="color:${n.status === 'pending' ? '#f39c12' : '#2ecc71'}; font-weight:bold;">${n.status.toUpperCase()}</span></td>

@@ -49,12 +49,18 @@ export default function ComboConfigurator({ products = [] }) {
   const [notifyPhone, setNotifyPhone] = useState('');
   const [notifySuccess, setNotifySuccess] = useState(false);
 
+  // Reset notify state when selections change
+  useEffect(() => {
+    setNotifySuccess(false);
+    setShowNotifyForm(false);
+  }, [coreSel, boostSel]);
+
   // Initialize with Bulking Stack
   useEffect(() => {
     if (coreProducts.length > 0 && boostProducts.length > 0 && !coreSel.product && !boostSel.product) {
       applyTemplate(QUICK_TEMPLATES[0]);
     }
-  }, [coreProducts, boostProducts]);
+  }, [coreProducts, boostProducts, coreSel.product, boostSel.product]);
 
   const applyTemplate = (tpl) => {
     const cProd = coreProducts.find(p => p.subCategory === tpl.coreSubcat) || coreProducts[0];

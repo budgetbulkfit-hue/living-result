@@ -52,6 +52,12 @@ export default function ProductDetailClient({ product }) {
   const productsInCombo = isComboItem ? (liveProductsInCombo ?? product.products ?? product.comboProducts ?? []) : [];
   const comboGroups = isComboItem ? (liveComboGroups ?? product.comboGroups ?? []) : [];
 
+  // Reset notify state when selections change
+  useEffect(() => {
+    setNotifySuccess(false);
+    setShowNotifyForm(false);
+  }, [selectedFlavor, selectedSize, groupSelections]);
+
   // Client-side fetch of full combo data (handles case where SSR page didn't merge comboGroups)
   useEffect(() => {
     if (!isComboItem) return;
