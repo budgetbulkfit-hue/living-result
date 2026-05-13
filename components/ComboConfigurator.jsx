@@ -516,7 +516,7 @@ export default function ComboConfigurator({ products = [] }) {
                         <button type="submit" className="btn-primary" style={{ padding: '14px 20px', justifyContent: 'center' }}>Notify When Available</button>
                       </form>
                     )}
-                    {notifySuccess && <div style={{ color: 'var(--green)', fontSize: '14px', textAlign: 'center', padding: '10px' }}>✓ You're on the restock list!</div>}
+                    {notifySuccess && <div style={{ color: 'var(--green)', fontSize: '14px', textAlign: 'center', padding: '10px' }}>✓ You&apos;re on the restock list!</div>}
                   </div>
                 )}
               </motion.div>
