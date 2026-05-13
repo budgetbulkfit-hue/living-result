@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import useCart from '@/lib/cartStore';
+import { subscribeToRestock } from '@/lib/api';
 
 const COMBO_DISCOUNT = 30;
 
@@ -42,6 +43,11 @@ export default function ComboConfigurator({ products = [] }) {
   const [coreSel, setCoreSel] = useState({ product: null, sizeIdx: 0, flavorIdx: 0 });
   const [boostSel, setBoostSel] = useState({ product: null, sizeIdx: 0, flavorIdx: 0 });
   const [activeReason, setActiveReason] = useState(null);
+  
+  const [showNotifyForm, setShowNotifyForm] = useState(false);
+  const [notifyEmail, setNotifyEmail] = useState('');
+  const [notifyPhone, setNotifyPhone] = useState('');
+  const [notifySuccess, setNotifySuccess] = useState(false);
 
   // Initialize with Bulking Stack
   useEffect(() => {
@@ -65,6 +71,28 @@ export default function ComboConfigurator({ products = [] }) {
   const finalPrice = subtotal > 0 ? Math.max(0, subtotal - COMBO_DISCOUNT) : 0;
   const isComplete = coreSel.product && boostSel.product;
 
+  const cSizeObj = coreSel.product?.sizes?.[coreSel.sizeIdx];
+  const cFlavorObj = coreSel.product?.flavors?.[coreSel.flavorIdx];
+  const bSizeObj = boostSel.product?.sizes?.[boostSel.sizeIdx];
+  const bFlavorObj = boostSel.product?.flavors?.[boostSel.flavorIdx];
+
+  const checkStock = (prod, sizeObj, flavorObj) => {
+    if (!prod) return true;
+    if (prod.variants?.length > 0) {
+      const flavorName = flavorObj?.name || 'Regular';
+      const weightLabel = sizeObj?.weight || '';
+      const v = prod.variants.find(v => v.flavor === flavorName && (!weightLabel || v.weight === weightLabel));
+      if (v) return v.availableStock > 0;
+    }
+    if (sizeObj) return sizeObj.inStock !== false;
+    if (flavorObj) return flavorObj.inStock !== false;
+    return prod.stockLeft > 0;
+  };
+
+  const coreInStock = checkStock(coreSel.product, cSizeObj, cFlavorObj);
+  const boostInStock = checkStock(boostSel.product, bSizeObj, bFlavorObj);
+  const isInStock = coreInStock && boostInStock;
+
   const handleAddToCart = () => {
     if (!isComplete) return;
     
@@ -77,6 +105,7 @@ export default function ComboConfigurator({ products = [] }) {
       isCombo: true,
       isCustomCombo: true,
       name: "STACK LAB™ Custom Stack",
+      flavorName: "Custom Stack",
       price: finalPrice,
       qty: 1,
       image: getProductImage(coreSel.product, coreSel.flavorIdx), // Main fallback for vanilla cart
@@ -110,6 +139,29 @@ export default function ComboConfigurator({ products = [] }) {
     addItem(item);
     setAddedSuccess(true);
     setTimeout(() => setAddedSuccess(false), 2000);
+  };
+
+  const handleNotifySubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const outOfStockProduct = !coreInStock ? coreSel.product : boostSel.product;
+      const oosSizeObj = !coreInStock ? cSizeObj : bSizeObj;
+      const oosFlavorObj = !coreInStock ? cFlavorObj : bFlavorObj;
+      
+      const res = await subscribeToRestock({
+        email: notifyEmail,
+        phone: notifyPhone,
+        productId: outOfStockProduct._id,
+        variantKey: `${oosFlavorObj?.name || 'Regular'}-${oosSizeObj?.weight || 'Default'}`
+      });
+      if (res.success) {
+        setNotifySuccess(true);
+        setNotifyEmail('');
+        setNotifyPhone('');
+      }
+    } catch (err) {
+      console.error('Notification failed:', err);
+    }
   };
 
   const renderSelector = (title, sel, setSel, options) => {
@@ -280,13 +332,50 @@ export default function ComboConfigurator({ products = [] }) {
                 🔥 YOU SAVE ₹{COMBO_DISCOUNT}
               </div>
 
-              <button 
-                onClick={handleAddToCart}
-                className="btn-primary" 
-                style={{ width: '100%', justifyContent: 'center', padding: '16px', fontSize: '16px', fontWeight: 'bold' }}
-              >
-                {addedSuccess ? '✓ ADDED TO CART' : '🛒 ADD STACK TO CART'}
-              </button>
+              {isInStock ? (
+                <button 
+                  onClick={handleAddToCart}
+                  className="btn-primary" 
+                  style={{ width: '100%', justifyContent: 'center', padding: '16px', fontSize: '16px', fontWeight: 'bold' }}
+                >
+                  {addedSuccess ? '✓ ADDED TO CART' : '🛒 ADD STACK TO CART'}
+                </button>
+              ) : (
+                <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {!showNotifyForm && !notifySuccess && (
+                    <button
+                      className="btn-notify"
+                      style={{ width: '100%', padding: '16px', fontSize: '15px' }}
+                      onClick={() => setShowNotifyForm(true)}
+                    >
+                      Out of Stock - Notify Me
+                    </button>
+                  )}
+
+                  {showNotifyForm && !notifySuccess && (
+                    <form onSubmit={handleNotifySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <input
+                        type="email"
+                        placeholder="Your Email Address"
+                        value={notifyEmail}
+                        onChange={(e) => setNotifyEmail(e.target.value)}
+                        required
+                        style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: '#fff' }}
+                      />
+                      <input
+                        type="tel"
+                        placeholder="Your Phone Number"
+                        value={notifyPhone}
+                        onChange={(e) => setNotifyPhone(e.target.value)}
+                        required
+                        style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: '#fff' }}
+                      />
+                      <button type="submit" className="btn-primary" style={{ padding: '14px 20px', justifyContent: 'center' }}>Notify When Available</button>
+                    </form>
+                  )}
+                  {notifySuccess && <div style={{ color: 'var(--green)', fontSize: '14px', textAlign: 'center', padding: '10px' }}>✓ You're on the restock list!</div>}
+                </div>
+              )}
             </div>
           )}
         </div>
