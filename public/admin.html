@@ -680,6 +680,7 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Email</th>
+                                <th>Phone</th>
                                 <th>Product</th>
                                 <th>Variant</th>
                                 <th>Status</th>
@@ -688,7 +689,7 @@
                         </thead>
                         <tbody id="notificationTableBody">
                             <tr>
-                                <td colspan="6" style="text-align: center;">Loading requests...</td>
+                                <td colspan="7" style="text-align: center;">Loading requests...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -991,8 +992,22 @@
 
                         <hr style="border: 0; border-top: 1px solid var(--border); margin: 25px 0;">
 
-                        <h4 style="color: var(--accent); margin-bottom: 15px; text-transform: uppercase;">Dynamic
-                            Product Selection</h4>
+                        <h4 style="color: var(--accent); margin-bottom: 15px; text-transform: uppercase;">Combo Groups
+                            (Configurable)</h4>
+                        <div class="form-row" style="align-items: flex-end;">
+                            <div class="form-group" style="flex: 2;"><label>Group Key (e.g. whey)</label><input
+                                    type="text" id="ec-group-key"></div>
+                            <div class="form-group" style="flex: 2;"><label>Group Label (e.g. Select Whey)</label><input
+                                    type="text" id="ec-group-label"></div>
+                            <button class="btn-outline" onclick="addComboGroup()" style="margin-bottom: 18px;">+ Add
+                                Group</button>
+                        </div>
+                        <div id="ec-combo-groups-container"></div>
+
+                        <hr style="border: 0; border-top: 1px solid var(--border); margin: 25px 0;">
+
+                        <h4 style="color: var(--text-muted); margin-bottom: 15px; text-transform: uppercase;">Fixed
+                            Products (Legacy)</h4>
                         <div class="form-row" style="align-items: flex-end;">
                             <div class="form-group" style="flex: 3;">
                                 <label>Select Product from Database</label>
@@ -1257,6 +1272,7 @@
     </div>
 
     <div id="toastWrap" class="toast-wrap"></div>
+    <input type="file" id="generic-upload" style="display:none;" accept="image/*">
 
     <!-- MODALS FOR SUB-FEATURES -->
 
@@ -1296,7 +1312,7 @@
             <div id="vm-combo-selectors" style="display:none; margin-bottom: 15px; gap: 10px; flex-direction: column;">
             </div>
             <div class="form-row">
-                <div class="form-group" style="flex:1;"><label>Price (₹)</label><input type="number" id="vm-price">
+                <div class="form-group" style="flex:1;"><label>Price (₹) <span onclick="updateComboVariantAutoPrice(true)" style="cursor:pointer; color:var(--accent); font-size:10px; margin-left:5px; border:1px solid; padding:0 3px; border-radius:3px;" title="Auto-calculate from items">⚡ AUTO</span></label><input type="number" id="vm-price">
                 </div>
                 <div class="form-group" style="flex:1;"><label>Old Price</label><input type="number" id="vm-oldprice">
                 </div>
@@ -1348,7 +1364,7 @@
         let allOrders = [];
         let allCombos = [];
         let editingComboId = null;
-        let ecData = { products: [], sizes: [], images: [], flavors: [] };
+        let ecData = { products: [], sizes: [], images: [], flavors: [], comboGroups: [] };
 
         const generateSlug = (text) => (text || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
@@ -1534,7 +1550,7 @@
 
         // --- NOTIFICATIONS SYSTEM ---
         async function fetchNotifications() {
-            setTableState('notificationTableBody', 6, 'Loading requests...');
+            setTableState('notificationTableBody', 7, 'Loading requests...');
             try {
                 const res = await authFetch(`${API_URL}/notifications`);
                 const data = await res.json();
@@ -1552,13 +1568,14 @@
         function renderNotificationTable(list) {
             const tbody = document.getElementById('notificationTableBody');
             if (!list || list.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No pending requests</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No pending requests</td></tr>';
                 return;
             }
             tbody.innerHTML = list.map(n => `
                 <tr>
                     <td>${new Date(n.createdAt).toLocaleDateString()}</td>
                     <td style="font-weight:bold; color:var(--accent);">${n.email}</td>
+                    <td style="color:#fff;">${n.phone || '-'}</td>
                     <td>${n.productName}</td>
                     <td><span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:12px;">${n.variantKey}</span></td>
                     <td><span style="color:${n.status === 'pending' ? '#f39c12' : '#2ecc71'}; font-weight:bold;">${n.status.toUpperCase()}</span></td>
@@ -1783,9 +1800,9 @@
                 <tr>
                     <td><img src="${(c.flavors && c.flavors.length > 0) ? c.flavors[0].image : (c.images && c.images.length > 0 ? c.images[0] : (c.comboBanner || ''))}" width="50" style="border-radius:4px; background:#fff;"></td>
                     <td style="font-weight: bold; color: var(--accent);">${c.comboName}</td>
-                    <td style="font-size: 12px; color: var(--text-secondary);">${c.products.map(p => p.name).join(', ')}</td>
-                    <td style="text-decoration: line-through; color: var(--text-muted);">₹${c.autoCalculatedMrp.toLocaleString()}</td>
-                    <td style="font-weight: bold; color: #fff;">₹${c.finalPrice.toLocaleString()}</td>
+                    <td style="font-size: 12px; color: var(--text-secondary);">${(c.products || []).map(p => p.name).join(', ')}${(c.comboGroups && c.comboGroups.length > 0) ? ((c.products && c.products.length > 0 ? ', ' : '') + c.comboGroups.map(g => g.label).join(', ')) : ''}</td>
+                    <td style="text-decoration: line-through; color: var(--text-muted);">₹${(c.autoCalculatedMrp || 0).toLocaleString()}</td>
+                    <td style="font-weight: bold; color: #fff;">₹${(c.finalPrice || 0).toLocaleString()}</td>
                     <td><span style="background: ${c.isPublished ? '#2ecc7122' : '#e74c3c22'}; color: ${c.isPublished ? '#2ecc71' : '#e74c3c'}; padding: 4px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase;">${c.isPublished ? 'Published' : 'Hidden'}</span></td>
                     <td>
                         <button class="action-btn btn-edit" onclick="editCombo('${c._id}')">Edit</button>
@@ -1803,7 +1820,7 @@
         function openComboEditor() {
             currentEditorContext = 'combo';
             editingComboId = null;
-            ecData = { products: [], sizes: [], images: [], flavors: [] };
+            ecData = { products: [], sizes: [], images: [], flavors: [], comboGroups: [] };
             document.getElementById('ec-name').value = '';
             document.getElementById('ec-slug').value = '';
             document.getElementById('ec-slug').dataset.manual = '';
@@ -1812,6 +1829,7 @@
             document.getElementById('ec-published').checked = true;
             document.getElementById('comboEditorTitle').textContent = 'Build Combo';
             renderComboSelectedProducts();
+            renderComboGroups();
             renderComboVariants();
             renderComboImages();
             renderComboFlavors();
@@ -1825,10 +1843,11 @@
             currentEditorContext = 'combo';
             editingComboId = id;
             ecData = {
-                products: combo.products.map(p => ({ productId: p._id || p.productId?._id || p.productId, name: p.name, quantity: p.quantity })),
+                products: (combo.products || []).map(p => ({ productId: p._id || p.productId?._id || p.productId, name: p.name, quantity: p.quantity })),
                 sizes: combo.sizes || [],
                 images: combo.images || (combo.comboBanner ? [combo.comboBanner] : []),
-                flavors: combo.flavors || []
+                flavors: combo.flavors || [],
+                comboGroups: combo.comboGroups || []
             };
             document.getElementById('ec-name').value = combo.comboName;
             document.getElementById('ec-slug').value = combo.comboSlug;
@@ -1838,6 +1857,7 @@
             document.getElementById('ec-published').checked = combo.isPublished;
             document.getElementById('comboEditorTitle').textContent = 'Edit Combo';
             renderComboSelectedProducts();
+            renderComboGroups();
             renderComboVariants();
             renderComboImages();
             renderComboFlavors();
@@ -1858,9 +1878,99 @@
 
         function renderComboSelectedProducts() {
             const tb = document.getElementById('ec-selected-products');
-            if (!ecData.products.length) tb.innerHTML = '<tr><td colspan="3" style="text-align:center;">No products added to bundle yet.</td></tr>';
+            if (!ecData.products.length) tb.innerHTML = '<tr><td colspan="3" style="text-align:center;">No fixed products added.</td></tr>';
             else tb.innerHTML = ecData.products.map((p, i) => `<tr><td>${p.name}</td><td>x${p.quantity}</td><td><button class="action-btn btn-delete" onclick="ecData.products.splice(${i},1); renderComboSelectedProducts()">Remove</button></td></tr>`).join('');
             updateComboStats();
+        }
+
+        function renderComboGroups() {
+            const container = document.getElementById('ec-combo-groups-container');
+            if (!ecData.comboGroups || !ecData.comboGroups.length) {
+                container.innerHTML = "<p style='color:var(--text-muted); font-size:13px;'>No combo groups added. Users won't be able to customize this stack.</p>";
+                return;
+            }
+
+            let html = '';
+            ecData.comboGroups.forEach((group, groupIndex) => {
+                let optionsHtml = products.map(p => `<option value="${p._id}">${p.name}</option>`).join('');
+
+                html += `
+                <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; border: 1px dashed var(--border); margin-bottom: 15px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <h5 style="color:#fff; margin:0; font-size: 15px;">${group.label} <span style="color:var(--text-muted); font-weight:normal; font-size:12px;">(Key: ${group.key})</span></h5>
+                        <button class="action-btn btn-delete" onclick="ecData.comboGroups.splice(${groupIndex}, 1); renderComboGroups()">Remove Group</button>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-bottom: 10px;">
+                        <select id="cg-prod-select-${groupIndex}" style="flex:1;">${optionsHtml}</select>
+                        <button class="btn-outline" onclick="addProdToComboGroup(${groupIndex})">Add Option</button>
+                    </div>
+                    <table style="width:100%; margin-top:10px; background: rgba(0,0,0,0.2);">
+                        <thead><tr><th style="padding:10px;">Product Option</th><th style="padding:10px;">Weight Lock</th><th style="padding:10px;">Price Override</th><th style="padding:10px;">Image</th><th style="padding:10px; text-align:right;">Actions</th></tr></thead>
+                        <tbody>
+                            ${group.products && group.products.length ? group.products.map((pEntry, pidIndex) => {
+                                const pid = pEntry.productId || pEntry;
+                                const prodObj = typeof pid === 'object' && pid._id ? pid : products.find(p => p._id === (pid._id || pid));
+                                const prodName = prodObj?.name || 'Unknown';
+                                
+                                // Weight dropdown
+                                let weightOptions = '<option value="">Default (First Size)</option>';
+                                if (prodObj && prodObj.sizes) {
+                                    prodObj.sizes.forEach(s => {
+                                        weightOptions += `<option value="${s.weight}" ${pEntry.fixedWeight === s.weight ? 'selected' : ''}>${s.weight}</option>`;
+                                    });
+                                }
+
+                                const imgHtml = pEntry.image 
+                                    ? `<img src="${pEntry.image}" style="height:30px; border-radius:4px; vertical-align:middle;"> <button onclick="ecData.comboGroups[${groupIndex}].products[${pidIndex}].image=''; renderComboGroups()" style="background:none; border:none; color:#e74c3c; cursor:pointer;">✕</button>`
+                                    : `<button class="btn-outline" style="padding:4px 8px; font-size:10px;" onclick="uploadGroupProdImage(${groupIndex}, ${pidIndex})">Upload</button>`;
+
+                                return `<tr>
+                                    <td style="padding:10px;">${prodName}</td>
+                                    <td style="padding:10px;">
+                                        <select onchange="ecData.comboGroups[${groupIndex}].products[${pidIndex}].fixedWeight = this.value; updateComboStats()" style="width:120px; font-size:11px; padding:4px;">
+                                            ${weightOptions}
+                                        </select>
+                                    </td>
+                                    <td style="padding:10px;">
+                                        <input type="number" value="${pEntry.customPrice || ''}" placeholder="Auto" onchange="ecData.comboGroups[${groupIndex}].products[${pidIndex}].customPrice = this.value ? Number(this.value) : null; updateComboStats()" style="width:70px; font-size:11px; padding:4px; background:var(--bg-primary); border:1px solid var(--border); color:#fff; border-radius:4px;">
+                                    </td>
+                                    <td style="padding:10px;">${imgHtml}</td>
+                                    <td style="padding:10px; text-align:right;">
+                                        <button class="action-btn btn-delete" onclick="ecData.comboGroups[${groupIndex}].products.splice(${pidIndex}, 1); renderComboGroups()">✕ Remove</button>
+                                    </td>
+                                </tr>`;
+                            }).join('') : '<tr><td colspan="5" style="text-align:center; padding:10px;">No product options in this group</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>`;
+            });
+            container.innerHTML = html;
+            updateComboStats();
+        }
+
+        function addComboGroup() {
+            const key = document.getElementById('ec-group-key').value.trim();
+            const label = document.getElementById('ec-group-label').value.trim();
+            if (!key || !label) return;
+            if (!ecData.comboGroups) ecData.comboGroups = [];
+            ecData.comboGroups.push({ key, label, products: [] });
+            document.getElementById('ec-group-key').value = '';
+            document.getElementById('ec-group-label').value = '';
+            renderComboGroups();
+        }
+
+        function addProdToComboGroup(groupIndex) {
+            const select = document.getElementById(`cg-prod-select-${groupIndex}`);
+            const pid = select.value;
+            if (!pid) return;
+            if (!ecData.comboGroups[groupIndex].products) ecData.comboGroups[groupIndex].products = [];
+            
+            // Check if exists
+            const exists = ecData.comboGroups[groupIndex].products.find(p => (p.productId || p._id || p) === pid);
+            if (!exists) {
+                ecData.comboGroups[groupIndex].products.push({ productId: pid, fixedWeight: '', quantity: 1 });
+                renderComboGroups();
+            }
         }
 
         function switchComboEditorTab(tab) {
@@ -1922,6 +2032,24 @@
                 }
             });
 
+            if (ecData.comboGroups && ecData.comboGroups.length > 0) {
+                ecData.comboGroups.forEach(group => {
+                    if (group.products && group.products.length > 0) {
+                        const firstEntry = group.products[0];
+                        const pid = firstEntry.productId || firstEntry;
+                        const prod = typeof pid === 'object' && pid._id ? pid : products.find(full => full._id === (pid._id || pid));
+                        if (prod) {
+                            const qty = firstEntry.quantity || 1;
+                            const size = firstEntry.fixedWeight ? prod.sizes?.find(s => s.weight === firstEntry.fixedWeight) : prod.sizes?.[0];
+                            const basePrice = firstEntry.customPrice != null ? firstEntry.customPrice : (size ? size.price : prod.price);
+                            const oldPrice = size?.oldPrice || prod.oldPrice || basePrice;
+                            autoMrp += oldPrice * qty;
+                            autoPrice += basePrice * qty;
+                        }
+                    }
+                });
+            }
+
             const statsEl = document.getElementById('ec-live-stats');
             if (statsEl) {
                 statsEl.innerHTML = `
@@ -1929,6 +2057,19 @@
                     <div>Auto Price: <strong style="color:var(--accent);">₹${autoPrice.toLocaleString()}</strong></div>
                 `;
             }
+        }
+
+        async function uploadGroupProdImage(groupIndex, prodIndex) {
+            const input = document.getElementById('generic-upload');
+            input.onchange = async () => {
+                const url = await handleCloudinaryUpload('generic-upload');
+                if (url) {
+                    ecData.comboGroups[groupIndex].products[prodIndex].image = url;
+                    renderComboGroups();
+                }
+                input.onchange = null;
+            };
+            input.click();
         }
 
         async function saveComboEditor() {
@@ -1946,6 +2087,17 @@
                 manualOverridePrice: Number(document.getElementById('ec-override').value) || null,
                 isPublished: document.getElementById('ec-published').checked,
                 products: ecData.products.map(p => ({ productId: p.productId, quantity: p.quantity })),
+                comboGroups: ecData.comboGroups.map(g => ({
+                    key: g.key,
+                    label: g.label,
+                    products: g.products.map(p => ({
+                        productId: p.productId || p._id || p,
+                        fixedWeight: p.fixedWeight || '',
+                        quantity: p.quantity || 1,
+                        image: p.image || '',
+                        customPrice: p.customPrice != null ? Number(p.customPrice) : null
+                    }))
+                })),
                 sizes: ecData.sizes || [],
                 images: ecData.images || [],
                 flavors: ecData.flavors || []
@@ -2109,16 +2261,15 @@
             document.getElementById('variantModal').classList.add('active');
         }
 
-        function updateComboVariantAutoPrice() {
+        function updateComboVariantAutoPrice(force = false) {
             let combinedWeight = [];
             let autoPrice = 0;
             let autoOldPrice = 0;
 
-            ecData.products.forEach((p, idx) => {
+            (ecData.products || []).forEach((p, idx) => {
                 const sel = document.getElementById(`combo-weight-select-${idx}`);
                 if (sel && sel.options[sel.selectedIndex]) {
                     const opt = sel.options[sel.selectedIndex];
-                    // Format output. If they selected quantity 2, show "2x 1kg"
                     if (p.quantity > 1) {
                         combinedWeight.push(`${p.quantity}x ${opt.value}`);
                     } else {
@@ -2130,8 +2281,13 @@
             });
 
             document.getElementById('vm-weight').value = combinedWeight.join(' + ');
-            document.getElementById('vm-price').value = autoPrice;
-            document.getElementById('vm-oldprice').value = autoOldPrice;
+            
+            const priceEl = document.getElementById('vm-price');
+            const oldPriceEl = document.getElementById('vm-oldprice');
+            
+            // Only update if field is empty or if forced (by the ⚡ button)
+            if (force || !priceEl.value) priceEl.value = autoPrice;
+            if (force || !oldPriceEl.value) oldPriceEl.value = autoOldPrice;
         }
 
         function saveVariant() {
