@@ -89,6 +89,14 @@ export default function ComboConfigurator({ products = [] }) {
     return prod.stockLeft > 0;
   };
 
+  const isProductAvailable = (prod) => {
+    if (!prod) return false;
+    if (prod.variants?.length > 0) return prod.variants.some(v => v.availableStock > 0);
+    if (prod.sizes?.length > 0) return prod.sizes.some(s => s.inStock !== false);
+    if (prod.flavors?.length > 0) return prod.flavors.some(f => f.inStock !== false);
+    return prod.stockLeft > 0;
+  };
+
   const coreInStock = checkStock(coreSel.product, cSizeObj, cFlavorObj);
   const boostInStock = checkStock(boostSel.product, bSizeObj, bFlavorObj);
   const isInStock = coreInStock && boostInStock;
@@ -181,7 +189,14 @@ export default function ComboConfigurator({ products = [] }) {
           }}
         >
           <option value="" disabled>Select Product...</option>
-          {options.map(o => <option key={o._id} value={o._id}>{o.name}</option>)}
+          {options.map(o => {
+            const available = isProductAvailable(o);
+            return (
+              <option key={o._id} value={o._id} style={{ color: available ? '#fff' : '#888', textDecoration: available ? 'none' : 'line-through' }}>
+                {o.name} {!available ? ' (OUT OF STOCK)' : ''}
+              </option>
+            );
+          })}
         </select>
 
         {sel.product && (
@@ -193,7 +208,14 @@ export default function ComboConfigurator({ products = [] }) {
                 value={sel.flavorIdx}
                 onChange={(e) => setSel({ ...sel, flavorIdx: parseInt(e.target.value, 10) })}
               >
-                {sel.product.flavors.map((f, i) => <option key={i} value={i}>{f.name}</option>)}
+                {sel.product.flavors.map((f, i) => {
+                  const available = checkStock(sel.product, sel.product.sizes?.[sel.sizeIdx], f);
+                  return (
+                    <option key={i} value={i} style={{ color: available ? '#fff' : '#888', textDecoration: available ? 'none' : 'line-through' }}>
+                      {f.name} {!available ? ' (SOLD OUT)' : ''}
+                    </option>
+                  );
+                })}
               </select>
             )}
             
@@ -204,7 +226,14 @@ export default function ComboConfigurator({ products = [] }) {
                 value={sel.sizeIdx}
                 onChange={(e) => setSel({ ...sel, sizeIdx: parseInt(e.target.value, 10) })}
               >
-                {sel.product.sizes.map((s, i) => <option key={i} value={i}>{s.weight}</option>)}
+                {sel.product.sizes.map((s, i) => {
+                  const available = checkStock(sel.product, s, sel.product.flavors?.[sel.flavorIdx]);
+                  return (
+                    <option key={i} value={i} style={{ color: available ? '#fff' : '#888', textDecoration: available ? 'none' : 'line-through' }}>
+                      {s.weight} {!available ? ' (SOLD OUT)' : ''}
+                    </option>
+                  );
+                })}
               </select>
             )}
           </div>

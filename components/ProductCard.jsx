@@ -139,7 +139,9 @@ export default function ProductCard({ product }) {
 
       {/* ── Info Section ── */}
       <div className="product-info">
-        <h3 className="product-name">{product.name}</h3>
+        <h3 className="product-name" style={{ textDecoration: isInStock ? 'none' : 'line-through', opacity: isInStock ? 1 : 0.6 }}>
+          {product.name}
+        </h3>
 
         {/* Flavor sub-label */}
         <p className="product-flavor">
