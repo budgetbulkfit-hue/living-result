@@ -2594,3 +2594,12 @@ section {
     padding: 0 20px 80px !important;
   }
 }
+
+/* ===== STACK LAB V2 UI ===== */
+.horizontal-scroll::-webkit-scrollbar {
+  display: none;
+}
+.horizontal-scroll {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
