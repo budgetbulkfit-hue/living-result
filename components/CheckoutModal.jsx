@@ -57,9 +57,9 @@ export default function CheckoutModal({ isOpen, onClose, fomoSettings = {} }) {
       const orderData = await createOrder({
         customerDetails: { name, phone, email, address, coupon },
         products: items.map((i) => {
-          const safeId = i.comboId || i.productId || i.id;
+          const safeId = i.comboId || i.productId || i.id || (i.isCustomCombo ? 'custom-combo' : '');
           return i.isCombo
-            ? { comboId: safeId, isCombo: true, name: i.name || 'Premium Stack', flavor: i.flavorName, comboSelections: i.comboSelections, weight: i.weight || '', quantity: i.qty, price: i.price }
+            ? { comboId: safeId, isCombo: true, isCustomCombo: !!i.isCustomCombo, name: i.name || 'Premium Stack', flavor: i.flavorName, comboSelections: i.comboSelections, weight: i.weight || '', quantity: i.qty, price: i.price }
             : { productId: safeId, name: i.name, flavor: i.flavorName, weight: i.weight || '', quantity: i.qty, price: i.price };
         }),
         totalAmount: total,
@@ -70,7 +70,22 @@ export default function CheckoutModal({ isOpen, onClose, fomoSettings = {} }) {
       // Build WhatsApp message
       let msg = `🛒 *NEW ORDER — Living Result*\n🔖 *Order ID:* ${orderId}\n\n📦 *Items:*\n`;
       items.forEach((i) => {
-        if (i.isCombo && i.comboSelections) {
+        if (i.isCustomCombo) {
+          msg += `\n🔥 *STACK LAB™ CUSTOM ORDER*\n\n`;
+          const core = i.comboSelections.find(s => s.role === 'core');
+          const boost = i.comboSelections.find(s => s.role === 'boost');
+          if (core) {
+            msg += `⚡ *MAIN FUEL*\n• ${core.name}\n• ${core.flavor}\n${core.weight ? `• ${core.weight}\n` : ''}\n`;
+          }
+          if (boost) {
+            msg += `🧪 *PERFORMANCE BOOST*\n• ${boost.name}\n• ${boost.flavor}\n${boost.weight ? `• ${boost.weight}\n` : ''}\n`;
+          }
+          const subtotal = (core?.unitPrice || 0) + (boost?.unitPrice || 0);
+          const discount = Math.max(0, subtotal - i.price);
+          if (discount > 0) {
+            msg += `💸 *STACK DISCOUNT APPLIED: ₹${discount}*\n\n`;
+          }
+        } else if (i.isCombo && i.comboSelections) {
           msg += `• ${i.name} × ${i.qty} — ₹${(i.price * i.qty).toLocaleString()}\n`;
           i.comboSelections.forEach((s) => { msg += `   ↳ ${s.name} (${s.flavor}) x${s.quantity * i.qty}\n`; });
         } else {

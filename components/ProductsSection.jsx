@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import ComboCard from './ComboCard';
+import ComboConfigurator from './ComboConfigurator';
 
 // Derive sub-categories from unique products
 function getSubCats(products) {
@@ -41,6 +42,8 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
   let baseProducts = [];
   if (activeTab === 'unique') baseProducts = uniqueProducts;
   else if (activeTab === 'common') baseProducts = commonProducts;
+
+  const allProducts = [...uniqueProducts, ...commonProducts];
 
   const subCats = activeTab !== 'combos' ? getSubCats(baseProducts) : [];
 
@@ -155,35 +158,44 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
           </div>
         )}
 
-        {/* ── Combos Grid ── */}
-        {activeTab === 'combos' && viewAll && (
-          <div className="products-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-            {combos.length === 0 ? (
-              <p style={{ color: 'var(--text-muted)', gridColumn: '1/-1', textAlign: 'center', padding: '60px 0' }}>No stacks available yet.</p>
-            ) : (
-              combos.map((combo) => <ComboCard key={combo._id} combo={combo} />)
-            )}
-          </div>
-        )}
-
-        {/* ── Combos: Scroll View ── */}
-        {activeTab === 'combos' && !viewAll && (
-          <div className="products-scroll-wrapper">
-            {combos.length > 1 && (
-              <button className="scroll-arrow scroll-left" onClick={() => scroll(-1)} aria-label="Scroll left">‹</button>
-            )}
-            <div className="products-scroll" ref={scrollRef}>
-              {combos.map((combo) => (
-                <ComboCard key={combo._id} combo={combo} />
-              ))}
-              {combos.length === 0 && (
-                <p style={{ color: 'var(--text-muted)', padding: '60px 0' }}>No stacks available yet.</p>
+        {/* ── Combos Tab Content ── */}
+        {activeTab === 'combos' && (
+          <>
+            {/* 1. Preset Stacks */}
+            <div style={{ marginBottom: '40px' }}>
+              <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', textTransform: 'uppercase', marginBottom: '20px', color: '#fff' }}>Featured Preset Stacks</h3>
+              {viewAll ? (
+                <div className="products-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                  {combos.length === 0 ? (
+                    <p style={{ color: 'var(--text-muted)', gridColumn: '1/-1', textAlign: 'center', padding: '60px 0' }}>No stacks available yet.</p>
+                  ) : (
+                    combos.map((combo) => <ComboCard key={combo._id} combo={combo} />)
+                  )}
+                </div>
+              ) : (
+                <div className="products-scroll-wrapper">
+                  {combos.length > 1 && (
+                    <button className="scroll-arrow scroll-left" onClick={() => scroll(-1)} aria-label="Scroll left">‹</button>
+                  )}
+                  <div className="products-scroll" ref={scrollRef}>
+                    {combos.map((combo) => (
+                      <ComboCard key={combo._id} combo={combo} />
+                    ))}
+                    {combos.length === 0 && (
+                      <p style={{ color: 'var(--text-muted)', padding: '60px 0' }}>No stacks available yet.</p>
+                    )}
+                  </div>
+                  {combos.length > 1 && (
+                    <button className="scroll-arrow scroll-right" onClick={() => scroll(1)} aria-label="Scroll right">›</button>
+                  )}
+                </div>
               )}
             </div>
-            {combos.length > 1 && (
-              <button className="scroll-arrow scroll-right" onClick={() => scroll(1)} aria-label="Scroll right">›</button>
-            )}
-          </div>
+
+            {/* 2. STACK LAB */}
+            <hr style={{ borderColor: 'rgba(255,255,255,0.05)', margin: '40px 0' }} />
+            <ComboConfigurator products={allProducts} />
+          </>
         )}
 
         {/* ── Products: Scroll View ── */}

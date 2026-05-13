@@ -41,11 +41,19 @@ export default function CartSidebar({ isOpen, onClose, onCheckout }) {
 
                 return (
                   <div key={item.key} style={{ display: 'flex', gap: '12px', padding: '16px 0', borderBottom: '1px solid var(--border)' }}>
-                    <img
-                      src={item.image}
-                      style={{ width: '60px', height: '60px', objectFit: 'contain', background: '#0e0e0e', borderRadius: '6px', padding: '4px', flexShrink: 0 }}
-                      alt={item.name}
-                    />
+                    {item.generatedThumbnail ? (
+                      <div style={{ width: '60px', height: '60px', background: '#0a0a0a', borderRadius: '6px', overflow: 'hidden', position: 'relative', flexShrink: 0, border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(255,106,0,0.1), transparent)' }}></div>
+                        <img src={item.coreImg} style={{ position: 'absolute', width: '60%', height: '80%', objectFit: 'contain', left: '-5%', bottom: '0' }} alt="Core" />
+                        <img src={item.boostImg} style={{ position: 'absolute', width: '55%', height: '70%', objectFit: 'contain', right: '-5%', bottom: '0' }} alt="Boost" />
+                      </div>
+                    ) : (
+                      <img
+                        src={item.image}
+                        style={{ width: '60px', height: '60px', objectFit: 'contain', background: '#0e0e0e', borderRadius: '6px', padding: '4px', flexShrink: 0 }}
+                        alt={item.name}
+                      />
+                    )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: '600', fontSize: '13px', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
                       <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{subText}</div>
