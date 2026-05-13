@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import useCart from '@/lib/cartStore';
 import { subscribeToRestock } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,6 +53,8 @@ export default function ComboConfigurator({ products = [] }) {
   const addItem = useCart(s => s.addItem);
   const [addedSuccess, setAddedSuccess] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const coreScrollRef = useRef(null);
+  const boostScrollRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -76,6 +78,9 @@ export default function ComboConfigurator({ products = [] }) {
   // Group Products
   const coreProducts = useMemo(() => {
     return products.filter(p => {
+      // Explicitly exclude creatine from Step 1
+      const isCreatine = p.subCategory === 'Creatine' || p.name.toLowerCase().includes('creatine') || p.stackGroup === 'boost';
+      if (isCreatine) return false;
       const isCoreGroup = p.stackGroup === 'core';
       const isProteinSubcat = ['Whey Protein', 'Mass Gainer', 'Iso Plasma', 'Weight Gainer', 'Protein Blend', 'Isolate'].includes(p.subCategory);
       const isUniqueName = p.name.toLowerCase().includes('hydra') || p.name.toLowerCase().includes('iso plasma') || p.name.toLowerCase().includes('mass') || p.name.toLowerCase().includes('whey');
@@ -198,98 +203,106 @@ export default function ComboConfigurator({ products = [] }) {
     }
   };
 
-  const renderProductCards = (options, sel, setSel) => {
+  const renderProductCards = (options, sel, setSel, scrollRef) => {
     return (
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+      <div style={{ position: 'relative' }}>
         {/* Left Arrow */}
-        <button 
-          onClick={(e) => {
-            const scrollContainer = e.currentTarget.nextElementSibling;
-            if (scrollContainer) scrollContainer.scrollBy({ left: -250, behavior: 'smooth' });
-          }}
+        <button
+          onClick={() => scrollRef.current?.scrollBy({ left: -220, behavior: 'smooth' })}
           style={{
-            position: 'absolute', left: '-15px', zIndex: 10,
-            background: 'var(--bg-secondary)', border: '1px solid var(--border)', 
-            color: '#fff', borderRadius: '50%', width: '32px', height: '32px', 
-            display: 'flex', alignItems: 'center', justifyContent: 'center', 
-            cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+            position: 'absolute', left: '0', top: '50%', transform: 'translateY(-60%)',
+            zIndex: 10, background: 'rgba(20,20,20,0.9)', border: '1px solid var(--border)',
+            color: '#fff', borderRadius: '50%', width: '34px', height: '34px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.7)',
           }}
         >
-          &lt;
+          ‹
         </button>
 
         {/* Scroll Container */}
-        <div className="horizontal-scroll" style={{ display: 'flex', gap: '15px', overflowX: 'auto', paddingBottom: '15px', paddingLeft: '10px', paddingRight: '10px', msOverflowStyle: 'none', scrollbarWidth: 'none', scrollBehavior: 'smooth', width: '100%' }}>
+        <div
+          ref={scrollRef}
+          className="horizontal-scroll"
+          style={{
+            display: 'flex', gap: '12px',
+            overflowX: 'auto', overflowY: 'visible',
+            paddingBottom: '10px', paddingLeft: '44px', paddingRight: '44px', paddingTop: '8px',
+            msOverflowStyle: 'none', scrollbarWidth: 'none',
+          }}
+        >
           {options.map(p => {
             const isSelected = sel.product?._id === p._id;
             const available = isProductAvailable(p);
-            
-            // Check if this product belongs to the active goal's highlighted subcategories
-            const isHighlighted = activeGoal.coreSubcat.some(sub => 
-              p.subCategory?.toLowerCase() === sub.toLowerCase() || 
+
+            const isHighlighted = activeGoal.coreSubcat.some(sub =>
+              p.subCategory?.toLowerCase() === sub.toLowerCase() ||
               p.name.toLowerCase().includes(sub.toLowerCase())
             );
 
-            let borderColor = 'var(--border)';
+            let borderColor = 'rgba(255,255,255,0.08)';
             let boxShadow = 'none';
 
             if (isSelected) {
               borderColor = activeGoal.theme.accent;
-              boxShadow = `0 0 20px ${activeGoal.theme.glow}`;
+              boxShadow = `0 0 18px ${activeGoal.theme.glow}`;
             } else if (isHighlighted) {
               borderColor = activeGoal.theme.highlightColor;
-              boxShadow = `0 0 10px ${activeGoal.theme.highlightColor}40`;
+              boxShadow = `0 0 8px ${activeGoal.theme.highlightColor}55`;
             }
 
             return (
-              <motion.div 
+              <motion.div
                 key={p._id}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => { setSel({ product: p, sizeIdx: 0, flavorIdx: 0 }); }}
                 style={{
-                  minWidth: '160px',
-                  background: isSelected ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${borderColor}`,
+                  minWidth: '140px',
+                  maxWidth: '140px',
+                  background: isSelected ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.02)',
+                  border: `2px solid ${borderColor}`,
                   borderRadius: '12px',
-                  padding: '15px',
+                  padding: '12px 10px',
                   cursor: 'pointer',
                   position: 'relative',
+                  flexShrink: 0,
                   boxShadow: boxShadow,
-                  transition: '0.3s ease',
-                  opacity: available ? 1 : 0.5
+                  transition: 'border-color 0.25s ease, box-shadow 0.25s ease',
+                  opacity: available ? 1 : 0.55,
                 }}
               >
                 {(p.tags?.includes('bestseller') || p.isBestseller) && (
-                  <div style={{ position: 'absolute', top: '-8px', left: '10px', background: 'var(--accent)', color: '#fff', fontSize: '9px', padding: '3px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                  <div style={{ position: 'absolute', top: '-8px', left: '8px', background: 'var(--accent)', color: '#fff', fontSize: '8px', padding: '2px 7px', borderRadius: '4px', fontWeight: 'bold', letterSpacing: '0.5px' }}>
                     BESTSELLER
                   </div>
                 )}
-                <div style={{ height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
-                  <img src={getProductImage(p, 0)} alt={p.name} style={{ maxHeight: '100%', objectFit: 'contain' }} />
+                <div style={{ width: '100%', height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px', overflow: 'hidden' }}>
+                  <img
+                    src={getProductImage(p, 0)}
+                    alt={p.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  />
                 </div>
-                <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff', textAlign: 'center', lineHeight: '1.2' }}>{p.name}</div>
-                {!available && <div style={{ fontSize: '10px', color: 'var(--red)', textAlign: 'center', marginTop: '4px', fontWeight: 'bold' }}>OUT OF STOCK</div>}
+                <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', textAlign: 'center', lineHeight: '1.3', minHeight: '28px' }}>{p.name}</div>
+                {!available && <div style={{ fontSize: '9px', color: 'var(--red)', textAlign: 'center', marginTop: '4px', fontWeight: 'bold' }}>OUT OF STOCK</div>}
               </motion.div>
             );
           })}
         </div>
 
         {/* Right Arrow */}
-        <button 
-          onClick={(e) => {
-            const scrollContainer = e.currentTarget.previousElementSibling;
-            if (scrollContainer) scrollContainer.scrollBy({ left: 250, behavior: 'smooth' });
-          }}
+        <button
+          onClick={() => scrollRef.current?.scrollBy({ left: 220, behavior: 'smooth' })}
           style={{
-            position: 'absolute', right: '-15px', zIndex: 10,
-            background: 'var(--bg-secondary)', border: '1px solid var(--border)', 
-            color: '#fff', borderRadius: '50%', width: '32px', height: '32px', 
-            display: 'flex', alignItems: 'center', justifyContent: 'center', 
-            cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
+            position: 'absolute', right: '0', top: '50%', transform: 'translateY(-60%)',
+            zIndex: 10, background: 'rgba(20,20,20,0.9)', border: '1px solid var(--border)',
+            color: '#fff', borderRadius: '50%', width: '34px', height: '34px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,0,0,0.7)',
           }}
         >
-          &gt;
+          ›
         </button>
       </div>
     );
@@ -345,7 +358,7 @@ export default function ComboConfigurator({ products = [] }) {
             <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', textTransform: 'uppercase' }}>STEP 1 — MAIN FUEL</h3>
             {!isMobile && coreSel.product && <span style={{ color: '#2ecc71', fontSize: '14px' }}>✔ SELECTED</span>}
           </div>
-          {renderProductCards(coreProducts, coreSel, setCoreSel)}
+          {renderProductCards(coreProducts, coreSel, setCoreSel, coreScrollRef)}
           {coreSel.product && (
             <div style={{ marginTop: '15px', background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px' }}>
               <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '5px' }}>Variant Select</div>
@@ -366,7 +379,7 @@ export default function ComboConfigurator({ products = [] }) {
             <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', textTransform: 'uppercase' }}>STEP 2 — BOOST</h3>
             {!isMobile && boostSel.product && <span style={{ color: '#2ecc71', fontSize: '14px' }}>✔ SELECTED</span>}
           </div>
-          {renderProductCards(boostProducts, boostSel, setBoostSel)}
+          {renderProductCards(boostProducts, boostSel, setBoostSel, boostScrollRef)}
           {boostSel.product && (
             <div style={{ marginTop: '15px', background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '12px' }}>
               <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '5px' }}>Variant Select</div>
@@ -386,17 +399,50 @@ export default function ComboConfigurator({ products = [] }) {
   );
 
   return (
-    <div className="stack-lab-container" style={{ margin: '40px 0', padding: isMobile ? '0 10px' : '0 20px' }}>
+    <div className="stack-lab-container" style={{ margin: '40px 0', padding: isMobile ? '0 10px' : '0 20px', overflowX: 'hidden', maxWidth: '100%', boxSizing: 'border-box' }}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <motion.h2 
-          initial={{ scale: 0.9, opacity: 0 }} 
+        {/* Badge */}
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: '8px',
+          background: 'rgba(255, 106, 0, 0.12)', border: '1px solid rgba(255, 106, 0, 0.35)',
+          borderRadius: '50px', padding: '6px 18px', marginBottom: '18px',
+          fontSize: '11px', fontWeight: '700', letterSpacing: '2px', color: '#ff8533',
+          textTransform: 'uppercase'
+        }}>
+          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ff6a00', display: 'inline-block', boxShadow: '0 0 8px #ff6a00' }}></span>
+          Exclusive Custom Builder
+        </div>
+
+        {/* Main Title */}
+        <motion.h2
+          initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          style={{ fontFamily: 'var(--font-heading)', fontSize: isMobile ? '32px' : '40px', textTransform: 'uppercase', letterSpacing: '3px', background: 'linear-gradient(135deg, #fff, #888)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+          style={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: isMobile ? '42px' : '58px',
+            textTransform: 'uppercase',
+            letterSpacing: '5px',
+            background: 'linear-gradient(135deg, #ff6a00 0%, #ffb347 50%, #fff 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            lineHeight: 1,
+            marginBottom: '16px',
+          }}
         >
-          BUILD YOUR STACK
+          STACK LAB™
         </motion.h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '16px', marginTop: '10px' }}>Select your goal to configure the ultimate performance machine.</p>
+
+        {/* Subtitle */}
+        <p style={{
+          color: 'var(--text-secondary)',
+          fontSize: isMobile ? '14px' : '17px',
+          maxWidth: '540px',
+          margin: '0 auto',
+          lineHeight: '1.65',
+        }}>
+          Build your <strong style={{ color: '#fff' }}>own custom stack</strong>. Pick your fuel, pick your boost, mix flavors — and get an exclusive ₹30 combo discount. No compromise.
+        </p>
       </div>
 
       {/* Goal Selector */}
