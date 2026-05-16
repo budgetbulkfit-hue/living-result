@@ -146,6 +146,12 @@ export default async function ProductPage({ params }) {
                   ? 'https://schema.org/OutOfStock'
                   : 'https://schema.org/InStock',
                 seller: { '@type': 'Organization', name: 'Living Result' },
+                // shippingDetails omitted — charges vary per order, cannot be represented as a fixed value
+                hasMerchantReturnPolicy: {
+                  '@type': 'MerchantReturnPolicy',
+                  applicableCountry: 'IN',
+                  returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+                },
               },
               ...(product.rating && {
                 aggregateRating: {
