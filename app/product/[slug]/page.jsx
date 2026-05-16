@@ -38,13 +38,10 @@ export async function generateMetadata({ params }) {
       title: `${product.name} | Living Result`,
       description: product.description?.slice(0, 155),
       images: [optimizedImage],
-<<<<<<< HEAD
     },
     other: {
       'product:price:amount': price.toString(),
       'product:price:currency': 'INR',
-=======
->>>>>>> 3078dbe7cbc3f1419f7ae61c3a63eaf690acd711
     },
   };
 }
