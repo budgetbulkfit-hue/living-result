@@ -12,8 +12,11 @@ export const metadata = {
     description: 'India\'s only custom supplement stack builder. Exclusively at Living Result.',
     url: 'https://www.getlivingresult.in/stack-lab',
     siteName: 'Living Result',
-    images: [{ url: '/images/logo.png', width: 1200, height: 630, alt: 'Stack Lab - Living Result' }],
+    images: [{ url: '/images/logo.webp', width: 1200, height: 630, alt: 'Stack Lab - Living Result' }],
     type: 'website',
+  },
+  alternates: {
+    canonical: 'https://www.getlivingresult.in/stack-lab',
   },
   twitter: {
     card: 'summary_large_image',

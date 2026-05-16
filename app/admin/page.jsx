@@ -206,7 +206,7 @@ export default function AdminPage() {
 
       <aside className="sidebar">
         <div style={{ padding: '0 30px 30px', borderBottom: '1px solid #222', marginBottom: '20px' }}>
-          <img src="/images/logo.png" alt="Logo" style={{ height: '40px' }} />
+          <img src="/images/logo.webp" alt="Logo" style={{ height: '40px' }} />
         </div>
         <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
           Dashboard

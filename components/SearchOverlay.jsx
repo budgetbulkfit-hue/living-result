@@ -44,7 +44,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
 
   const getProductImage = (p) => {
     const flavorImage = p.flavors?.[0]?.image;
-    return flavorImage || `/images/${p.slug}-1.png`;
+    return flavorImage ? flavorImage.replace(/\.png$/i, '.webp') : `/images/${p.slug}-1.webp`;
   };
 
   const getProductPrice = (p) => {
@@ -92,7 +92,7 @@ export default function SearchOverlay({ isOpen, onClose }) {
               <img
                 src={getProductImage(p)}
                 alt={p.name}
-                onError={(e) => { e.target.src = `/images/${p.slug}.png`; }}
+                onError={(e) => { e.target.src = `/images/${p.slug}.webp`; }}
               />
               <div>
                 <div className="search-result-name">{p.name}</div>

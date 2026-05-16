@@ -55,7 +55,7 @@ export default function ComboFlavorModal({ combo, isOpen, onClose, onAddToCart }
           {combo.products?.map((p, idx) => (
             <div key={p._id || idx} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
               <img
-                src={p.image || `/images/${p.slug || 'creatine'}.png`}
+                src={p.image?.replace(/\.png$/i, '.webp') || `/images/${p.slug || 'creatine'}.webp`}
                 alt={p.name}
                 style={{ width: '56px', height: '56px', objectFit: 'contain', background: '#0e0e0e', borderRadius: '6px', padding: '4px', flexShrink: 0 }}
               />

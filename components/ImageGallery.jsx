@@ -37,7 +37,7 @@ export default function ImageGallery({ images = [], flavors = [], selectedFlavor
   }, [selectedFlavorIndex]);
 
   const total = allImages.length;
-  const displayImages = total > 0 ? allImages : ['/images/logo.png'];
+  const displayImages = total > 0 ? allImages.map(img => img ? img.replace(/\.png$/i, '.webp') : img) : ['/images/logo.webp'];
   const displayTotal = displayImages.length;
 
   const goTo = (idx) => setActiveIndex((idx + displayTotal) % displayTotal);
@@ -118,7 +118,7 @@ export default function ImageGallery({ images = [], flavors = [], selectedFlavor
           onMouseLeave={handleMouseLeave}
           onClick={() => setIsLightboxOpen(true)}
           style={{ maxHeight: '550px', maxWidth: '100%', objectFit: 'contain', transition: 'opacity 0.2s ease', cursor: 'zoom-in', zIndex: 1 }}
-          onError={(e) => { e.target.src = '/images/hydra-whey-protein.png'; e.target.onerror = null; }}
+          onError={(e) => { e.target.src = '/images/hydra-whey-protein.webp'; e.target.onerror = null; }}
         />
 
         {displayTotal > 1 && (

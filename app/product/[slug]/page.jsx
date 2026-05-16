@@ -15,7 +15,8 @@ export async function generateMetadata({ params }) {
     ? (product.flavors[0].image.startsWith('http')
         ? product.flavors[0].image
         : `/images/${product.flavors[0].image.replace(/^\/?(images\/)?/, '')}`)
-    : `/images/${product.slug}.png`;
+    : `/images/${product.slug}.webp`;
+  const optimizedImage = image.replace(/\.png$/i, '.webp');
 
   return {
     title: `${product.name} | Living Result`,
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title: `${product.name} | Living Result`,
       description: product.description?.slice(0, 155),
-      images: [{ url: image, width: 800, height: 800, alt: product.name }],
+      images: [{ url: optimizedImage, width: 800, height: 800, alt: product.name }],
       type: 'website',
       siteName: 'Living Result',
     },
@@ -36,7 +37,11 @@ export async function generateMetadata({ params }) {
       card: 'summary_large_image',
       title: `${product.name} | Living Result`,
       description: product.description?.slice(0, 155),
-      images: [image],
+      images: [optimizedImage],
+    },
+    other: {
+      'product:price:amount': price.toString(),
+      'product:price:currency': 'INR',
     },
   };
 }
@@ -116,8 +121,8 @@ export default async function ProductPage({ params }) {
           {(() => {
             // Build an absolute image URL (Google requires https://)
             const BASE_URL = 'https://www.getlivingresult.in';
-            const rawImage = product.flavors?.[0]?.image || `/images/${product.slug}.png`;
-            const absoluteImage = rawImage.startsWith('http') ? rawImage : `${BASE_URL}${rawImage.startsWith('/') ? '' : '/'}${rawImage}`;
+            const rawImage = product.flavors?.[0]?.image || `/images/${product.slug}.webp`;
+            const absoluteImage = rawImage.startsWith('http') ? rawImage : `${BASE_URL}${rawImage.startsWith('/') ? '' : '/'}${rawImage.replace(/\.png$/i, '.webp')}`;
 
             // Determine real stock status
             const isOutOfStock =
@@ -146,22 +151,66 @@ export default async function ProductPage({ params }) {
                   ? 'https://schema.org/OutOfStock'
                   : 'https://schema.org/InStock',
                 seller: { '@type': 'Organization', name: 'Living Result' },
+                // shippingDetails omitted — charges vary per order, cannot be represented as a fixed value
+                hasMerchantReturnPolicy: {
+                  '@type': 'MerchantReturnPolicy',
+                  applicableCountry: 'IN',
+                  returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+                },
               },
-              ...(product.rating && {
+              ...(product.reviews && product.reviews.length > 0 && {
                 aggregateRating: {
                   '@type': 'AggregateRating',
-                  ratingValue: product.rating,
+                  ratingValue: product.rating || 5,
                   bestRating: 5,
                   worstRating: 1,
-                  reviewCount: product.reviews?.length || 1,
+                  reviewCount: product.reviews.length,
                 },
+                review: product.reviews.map(r => ({
+                  '@type': 'Review',
+                  reviewRating: {
+                    '@type': 'Rating',
+                    ratingValue: r.rating || 5,
+                    bestRating: 5,
+                  },
+                  author: {
+                    '@type': 'Person',
+                    name: r.name || 'Verified Buyer'
+                  },
+                  reviewBody: r.comment || '',
+                }))
               }),
+            };
+
+            const breadcrumbData = {
+              '@context': 'https://schema.org',
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                {
+                  '@type': 'ListItem',
+                  position: 1,
+                  name: 'Home',
+                  item: `${BASE_URL}`
+                },
+                {
+                  '@type': 'ListItem',
+                  position: 2,
+                  name: 'Products',
+                  item: `${BASE_URL}/#products`
+                },
+                {
+                  '@type': 'ListItem',
+                  position: 3,
+                  name: product.name,
+                  item: `${BASE_URL}/product/${product.slug}`
+                }
+              ]
             };
 
             return (
               <script
                 type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+                dangerouslySetInnerHTML={{ __html: JSON.stringify([structuredData, breadcrumbData]) }}
               />
             );
           })()}

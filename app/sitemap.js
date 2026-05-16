@@ -44,6 +44,12 @@ export default async function sitemap() {
       changeFrequency: 'daily',
       priority: 1.0,
     },
+    {
+      url: `${baseUrl}/stack-lab`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
     ...productUrls,
     ...comboUrls,
   ];

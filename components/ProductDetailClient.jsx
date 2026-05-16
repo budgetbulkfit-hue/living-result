@@ -10,7 +10,7 @@ function resolveImage(src) {
   if (!src) return null;
   if (src.startsWith('http')) return src;
   const filename = src.replace(/^\/?(images\/)?/, '');
-  return `/images/${filename}`;
+  return `/images/${filename}`.replace(/\.png$/i, '.webp');
 }
 
 export default function ProductDetailClient({ product }) {
@@ -207,7 +207,7 @@ export default function ProductDetailClient({ product }) {
       flavorName: isComboItem ? (currentFlavor?.name || 'Combo Stack') : (currentFlavor?.name || 'Regular'),
       weight: isComboItem ? product.weight : (currentSize?.weight || ''),
       price: finalPrice,
-      image: isComboItem ? (resolveImage(currentFlavor?.image) || product.image) : (resolveImage(currentFlavor?.image) || `/images/${product.slug}.png`),
+      image: isComboItem ? (resolveImage(currentFlavor?.image) || product.image?.replace(/\.png$/i, '.webp')) : (resolveImage(currentFlavor?.image) || `/images/${product.slug}.webp`),
       qty,
       isCombo: isComboItem || false,
     };

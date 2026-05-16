@@ -39,7 +39,7 @@ export default function AdminLogin({ onLoginSuccess }) {
     <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
       <div style={{ width: '100%', maxWidth: '400px', background: 'var(--bg-card)', padding: '40px', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}>
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <img src="/images/logo.png" alt="Living Result" style={{ height: '60px', marginBottom: '15px' }} />
+          <img src="/images/logo.webp" alt="Living Result" style={{ height: '60px', marginBottom: '15px' }} />
           <h2 style={{ fontFamily: 'var(--font-heading)', color: 'var(--accent)', textTransform: 'uppercase' }}>
             Admin Portal
           </h2>

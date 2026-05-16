@@ -20,15 +20,53 @@ export default async function HomePage() {
   const uniqueProducts = allProducts.filter((p) => p.category === 'unique');
   const commonProducts = allProducts.filter((p) => p.category === 'common');
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': 'https://www.getlivingresult.in/#organization',
+        name: 'Living Result',
+        url: 'https://www.getlivingresult.in',
+        logo: 'https://www.getlivingresult.in/images/logo.webp',
+        sameAs: [
+          'https://www.instagram.com/getlivingresult',
+          'https://www.facebook.com/getlivingresult'
+        ]
+      },
+      {
+        '@type': 'WebSite',
+        '@id': 'https://www.getlivingresult.in/#website',
+        url: 'https://www.getlivingresult.in',
+        name: 'Living Result',
+        publisher: {
+          '@id': 'https://www.getlivingresult.in/#organization'
+        },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: {
+            '@type': 'EntryPoint',
+            urlTemplate: 'https://www.getlivingresult.in/search?q={search_term_string}'
+          },
+          'query-input': 'required name=search_term_string'
+        }
+      }
+    ]
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* PRE-LAUNCH OVERLAY placeholder — wired via AppShell/useSettings in layout */}
 
       {/* HERO */}
       <section className="hero" id="hero">
         <div className="hero-bg">
           <Image
-            src="/images/hero-athlete.png"
+            src="/images/hero-athlete.webp"
             alt="Muscular athlete in dramatic lighting"
             fill
             style={{ objectFit: 'cover', objectPosition: 'center top' }}
@@ -78,7 +116,7 @@ export default async function HomePage() {
         <div className="container">
           <div className="why-us-grid">
             <div className="why-us-image">
-              <Image src="/images/why-us-image.png" alt="Athlete holding a supplement tub" width={600} height={600} style={{ borderRadius: 'var(--radius-lg)', boxShadow: '0 10px 40px rgba(0,0,0,0.6)', width: '100%', height: 'auto' }} />
+              <Image src="/images/why-us-image.webp" alt="Athlete holding a supplement tub" width={600} height={600} style={{ borderRadius: 'var(--radius-lg)', boxShadow: '0 10px 40px rgba(0,0,0,0.6)', width: '100%', height: 'auto' }} />
             </div>
             <div className="why-us-content">
               <p className="section-label">The Living Result Difference</p>
@@ -149,7 +187,7 @@ export default async function HomePage() {
       {/* WHY CHOOSE */}
       <section className="why-choose" id="why-choose">
         <div className="why-bg">
-          <Image src="/images/why-choose-athlete.png" alt="Athlete with orange paint effect" fill style={{ objectFit: 'cover' }} />
+          <Image src="/images/why-choose-athlete.webp" alt="Athlete with orange paint effect" fill style={{ objectFit: 'cover' }} />
         </div>
         <div className="container">
           <div className="why-content">

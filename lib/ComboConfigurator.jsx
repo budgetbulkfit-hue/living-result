@@ -20,8 +20,9 @@ function getProductPrice(product, sizeIdx, flavorIdx) {
 }
 
 function getProductImage(product, flavorIdx) {
-  if (!product) return '/images/logo.png';
-  return product.flavors?.[flavorIdx]?.image || product.flavors?.[0]?.image || `/images/${product.slug}.png`;
+  if (!product) return '/images/logo.webp';
+  const img = product.flavors?.[flavorIdx]?.image || product.flavors?.[0]?.image || `/images/${product.slug}.webp`;
+  return img ? img.replace(/\.png$/i, '.webp') : img;
 }
 
 export default function ComboConfigurator({ products = [] }) {
