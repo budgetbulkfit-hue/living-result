@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 import ProductDetailClient from '@/components/ProductDetailClient';
-import { getProductBySlug, getProducts } from '@/lib/api';
+import { getProductBySlug, getProducts, getComboBySlug } from '@/lib/api';
 
 // ─── SEO: Generate dynamic metadata per product ───────────────────────────────
 export async function generateMetadata({ params }) {
@@ -10,7 +10,7 @@ export async function generateMetadata({ params }) {
   const product = await getProductBySlug(slug);
   if (!product) return { title: 'Product Not Found | Living Result' };
 
-  const price = product.sizes?.[0]?.price || product.flavors?.[0]?.price || product.price || 0;
+  const price = product.finalPrice || product.sizes?.[0]?.price || product.flavors?.[0]?.price || product.price || 0;
   const image = product.flavors?.[0]?.image
     ? (product.flavors[0].image.startsWith('http')
         ? product.flavors[0].image
@@ -57,8 +57,22 @@ export default async function ProductPage({ params }) {
     notFound();
   }
 
-  const price = product.sizes?.[0]?.price || product.flavors?.[0]?.price || 0;
-  const oldPrice = product.sizes?.[0]?.oldPrice || null;
+  // If this product is a combo, also fetch the full combo data
+  // (which includes comboGroups with populated product variants)
+  if (product.isCombo || product.comboGroups) {
+    const comboData = await getComboBySlug(slug);
+    if (comboData) {
+      // Merge combo-specific fields onto the product object
+      product.comboGroups = comboData.comboGroups || [];
+      product.products = comboData.products || product.products || [];
+      product.autoCalculatedPrice = comboData.autoCalculatedPrice;
+      product.autoCalculatedMrp = comboData.autoCalculatedMrp;
+      product.manualOverridePrice = comboData.manualOverridePrice;
+    }
+  }
+
+  const price = product.finalPrice || product.sizes?.[0]?.price || product.flavors?.[0]?.price || product.price || 0;
+  const oldPrice = product.autoCalculatedMrp || product.sizes?.[0]?.oldPrice || null;
 
   return (
     <>
@@ -95,32 +109,59 @@ export default async function ProductPage({ params }) {
             <ProductDetailClient product={product} />
           </div>
 
-          {/* JSON-LD Structured Data for Google Shopping */}
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
-                '@context': 'https://schema.org/',
-                '@type': 'Product',
-                name: product.name,
-                description: product.description,
-                image: product.flavors?.[0]?.image || `/images/${product.slug}.png`,
-                brand: { '@type': 'Brand', name: 'Living Result' },
-                offers: {
-                  '@type': 'Offer',
-                  url: `https://www.getlivingresult.in/product/${product.slug}`,
-                  priceCurrency: 'INR',
-                  price: price,
-                  priceValidUntil: '2027-12-31',
-                  availability: 'https://schema.org/InStock',
-                  seller: { '@type': 'Organization', name: 'Living Result' },
+          {/* JSON-LD Structured Data for Google Shopping / Rich Results */}
+          {(() => {
+            // Build an absolute image URL (Google requires https://)
+            const BASE_URL = 'https://www.getlivingresult.in';
+            const rawImage = product.flavors?.[0]?.image || `/images/${product.slug}.png`;
+            const absoluteImage = rawImage.startsWith('http') ? rawImage : `${BASE_URL}${rawImage.startsWith('/') ? '' : '/'}${rawImage}`;
+
+            // Determine real stock status
+            const isOutOfStock =
+              product.flavors?.length > 0
+                ? product.flavors.every((f) => f.stock === 0 || f.inStock === false)
+                : product.stock === 0 || product.inStock === false;
+
+            const structuredData = {
+              '@context': 'https://schema.org/',
+              '@type': 'Product',
+              name: product.name,
+              description:
+                product.description ||
+                `Buy ${product.name} at Living Result — India's trusted supplement store. 100% authentic, fast delivery.`,
+              image: absoluteImage,
+              sku: product.sku || product._id || product.slug,
+              brand: { '@type': 'Brand', name: 'Living Result' },
+              offers: {
+                '@type': 'Offer',
+                url: `${BASE_URL}/product/${product.slug}`,
+                priceCurrency: 'INR',
+                price: price,
+                priceValidUntil: '2027-12-31',
+                itemCondition: 'https://schema.org/NewCondition',
+                availability: isOutOfStock
+                  ? 'https://schema.org/OutOfStock'
+                  : 'https://schema.org/InStock',
+                seller: { '@type': 'Organization', name: 'Living Result' },
+              },
+              ...(product.rating && {
+                aggregateRating: {
+                  '@type': 'AggregateRating',
+                  ratingValue: product.rating,
+                  bestRating: 5,
+                  worstRating: 1,
+                  reviewCount: product.reviews?.length || 1,
                 },
-                aggregateRating: product.rating
-                  ? { '@type': 'AggregateRating', ratingValue: product.rating, reviewCount: product.reviews?.length || 1 }
-                  : undefined,
               }),
-            }}
-          />
+            };
+
+            return (
+              <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+              />
+            );
+          })()}
         </div>
       </div>
 
