@@ -28,7 +28,7 @@ export default function Footer() {
           <div className="footer-content">
             <div className="footer-logo">
               <Image
-                src="/images/logo.png"
+                src="/images/logo.webp"
                 alt="Living Result"
                 width={80}
                 height={80}

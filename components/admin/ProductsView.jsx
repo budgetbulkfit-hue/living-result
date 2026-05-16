@@ -78,7 +78,7 @@ export default function ProductsView({ token, onEdit, onAdd }) {
               <tr><td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No products found.</td></tr>
             ) : (
               filteredProducts.map((p) => {
-                const img = p.flavors?.[0]?.image || `/images/${p.slug}.png`;
+                const img = p.flavors?.[0]?.image?.replace(/\.png$/i, '.webp') || `/images/${p.slug}.webp`;
                 const resolvedImg = img.startsWith('http') ? img : `/images/${img.replace(/^\/?(images\/)?/, '')}`;
                 return (
                   <tr key={p._id}>

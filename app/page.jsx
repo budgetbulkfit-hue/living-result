@@ -28,7 +28,7 @@ export default async function HomePage() {
       <section className="hero" id="hero">
         <div className="hero-bg">
           <Image
-            src="/images/hero-athlete.png"
+            src="/images/hero-athlete.webp"
             alt="Muscular athlete in dramatic lighting"
             fill
             style={{ objectFit: 'cover', objectPosition: 'center top' }}
@@ -78,7 +78,7 @@ export default async function HomePage() {
         <div className="container">
           <div className="why-us-grid">
             <div className="why-us-image">
-              <Image src="/images/why-us-image.png" alt="Athlete holding a supplement tub" width={600} height={600} style={{ borderRadius: 'var(--radius-lg)', boxShadow: '0 10px 40px rgba(0,0,0,0.6)', width: '100%', height: 'auto' }} />
+              <Image src="/images/why-us-image.webp" alt="Athlete holding a supplement tub" width={600} height={600} style={{ borderRadius: 'var(--radius-lg)', boxShadow: '0 10px 40px rgba(0,0,0,0.6)', width: '100%', height: 'auto' }} />
             </div>
             <div className="why-us-content">
               <p className="section-label">The Living Result Difference</p>
@@ -149,7 +149,7 @@ export default async function HomePage() {
       {/* WHY CHOOSE */}
       <section className="why-choose" id="why-choose">
         <div className="why-bg">
-          <Image src="/images/why-choose-athlete.png" alt="Athlete with orange paint effect" fill style={{ objectFit: 'cover' }} />
+          <Image src="/images/why-choose-athlete.webp" alt="Athlete with orange paint effect" fill style={{ objectFit: 'cover' }} />
         </div>
         <div className="container">
           <div className="why-content">

@@ -42,8 +42,9 @@ function getPrice(p, sIdx, fIdx) {
 }
 
 function getImg(p, fIdx = 0) {
-  if (!p) return '/images/logo.png';
-  return p.flavors?.[fIdx]?.image || p.flavors?.[0]?.image || `/images/${p.slug}.png`;
+  if (!p) return '/images/logo.webp';
+  const img = p.flavors?.[fIdx]?.image || p.flavors?.[0]?.image || `/images/${p.slug}.webp`;
+  return img ? img.replace(/\.png$/i, '.webp') : img;
 }
 
 function isAvailable(p) {

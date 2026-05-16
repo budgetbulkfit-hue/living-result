@@ -53,7 +53,7 @@ export default function CombosView({ token, onEdit, onAdd }) {
               <tr><td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No combos found.</td></tr>
             ) : (
               combos.map((c) => {
-                const img = c.images?.[0] || `/images/${c.slug}.png`;
+                const img = c.images?.[0]?.replace(/\.png$/i, '.webp') || `/images/${c.slug}.webp`;
                 const resolvedImg = img.startsWith('http') ? img : `/images/${img.replace(/^\/?(images\/)?/, '')}`;
                 const autoMRP = (c.comboSelections || []).reduce((acc, curr) => acc + (curr.priceSnapshot * curr.quantity), 0);
                 

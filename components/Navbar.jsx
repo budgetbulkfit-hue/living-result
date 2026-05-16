@@ -55,7 +55,7 @@ export default function Navbar({ cartCount = 0, onSearchOpen, onCartOpen }) {
           {/* Logo */}
           <Link href="/" className="nav-logo" onClick={closeMenu}>
             <Image
-              src="/images/logo.png"
+              src="/images/logo.webp"
               alt="Living Result"
               width={130}
               height={130}

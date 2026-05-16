@@ -22,9 +22,10 @@ function useReviewCount(realCount) {
 }
 
 function getProductImage(product, flavorIndex = 0) {
-  return product.flavors?.[flavorIndex]?.image
+  const img = product.flavors?.[flavorIndex]?.image
     || product.flavors?.[0]?.image
-    || `/images/${product.slug}.png`;
+    || `/images/${product.slug}.webp`;
+  return img ? img.replace(/\.png$/i, '.webp') : img;
 }
 
 function getProductPrice(product) {
@@ -78,7 +79,7 @@ export default function ProductCard({ product }) {
         <img
           src={getProductImage(product, 0)}
           alt={product.name}
-          onError={(e) => { e.target.src = `/images/${product.slug}.png`; e.target.onerror = null; }}
+          onError={(e) => { e.target.src = `/images/${product.slug}.webp`; e.target.onerror = null; }}
           style={{ maxHeight: '180px', objectFit: 'contain', transition: '0.3s ease' }}
         />
 
