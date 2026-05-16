@@ -54,6 +54,65 @@ function isAvailable(p) {
   return (p.stockLeft || 0) > 0;
 }
 
+// Check if a specific size index is in stock (checks variants first, falls back to sizes[].inStock)
+function isSizeInStock(p, sIdx) {
+  if (!p) return false;
+  const sz = p.sizes?.[sIdx];
+  if (!sz) return isAvailable(p);
+  if (p.variants?.length) {
+    const matched = p.variants.filter(v => v.weight === sz.weight);
+    if (matched.length) return matched.some(v => (v.availableStock || 0) > 0);
+  }
+  return sz.inStock !== false;
+}
+
+// Check if a specific flavor index is in stock
+function isFlavorInStock(p, fIdx) {
+  if (!p) return false;
+  const fl = p.flavors?.[fIdx];
+  if (!fl) return isAvailable(p);
+  if (p.variants?.length) {
+    const matched = p.variants.filter(v => v.flavor === fl.name);
+    if (matched.length) return matched.some(v => (v.availableStock || 0) > 0);
+  }
+  return fl.inStock !== false;
+}
+
+// Check if the specific selected variant (size + flavor combo) is in stock
+function isSelectionInStock(p, sIdx, fIdx) {
+  if (!p) return false;
+  if (p.variants?.length) {
+    const flavorName = p.flavors?.[fIdx]?.name;
+    const sizeName = p.sizes?.[sIdx]?.weight;
+    if (flavorName || sizeName) {
+      const matched = p.variants.find(v =>
+        (!flavorName || v.flavor === flavorName) &&
+        (!sizeName || v.weight === sizeName)
+      );
+      if (matched) return (matched.availableStock || 0) > 0;
+      // Couldn't find exact variant — fall back to any in-stock
+      return p.variants.some(v => (v.availableStock || 0) > 0);
+    }
+  }
+  if (p.sizes?.[sIdx]) return p.sizes[sIdx].inStock !== false;
+  if (p.flavors?.[fIdx]) return p.flavors[fIdx].inStock !== false;
+  return isAvailable(p);
+}
+
+// Returns the index of the first in-stock flavor, or 0 as fallback
+function firstInStockFlavorIdx(p) {
+  if (!p?.flavors?.length) return 0;
+  const idx = p.flavors.findIndex((_, i) => isFlavorInStock(p, i));
+  return idx >= 0 ? idx : 0;
+}
+
+// Returns the index of the first in-stock size, or 0 as fallback
+function firstInStockSizeIdx(p) {
+  if (!p?.sizes?.length) return 0;
+  const idx = p.sizes.findIndex((_, i) => isSizeInStock(p, i));
+  return idx >= 0 ? idx : 0;
+}
+
 export default function ComboConfigurator({ products = [] }) {
   const addItem = useCart(s => s.addItem);
   const [addedSuccess, setAddedSuccess] = useState(false);
@@ -98,12 +157,12 @@ export default function ComboConfigurator({ products = [] }) {
     ).sort((a, b) => (b.stackPriority || 0) - (a.stackPriority || 0)),
   [products]);
 
-  // Auto-select on goal change
+  // Auto-select on goal change — always pick first in-stock variant
   useEffect(() => {
     const c = coreProducts[0] || null;
     const b = boostProducts[0] || null;
-    setCoreSel({ product: c, sizeIdx: 0, flavorIdx: 0 });
-    setBoostSel({ product: b, sizeIdx: 0, flavorIdx: 0 });
+    setCoreSel({ product: c, sizeIdx: firstInStockSizeIdx(c), flavorIdx: firstInStockFlavorIdx(c) });
+    setBoostSel({ product: b, sizeIdx: firstInStockSizeIdx(b), flavorIdx: firstInStockFlavorIdx(b) });
     setShowNotify(false);
     setNotifyOk(false);
     setViewAllCore(false);
@@ -116,8 +175,9 @@ export default function ComboConfigurator({ products = [] }) {
   const finalPrice = total > 0 ? Math.max(0, total - COMBO_DISCOUNT) : 0;
   const isComplete = !!(coreSel.product && boostSel.product);
 
-  const coreStock = isAvailable(coreSel.product);
-  const boostStock = isAvailable(boostSel.product);
+  // Check stock for the SPECIFIC selected variant, not just the product overall
+  const coreStock = isSelectionInStock(coreSel.product, coreSel.sizeIdx, coreSel.flavorIdx);
+  const boostStock = isSelectionInStock(boostSel.product, boostSel.sizeIdx, boostSel.flavorIdx);
   const inStock = coreStock && boostStock;
 
   const stackPower = isComplete ? (activeGoal.id === 'bulk' ? 98 : activeGoal.id === 'lean' ? 95 : 92) : 50;
@@ -194,7 +254,7 @@ export default function ComboConfigurator({ products = [] }) {
               return (
                 <div
                   key={p._id}
-                  onClick={() => setSel({ product: p, sizeIdx: 0, flavorIdx: 0 })}
+                  onClick={() => setSel({ product: p, sizeIdx: firstInStockSizeIdx(p), flavorIdx: firstInStockFlavorIdx(p) })}
                   style={{
                     background: selected ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.02)',
                     border, borderRadius: '12px', padding: '12px', cursor: 'pointer', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.55, transition: '0.2s'
@@ -246,7 +306,7 @@ export default function ComboConfigurator({ products = [] }) {
                     key={p._id}
                     whileHover={{ scale: 1.03, y: -3 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => setSel({ product: p, sizeIdx: 0, flavorIdx: 0 })}
+                    onClick={() => setSel({ product: p, sizeIdx: firstInStockSizeIdx(p), flavorIdx: firstInStockFlavorIdx(p) })}
                     style={{
                       flex: '0 0 190px', scrollSnapAlign: 'start', background: selected ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.02)',
                       border, borderRadius: '12px', padding: '15px', cursor: 'pointer', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.55
@@ -287,12 +347,73 @@ export default function ComboConfigurator({ products = [] }) {
           <div style={{ marginTop: '14px', padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
             <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '1px' }}>Selection Options</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {(sel.product.flavors || []).length > 1 && sel.product.flavors.map((fl, i) => (
-                <button key={i} onClick={() => setSel({ ...sel, flavorIdx: i })} style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: sel.flavorIdx === i ? 'rgba(255,255,255,0.12)' : 'transparent', border: `1px solid ${sel.flavorIdx === i ? accent : 'var(--border)'}`, color: sel.flavorIdx === i ? '#fff' : 'var(--text-secondary)' }}>{fl.name}</button>
-              ))}
-              {(sel.product.sizes || []).length > 1 && sel.product.sizes.map((sz, i) => (
-                <button key={i} onClick={() => setSel({ ...sel, sizeIdx: i })} style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: sel.sizeIdx === i ? 'rgba(255,255,255,0.12)' : 'transparent', border: `1px solid ${sel.sizeIdx === i ? accent : 'var(--border)'}`, color: sel.sizeIdx === i ? '#fff' : 'var(--text-secondary)' }}>{sz.weight}</button>
-              ))}
+
+              {/* ── Flavor Pills ── */}
+              {(sel.product.flavors || []).length > 1 && sel.product.flavors.map((fl, i) => {
+                const flInStock = isFlavorInStock(sel.product, i);
+                const isActive = sel.flavorIdx === i;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setSel({ ...sel, flavorIdx: i })}
+                    title={flInStock ? fl.name : `${fl.name} — Out of Stock`}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      lineHeight: 1.4,
+                      background: isActive
+                        ? (flInStock ? 'rgba(255,255,255,0.12)' : 'rgba(231,76,60,0.15)')
+                        : 'transparent',
+                      border: `1px solid ${isActive
+                        ? (flInStock ? accent : '#e74c3c')
+                        : (flInStock ? 'var(--border)' : 'rgba(231,76,60,0.25)')}`,
+                      color: isActive ? '#fff' : (flInStock ? 'var(--text-secondary)' : '#666'),
+                      textDecoration: flInStock ? 'none' : 'line-through',
+                      opacity: flInStock ? 1 : 0.6,
+                    }}
+                  >
+                    {fl.name}
+                    {!flInStock && <span style={{ display: 'block', fontSize: '9px', color: '#e74c3c', textDecoration: 'none', lineHeight: 1, marginTop: '1px' }}>OUT OF STOCK</span>}
+                  </button>
+                );
+              })}
+
+              {/* ── Size Pills ── */}
+              {(sel.product.sizes || []).length > 1 && sel.product.sizes.map((sz, i) => {
+                const szInStock = isSizeInStock(sel.product, i);
+                const isActive = sel.sizeIdx === i;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setSel({ ...sel, sizeIdx: i })}
+                    title={szInStock ? sz.weight : `${sz.weight} — Out of Stock`}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      lineHeight: 1.4,
+                      background: isActive
+                        ? (szInStock ? 'rgba(255,255,255,0.12)' : 'rgba(231,76,60,0.15)')
+                        : 'transparent',
+                      border: `1px solid ${isActive
+                        ? (szInStock ? accent : '#e74c3c')
+                        : (szInStock ? 'var(--border)' : 'rgba(231,76,60,0.25)')}`,
+                      color: isActive ? '#fff' : (szInStock ? 'var(--text-secondary)' : '#666'),
+                      textDecoration: szInStock ? 'none' : 'line-through',
+                      opacity: szInStock ? 1 : 0.6,
+                    }}
+                  >
+                    {sz.weight}
+                    {!szInStock && <span style={{ display: 'block', fontSize: '9px', color: '#e74c3c', textDecoration: 'none', lineHeight: 1, marginTop: '1px' }}>OUT OF STOCK</span>}
+                  </button>
+                );
+              })}
+
               {(!sel.product.flavors || sel.product.flavors.length <= 1) && (!sel.product.sizes || sel.product.sizes.length <= 1) && (
                 <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>No additional options available</span>
               )}

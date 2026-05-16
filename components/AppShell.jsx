@@ -15,12 +15,14 @@ import useSettings from '@/lib/useSettings';
 
 export default function AppShell({ children }) {
   const [mounted, setMounted] = useState(false);
-  const [cartOpen, setCartOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   const getTotalItems = useCart((s) => s.getTotalItems);
   const migrateLegacyCart = useCart((s) => s.migrateLegacyCart);
+  const cartOpen = useCart((s) => s.cartSidebarOpen);
+  const openCart = useCart((s) => s.openCart);
+  const closeCart = useCart((s) => s.closeCart);
   const { noticeStrip, isLaunched, fomoSettings } = useSettings();
   const pathname = usePathname();
 
@@ -31,7 +33,7 @@ export default function AppShell({ children }) {
 
   const totalItems = mounted ? getTotalItems() : 0;
 
-  const openCheckout = () => { setCartOpen(false); setCheckoutOpen(true); };
+  const openCheckout = () => { closeCart(); setCheckoutOpen(true); };
 
   // Skip consumer shell for admin routes
   if (pathname?.startsWith('/admin')) {
@@ -73,7 +75,7 @@ export default function AppShell({ children }) {
       <Navbar
         cartCount={totalItems}
         onSearchOpen={() => setSearchOpen(true)}
-        onCartOpen={() => setCartOpen(true)}
+        onCartOpen={openCart}
       />
 
       {/* WHATSAPP QUICK BUY (Mobile Only) */}
@@ -83,7 +85,7 @@ export default function AppShell({ children }) {
       {mounted && (
         <CartSidebar
           isOpen={cartOpen}
-          onClose={() => setCartOpen(false)}
+          onClose={closeCart}
           onCheckout={openCheckout}
         />
       )}
@@ -117,7 +119,7 @@ export default function AppShell({ children }) {
       {mounted && (
         <ExitIntentWrapper
           enabled={fomoSettings?.exitIntent !== false}
-          onCartOpen={() => setCartOpen(true)}
+          onCartOpen={openCart}
         />
       )}
 
@@ -126,7 +128,7 @@ export default function AppShell({ children }) {
         <button
           className="floating-cart-btn visible"
           id="floatingCartBtn"
-          onClick={() => setCartOpen(true)}
+          onClick={openCart}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" />
