@@ -8,6 +8,9 @@ export const metadata = {
   title: 'Living Result | #WEARETHELIVINGRESULT',
   description:
     "Living Result — Premium fitness supplements. Stop guessing, start growing. Shop Whey Protein, Mass Gainer, Creatine and more at India's lowest prices.",
+  alternates: {
+    canonical: 'https://www.getlivingresult.in',
+  },
 };
 
 export default async function HomePage() {

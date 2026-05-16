@@ -1,10 +1,16 @@
 import './globals.css';
 import AppShell from '@/components/AppShell';
 
+const SITE_URL = 'https://www.getlivingresult.in';
+
 export const metadata = {
   title: 'Living Result | #WEARETHELIVINGRESULT',
   description:
     "Living Result — Premium fitness supplements. We don't just sell supplements, we LIVE the results. Shop Whey Protein, Mass Gainer, Creatine and more.",
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: '/',
+  },
   icons: {
     icon: [
       { url: '/images/favicon.ico', type: 'image/x-icon' },

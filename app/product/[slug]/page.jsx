@@ -22,6 +22,9 @@ export async function generateMetadata({ params }) {
     description: product.description
       ? product.description.slice(0, 155)
       : `Buy ${product.name} at the best price — ₹${price.toLocaleString()}. 100% authentic, fast delivery. Shop now at Living Result.`,
+    alternates: {
+      canonical: `https://www.getlivingresult.in/product/${slug}`,
+    },
     openGraph: {
       title: `${product.name} | Living Result`,
       description: product.description?.slice(0, 155),

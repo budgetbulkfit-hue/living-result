@@ -30,7 +30,7 @@ export default async function sitemap() {
 
   // Map combos to sitemap URLs
   const comboUrls = combos.map((combo) => ({
-    url: `${baseUrl}/product/${combo.comboSlug}?combo=true`,
+    url: `${baseUrl}/product/${combo.comboSlug}`,
     lastModified: combo.updatedAt ? new Date(combo.updatedAt) : new Date(),
     changeFrequency: 'weekly',
     priority: 0.8,
