@@ -47,14 +47,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        {/* PRELOAD CRITICAL ASSETS */}
-<<<<<<< HEAD
         <link rel="preload" href="/images/logo.webp" as="image" />
         <link rel="preload" href="/images/hero-athlete.webp" as="image" />
-=======
-        <link rel="preload" href="/images/logo.png" as="image" />
-        <link rel="preload" href="/images/hero-athlete.png" as="image" />
->>>>>>> 3078dbe7cbc3f1419f7ae61c3a63eaf690acd711
       </head>
       <body>
         {/* Google Analytics — Script component ensures tracking fires on every page, including SPA navigations */}
