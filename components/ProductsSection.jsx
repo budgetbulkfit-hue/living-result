@@ -73,6 +73,7 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
     textTransform: 'uppercase',
     transition: 'color 0.2s',
     ...(tab === 'combos' && { color: activeTab === 'combos' ? '#9b59b6' : 'var(--text-muted)', borderBottomColor: activeTab === 'combos' ? '#9b59b6' : 'transparent', textShadow: activeTab === 'combos' ? '0 0 10px rgba(155,89,182,0.4)' : 'none' }),
+    ...(tab === 'stacklab' && { color: activeTab === 'stacklab' ? '#ff6a00' : 'var(--text-muted)', borderBottomColor: activeTab === 'stacklab' ? '#ff6a00' : 'transparent', textShadow: activeTab === 'stacklab' ? '0 0 10px rgba(255,106,0,0.5)' : 'none' }),
   });
 
   return (
@@ -101,7 +102,10 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
             Everyday Essentials
           </button>
           <button style={tabStyle('combos')} onClick={() => handleTabChange('combos')}>
-            💎 Premium Stacks
+            Premium Combo
+          </button>
+          <button style={tabStyle('stacklab')} onClick={() => handleTabChange('stacklab')}>
+            🧪 Stack Lab™
           </button>
         </div>
 
@@ -109,12 +113,12 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
         <div style={{
           marginBottom: '30px',
           padding: '20px',
-          background: activeTab === 'unique' ? 'rgba(255, 68, 0, 0.1)' : activeTab === 'common' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 68, 0, 0.08)',
-          borderLeft: `4px solid ${activeTab === 'unique' || activeTab === 'combos' ? 'var(--accent)' : 'var(--text-muted)'}`,
+          background: activeTab === 'unique' ? 'rgba(255, 68, 0, 0.1)' : activeTab === 'common' ? 'rgba(255, 255, 255, 0.05)' : activeTab === 'combos' ? 'rgba(155, 89, 182, 0.08)' : 'rgba(255, 106, 0, 0.1)',
+          borderLeft: `4px solid ${activeTab === 'unique' ? 'var(--accent)' : activeTab === 'common' ? 'var(--text-muted)' : activeTab === 'combos' ? '#9b59b6' : '#ff6a00'}`,
           borderRadius: '4px'
         }}>
           <h4 style={{
-            color: activeTab === 'unique' || activeTab === 'combos' ? 'var(--accent)' : 'var(--text-primary)',
+            color: activeTab === 'unique' ? 'var(--accent)' : activeTab === 'common' ? 'var(--text-primary)' : activeTab === 'combos' ? '#b97de8' : '#ff6a00',
             marginBottom: '10px',
             fontSize: '20px',
             textTransform: 'uppercase',
@@ -124,9 +128,10 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
             {activeTab === 'unique' && 'Exclusive & Unmatched'}
             {activeTab === 'common' && 'Premium Standards'}
             {activeTab === 'combos' && '🔥 Best Combos on the Internet'}
+            {activeTab === 'stacklab' && '🧪 Only Here. Nowhere Else.'}
           </h4>
           <p style={{
-            color: activeTab === 'unique' || activeTab === 'combos' ? 'var(--text-primary)' : 'var(--text-muted)',
+            color: activeTab === 'common' ? 'var(--text-muted)' : 'var(--text-primary)',
             fontSize: '16px',
             lineHeight: '1.6',
             margin: 0
@@ -138,12 +143,17 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
               </>
             )}
             {activeTab === 'common' && 'You may find these products on different platforms, but we guarantee you are getting them here at a lower rate than anywhere else.'}
-            {activeTab === 'combos' && 'We\'ve handpicked the most powerful supplement pairings to maximise your gains, recovery and performance. Get more, save more — these bundles are unbeatable.'}
+            {activeTab === 'combos' && "We've handpicked the most powerful supplement pairings to maximise your gains, recovery and performance. Get more, save more — these bundles are unbeatable."}
+            {activeTab === 'stacklab' && (
+              <>
+                <strong style={{ color: '#ff6a00' }}>Nobody can provide this feature like us.</strong> The Stack Lab™ is an exclusive custom combo builder you will <em>only</em> find here — pick your fuel, pick your boost, mix flavors, and unlock an exclusive bundle discount. No other supplement store in India offers this.
+              </>
+            )}
           </p>
         </div>
 
         {/* ── Sub-category Pills (Both tabs) ── */}
-        {activeTab !== 'combos' && subCats.length > 1 && (
+        {activeTab !== 'combos' && activeTab !== 'stacklab' && subCats.length > 1 && (
           <div style={{ display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' }}>
             {subCats.map((cat) => (
               <button
@@ -161,13 +171,13 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
         {/* ── Combos Tab Content ── */}
         {activeTab === 'combos' && (
           <>
-            {/* 1. Preset Stacks */}
+            {/* Preset Stacks */}
             <div style={{ marginBottom: '40px' }}>
-              <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', textTransform: 'uppercase', marginBottom: '20px', color: '#fff' }}>Featured Preset Stacks</h3>
+              <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', textTransform: 'uppercase', marginBottom: '20px', color: '#fff' }}>Featured Preset Combos</h3>
               {viewAll ? (
                 <div className="products-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
                   {combos.length === 0 ? (
-                    <p style={{ color: 'var(--text-muted)', gridColumn: '1/-1', textAlign: 'center', padding: '60px 0' }}>No stacks available yet.</p>
+                    <p style={{ color: 'var(--text-muted)', gridColumn: '1/-1', textAlign: 'center', padding: '60px 0' }}>No combos available yet.</p>
                   ) : (
                     combos.map((combo) => <ComboCard key={combo._id} combo={combo} />)
                   )}
@@ -182,7 +192,7 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
                       <ComboCard key={combo._id} combo={combo} />
                     ))}
                     {combos.length === 0 && (
-                      <p style={{ color: 'var(--text-muted)', padding: '60px 0' }}>No stacks available yet.</p>
+                      <p style={{ color: 'var(--text-muted)', padding: '60px 0' }}>No combos available yet.</p>
                     )}
                   </div>
                   {combos.length > 1 && (
@@ -191,15 +201,40 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
                 </div>
               )}
             </div>
+          </>
+        )}
 
-            {/* 2. STACK LAB */}
-            <hr style={{ borderColor: 'rgba(255,255,255,0.05)', margin: '40px 0' }} />
+        {/* ── Stack Lab Tab Content ── */}
+        {activeTab === 'stacklab' && (
+          <>
+            {/* Exclusive Banner */}
+            <div style={{
+              marginBottom: '32px',
+              padding: '18px 24px',
+              background: 'linear-gradient(135deg, rgba(255,106,0,0.12) 0%, rgba(255,179,71,0.06) 100%)',
+              border: '1px solid rgba(255,106,0,0.3)',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{ fontSize: '32px' }}>🔒</div>
+              <div>
+                <div style={{ fontFamily: 'var(--font-heading)', fontSize: '15px', color: '#ff6a00', fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '4px' }}>
+                  Exclusively Available Here
+                </div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.5 }}>
+                  You will <strong style={{ color: '#fff' }}>only get this feature here</strong>. No other supplement store in India offers a custom stack builder like this. Mix, match, and save — it&apos;s built just for you.
+                </div>
+              </div>
+            </div>
             <ComboConfigurator products={allProducts} />
           </>
         )}
 
         {/* ── Products: Scroll View ── */}
-        {activeTab !== 'combos' && !viewAll && (
+        {activeTab !== 'combos' && activeTab !== 'stacklab' && !viewAll && (
           <div className="products-scroll-wrapper">
             {displayProducts.length > 1 && (
               <button className="scroll-arrow scroll-left" onClick={() => scroll(-1)} aria-label="Scroll left">‹</button>
@@ -219,7 +254,7 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
         )}
 
         {/* ── Products: Grid View (View All) ── */}
-        {activeTab !== 'combos' && viewAll && (
+        {activeTab !== 'combos' && activeTab !== 'stacklab' && viewAll && (
           <div className="products-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
             {displayProducts.map((product) => (
               <ProductCard key={product._id} product={product} />
@@ -231,7 +266,7 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
         )}
 
         {/* Product count footer */}
-        {activeTab !== 'combos' && (
+        {activeTab !== 'combos' && activeTab !== 'stacklab' && (
           <div style={{ textAlign: 'center', marginTop: '24px', color: 'var(--text-muted)', fontSize: '13px' }}>
             Showing {displayProducts.length} product{displayProducts.length !== 1 ? 's' : ''}
           </div>
