@@ -1,5 +1,6 @@
 import './globals.css';
 import AppShell from '@/components/AppShell';
+import Script from 'next/script';
 
 const SITE_URL = 'https://www.getlivingresult.in';
 
@@ -27,24 +28,23 @@ export default function RootLayout({ children }) {
         {/* PRELOAD CRITICAL ASSETS */}
         <link rel="preload" href="/images/logo.png" as="image" />
         <link rel="preload" href="/images/hero-athlete.png" as="image" />
-
-        {/* Google Analytics */}
-        <script
-          async
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-        />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
-            `,
-          }}
-        />
       </head>
       <body>
+        {/* Google Analytics — Script component ensures tracking fires on every page, including SPA navigations */}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
+              page_path: window.location.pathname,
+            });
+          `}
+        </Script>
         {/*
           AppShell is the client-side wrapper that provides:
           - Navbar with live cart count (Zustand)
