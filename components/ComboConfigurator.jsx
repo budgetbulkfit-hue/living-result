@@ -127,6 +127,47 @@ export default function ComboConfigurator({ products = [] }) {
   const [viewAllCore, setViewAllCore] = useState(false);
   const [viewAllBoost, setViewAllBoost] = useState(false);
 
+  // AI State
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiQuery, setAiQuery] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiRecommendation, setAiRecommendation] = useState(null);
+  const [aiError, setAiError] = useState('');
+
+  const handleAiRequest = async (e) => {
+    e?.preventDefault();
+    if (!aiQuery.trim()) return;
+    setIsAiLoading(true);
+    setAiError('');
+    try {
+      const { recommendAiStack } = await import('@/lib/api');
+      const res = await recommendAiStack(aiQuery);
+      if (res.success && res.data) {
+        setAiRecommendation(res.data);
+        setShowAiModal(false);
+        const c = products.find(p => p._id === res.data.recommendedCoreId);
+        const b = products.find(p => p._id === res.data.recommendedBoostId);
+        if (c) {
+          const fIdx = c.flavors?.findIndex(f => f.name === res.data.recommendedCoreFlavor);
+          const sIdx = c.sizes?.findIndex(s => s.weight === res.data.recommendedCoreSize);
+          setCoreSel({ product: c, sizeIdx: sIdx >= 0 ? sIdx : firstInStockSizeIdx(c), flavorIdx: fIdx >= 0 ? fIdx : firstInStockFlavorIdx(c) });
+        }
+        if (b) {
+          const fIdx = b.flavors?.findIndex(f => f.name === res.data.recommendedBoostFlavor);
+          const sIdx = b.sizes?.findIndex(s => s.weight === res.data.recommendedBoostSize);
+          setBoostSel({ product: b, sizeIdx: sIdx >= 0 ? sIdx : firstInStockSizeIdx(b), flavorIdx: fIdx >= 0 ? fIdx : firstInStockFlavorIdx(b) });
+        }
+        setTimeout(() => { document.getElementById('stack-config-area')?.scrollIntoView({ behavior: 'smooth' }); }, 300);
+      } else {
+        setAiError(res.message || 'Failed to get recommendation.');
+      }
+    } catch (err) {
+      setAiError('Failed to connect to AI service.');
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   // Notify state
   const [showNotify, setShowNotify] = useState(false);
   const [notifyEmail, setNotifyEmail] = useState('');
@@ -440,10 +481,64 @@ export default function ComboConfigurator({ products = [] }) {
         >
           STACK LAB™
         </motion.h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '17px', maxWidth: '560px', margin: '0 auto', lineHeight: 1.6 }}>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '17px', maxWidth: '560px', margin: '0 auto 25px', lineHeight: 1.6 }}>
           Build your <strong style={{ color: '#fff' }}>own custom stack</strong>. Pick your fuel, pick your boost, mix flavors — and get an exclusive ₹30 combo discount.
         </p>
+
+        {/* AI Stack Builder Button */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setShowAiModal(true)}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '10px',
+            background: 'rgba(0, 240, 255, 0.1)', border: '1px solid rgba(0, 240, 255, 0.4)',
+            color: '#00f0ff', padding: '12px 24px', borderRadius: '50px',
+            fontSize: '14px', fontWeight: 800, textTransform: 'uppercase',
+            boxShadow: '0 0 20px rgba(0, 240, 255, 0.2)', cursor: 'pointer',
+            transition: 'all 0.3s ease',
+          }}
+        >
+          ✨ GET HELP FROM AI
+        </motion.button>
       </div>
+
+      {/* ── AI Modal Overlay ── */}
+      {showAiModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)' }}>
+          <motion.div initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} style={{ background: 'linear-gradient(145deg, #111, #0a0a0a)', border: '1px solid rgba(0,240,255,0.3)', borderRadius: '24px', width: '100%', maxWidth: '500px', padding: '30px', position: 'relative', boxShadow: '0 20px 60px rgba(0,240,255,0.15)' }}>
+            <button onClick={() => setShowAiModal(false)} style={{ position: 'absolute', top: '20px', right: '20px', background: 'transparent', border: 'none', color: '#fff', fontSize: '24px', cursor: 'pointer', opacity: 0.5 }}>×</button>
+            <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', color: '#00f0ff', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              ✨ AI Stack Builder
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px' }}>Tell us your exact goals, challenges, or dietary restrictions. Our AI will select the perfect Core and Boost combo for you.</p>
+            
+            <form onSubmit={handleAiRequest}>
+              <textarea 
+                value={aiQuery} 
+                onChange={e => setAiQuery(e.target.value)} 
+                placeholder="e.g. 'I want to build lean muscle but I am lactose intolerant. I lift heavy 4x a week.'" 
+                rows={4}
+                style={{ width: '100%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', color: '#fff', fontSize: '15px', resize: 'none', marginBottom: '16px', outline: 'none' }}
+                onFocus={(e) => e.target.style.borderColor = 'rgba(0,240,255,0.5)'}
+                onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+              />
+              
+              {aiError && <div style={{ color: '#ff4757', fontSize: '13px', marginBottom: '16px', background: 'rgba(255,71,87,0.1)', padding: '10px', borderRadius: '8px' }}>{aiError}</div>}
+              
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '24px' }}>
+                {["Lean muscle, no fat", "Lactose intolerant bulking", "Endurance & recovery"].map(s => (
+                  <button key={s} type="button" onClick={() => setAiQuery(s)} style={{ background: 'rgba(0,240,255,0.05)', border: '1px solid rgba(0,240,255,0.2)', color: '#00f0ff', padding: '6px 12px', borderRadius: '50px', fontSize: '12px', cursor: 'pointer' }}>{s}</button>
+                ))}
+              </div>
+
+              <button type="submit" disabled={isAiLoading || !aiQuery.trim()} style={{ width: '100%', padding: '16px', borderRadius: '12px', background: isAiLoading ? '#333' : 'linear-gradient(90deg, #00f0ff, #0080ff)', color: isAiLoading ? '#888' : '#fff', fontSize: '16px', fontWeight: 'bold', border: 'none', cursor: isAiLoading ? 'not-allowed' : 'pointer', transition: 'all 0.3s' }}>
+                {isAiLoading ? 'Analyzing Catalog...' : 'Build My Stack'}
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      )}
 
       {/* ── Goal Selector ── */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3,1fr)', gap: '15px', marginBottom: '40px' }}>
@@ -471,7 +566,17 @@ export default function ComboConfigurator({ products = [] }) {
         })}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.6fr 1fr', gap: '40px', alignItems: 'start' }}>
+      <div id="stack-config-area" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.6fr 1fr', gap: '40px', alignItems: 'start', position: 'relative' }}>
+        
+        {/* Loading Shimmer Overlay */}
+        {isAiLoading && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 10, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ color: '#00f0ff', fontSize: '18px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="ai-pulse-glow" style={{ width: '15px', height: '15px', borderRadius: '50%', background: '#00f0ff' }} />
+              AI is crafting your stack...
+            </div>
+          </div>
+        )}
         {/* ── Left Column: Configuration ── */}
         <div style={{ overflow: 'hidden' }}>
           {renderProductList(coreProducts, coreSel, setCoreSel, coreRef, "CHOOSE YOUR FUEL", 1, viewAllCore, setViewAllCore)}
@@ -525,17 +630,29 @@ export default function ComboConfigurator({ products = [] }) {
             </div>
 
             {/* Intelligence */}
-            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '18px', borderRadius: '16px', marginBottom: '25px', border: '1px solid rgba(255,255,255,0.03)' }}>
-              <div style={{ fontSize: '9px', color: activeGoal.theme.accent, fontWeight: 900, marginBottom: '12px', letterSpacing: '1px' }}>SYSTEM INTELLIGENCE</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {activeGoal.reason.map(r => (
-                  <div key={r} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', color: '#fff' }}>
-                    <span style={{ color: activeGoal.theme.accent }}>{r.split(' ')[0]}</span>
-                    <span>{r.split(' ').slice(1).join(' ')}</span>
-                  </div>
-                ))}
+            {aiRecommendation ? (
+              <div style={{ background: 'rgba(0, 240, 255, 0.05)', padding: '18px', borderRadius: '16px', marginBottom: '25px', border: '1px solid rgba(0, 240, 255, 0.3)', boxShadow: '0 0 15px rgba(0,240,255,0.1)' }}>
+                <div style={{ fontSize: '9px', color: '#00f0ff', fontWeight: 900, marginBottom: '12px', letterSpacing: '1px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>✨ AI COACH RATIONALE</span>
+                  <span style={{ background: 'rgba(0,240,255,0.2)', padding: '2px 8px', borderRadius: '10px' }}>{aiRecommendation.matchScore || 95}% MATCH</span>
+                </div>
+                <div style={{ fontSize: '13px', color: '#fff', lineHeight: 1.5 }}>
+                  {aiRecommendation.rationale}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '18px', borderRadius: '16px', marginBottom: '25px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                <div style={{ fontSize: '9px', color: activeGoal.theme.accent, fontWeight: 900, marginBottom: '12px', letterSpacing: '1px' }}>SYSTEM INTELLIGENCE</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {activeGoal.reason.map(r => (
+                    <div key={r} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', color: '#fff' }}>
+                      <span style={{ color: activeGoal.theme.accent }}>{r.split(' ')[0]}</span>
+                      <span>{r.split(' ').slice(1).join(' ')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Pricing & CTA */}
             <div style={{ textAlign: 'center' }}>
