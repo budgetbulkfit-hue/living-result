@@ -5,7 +5,12 @@ import { useState, useRef, useEffect } from 'react';
 // Resolve image src — handles relative paths (from DB) and full URLs
 function resolveImage(src) {
   if (!src) return null;
-  if (src.startsWith('http')) return src;
+  if (src.startsWith('http')) {
+    if (src.startsWith('http://res.cloudinary.com/')) {
+      return src.replace('http://', 'https://');
+    }
+    return src;
+  }
   // Strip leading slash or "images/" prefix and map to /public/images/
   const filename = src.replace(/^\/?(images\/)?/, '');
   return `/images/${filename}`;

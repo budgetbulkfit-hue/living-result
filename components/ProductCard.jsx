@@ -22,10 +22,17 @@ function useReviewCount(realCount) {
 }
 
 function getProductImage(product, flavorIndex = 0) {
-  const img = product.flavors?.[flavorIndex]?.image
+  let img = product.flavors?.[flavorIndex]?.image
     || product.flavors?.[0]?.image
     || `/images/${product.slug}.webp`;
-  return img ? img.replace(/\.png$/i, '.webp') : img;
+  if (!img) return img;
+  if (img.startsWith('http')) {
+    if (img.startsWith('http://res.cloudinary.com/')) {
+      img = img.replace('http://', 'https://');
+    }
+    return img;
+  }
+  return img.replace(/\.png$/i, '.webp');
 }
 
 function getProductPrice(product) {
