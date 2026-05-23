@@ -51,12 +51,23 @@ export default function ComboEditor({ token, slugToEdit, onCancel, onSaved }) {
   const fetchCombo = async (slug) => {
     try {
       const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${API}/products/${slug}`);
+      const res = await fetch(`${API}/combos/${slug}`);
       const data = await res.json();
       if (data.success) {
         setFormData({
           ...INITIAL_FORM,
-          ...data.data,
+          name: data.data.comboName || '',
+          slug: data.data.comboSlug || '',
+          description: data.data.description || '',
+          price: data.data.manualOverridePrice || 0,
+          published: data.data.isPublished !== false,
+          comboSelections: (data.data.products || []).map(p => ({
+            productId: p.productId?._id || p.productId,
+            name: p.productId?.name || 'Unknown',
+            flavor: 'Standard',
+            quantity: p.quantity || 1,
+            priceSnapshot: p.productId?.price || 0
+          })),
           _id: data.data._id
         });
       }
@@ -72,9 +83,19 @@ export default function ComboEditor({ token, slugToEdit, onCancel, onSaved }) {
     try {
       const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
       const method = formData._id ? 'PUT' : 'POST';
-      const url = formData._id ? `${API}/products/${formData._id}` : `${API}/products`;
+      const url = formData._id ? `${API}/combos/${formData._id}` : `${API}/combos`;
       
-      const payload = { ...formData, isCombo: true };
+      const payload = { 
+        comboName: formData.name,
+        comboSlug: formData.slug,
+        description: formData.description,
+        manualOverridePrice: formData.price,
+        isPublished: formData.published,
+        products: formData.comboSelections.map(s => ({
+            productId: s.productId,
+            quantity: s.quantity
+        }))
+      };
 
       const res = await fetch(url, {
         method,
