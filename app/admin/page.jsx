@@ -1,288 +1,262 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  adminLogin, 
-  getNotifications, 
-  updateNotificationStatus, 
-  deleteNotification, 
-  getProducts, 
-  getProductPerformance 
-} from '@/lib/api';
+import './admin.css';
+import AdminLogin from '@/components/admin/AdminLogin';
+import Dashboard from '@/components/admin/Dashboard';
+import ProductsView from '@/components/admin/ProductsView';
+import ProductEditor from '@/components/admin/ProductEditor';
+import CombosView from '@/components/admin/CombosView';
+import ComboEditor from '@/components/admin/ComboEditor';
+import OrderManager from '@/components/admin/OrderManager';
+import SettingsView from '@/components/admin/SettingsView';
+import { getNotifications, updateNotificationStatus, deleteNotification } from '@/lib/api';
 
 export default function AdminPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [token, setToken] = useState(null);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-
-  // Dashboard Data
-  const [metrics, setMetrics] = useState({ views: 0, sales: 0, revenue: 0 });
-  const [notifications, setNotifications] = useState([]);
-  const [performance, setPerformance] = useState([]);
+  
+  // Navigation & Sub-views
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [editingProductSlug, setEditingProductSlug] = useState(null);
+  const [editingComboSlug, setEditingComboSlug] = useState(null);
+  
+  // Mobile UI States
+  const [sidebarActive, setSidebarActive] = useState(false);
+  
+  // Restock alerts count & list
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     const savedToken = localStorage.getItem('adminToken');
     if (savedToken) {
       setToken(savedToken);
       setIsLoggedIn(true);
-      fetchData(savedToken);
+      fetchRestockAlerts(savedToken);
     } else {
       setLoading(false);
     }
   }, []);
 
-  const fetchData = async (authToken) => {
-    setLoading(true);
+  const fetchRestockAlerts = async (authToken) => {
     try {
-      const [notifsData, productsData, perfData] = await Promise.all([
-        getNotifications(authToken),
-        getProducts(),
-        getProductPerformance(authToken)
-      ]);
-
-      if (notifsData.success) setNotifications(notifsData.data);
-      if (perfData.success) setPerformance(perfData.data);
-      
-      // Calculate simple metrics from products
-      if (productsData) {
-        let v = 0, s = 0, r = 0;
-        productsData.forEach(p => {
-          v += Number(p.viewCount || 0);
-          s += Number(p.confirmedSales || 0);
-          r += Number(p.confirmedRevenue || 0);
-        });
-        setMetrics({ views: v, sales: s, revenue: r });
+      const res = await getNotifications(authToken);
+      if (res.success) {
+        setNotifications(res.data || []);
       }
     } catch (err) {
-      console.error('Fetch error:', err);
+      console.error('Failed to load restock alerts count', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
+  const handleLoginSuccess = (newToken) => {
+    setToken(newToken);
+    setIsLoggedIn(true);
+    fetchRestockAlerts(newToken);
+  };
+
+  const handleLogout = async () => {
+    const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
     try {
-      const res = await adminLogin(email, password);
-      if (res.success && res.role === 'admin') {
-        localStorage.setItem('adminToken', res.token);
-        setToken(res.token);
-        setIsLoggedIn(true);
-        fetchData(res.token);
-      } else {
-        setError(res.message || 'Access denied. Admins only.');
-      }
+      await fetch(`${API}/auth/logout`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
     } catch (err) {
-      setError('Login failed. Check connection.');
+      console.error('Logout request failed', err);
+    } finally {
+      localStorage.removeItem('adminToken');
+      setToken(null);
+      setIsLoggedIn(false);
+      setNotifications([]);
+      setActiveTab('dashboard');
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    setIsLoggedIn(false);
-    setToken(null);
-  };
-
-  const handleUpdateStatus = async (id, status) => {
+  // Restock Alerts handlers
+  const handleMarkNotified = async (id) => {
     try {
-      const res = await updateNotificationStatus(id, status, token);
+      const res = await updateNotificationStatus(id, 'notified', token);
       if (res.success) {
-        setNotifications(prev => prev.map(n => n._id === id ? { ...n, status } : n));
+        setNotifications(prev => prev.map(n => n._id === id ? { ...n, status: 'notified' } : n));
       }
     } catch (err) {
-      alert('Update failed');
+      alert('Failed to update status');
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this request?')) return;
+  const handleDeleteAlert = async (id) => {
+    if (!confirm('Are you sure you want to delete this restock request?')) return;
     try {
       const res = await deleteNotification(id, token);
       if (res.success) {
         setNotifications(prev => prev.filter(n => n._id !== id));
       }
     } catch (err) {
-      alert('Delete failed');
+      alert('Failed to delete alert');
     }
   };
 
+  const toggleSidebar = () => {
+    setSidebarActive(!sidebarActive);
+  };
+
   if (loading && !isLoggedIn) {
-    return <div className="admin-loading">Loading secure portal...</div>;
+    return (
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#0a0a0a', color: '#fff' }}>
+        Loading secure portal...
+      </div>
+    );
   }
 
   if (!isLoggedIn) {
-    return (
-      <div className="admin-login-container">
-        <style jsx>{`
-          .admin-login-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000;
-            padding: 20px;
-          }
-          .login-card {
-            background: #111;
-            padding: 40px;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 400px;
-            border: 1px solid #222;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-          }
-          h1 { color: #f39c12; text-align: center; margin-bottom: 30px; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
-          .form-group { margin-bottom: 20px; }
-          label { display: block; color: #888; margin-bottom: 8px; font-size: 13px; }
-          input { width: 100%; padding: 12px; background: #000; border: 1px solid #333; border-radius: 6px; color: #fff; }
-          button { width: 100%; padding: 12px; background: #f39c12; color: #000; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-          button:hover { background: #e67e22; transform: translateY(-2px); }
-          .error { color: #e74c3c; font-size: 13px; text-align: center; margin-top: 15px; }
-        `}</style>
-        <div className="login-card">
-          <h1>Admin Portal</h1>
-          <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <label>Admin Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label>Password</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            </div>
-            <button type="submit">Secure Login</button>
-          </form>
-          {error && <div className="error">{error}</div>}
-        </div>
-      </div>
-    );
+    return <AdminLogin onLoginSuccess={handleLoginSuccess} />;
   }
 
   const pendingCount = notifications.filter(n => n.status === 'pending').length;
 
   return (
-    <div className="admin-dashboard">
-      <style jsx>{`
-        .admin-dashboard { min-height: 100vh; background: #0a0a0a; color: #fff; display: flex; }
-        .sidebar { width: 260px; background: #111; border-right: 1px solid #222; padding: 30px 0; display: flex; flexDirection: column; }
-        .nav-item { padding: 15px 30px; cursor: pointer; color: #888; transition: 0.2s; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid transparent; }
-        .nav-item:hover { background: rgba(255,255,255,0.02); color: #fff; }
-        .nav-item.active { color: #f39c12; background: rgba(243,156,18,0.05); border-left-color: #f39c12; }
-        .badge { background: #e74c3c; color: #fff; border-radius: 10px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
-        
-        .main { flex: 1; padding: 40px; overflow-y: auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-        .title { font-size: 28px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
-        .stat-card { background: #111; padding: 25px; border-radius: 12px; border: 1px solid #222; }
-        .stat-label { color: #888; font-size: 13px; margin-bottom: 10px; text-transform: uppercase; }
-        .stat-value { font-size: 24px; font-weight: 700; }
-        
-        table { width: 100%; border-collapse: collapse; background: #111; border-radius: 12px; overflow: hidden; border: 1px solid #222; }
-        th { background: #1a1a1a; padding: 15px 20px; text-align: left; font-size: 13px; color: #888; text-transform: uppercase; }
-        td { padding: 15px 20px; border-top: 1px solid #222; font-size: 14px; }
-        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
-        .status-pending { background: rgba(231,76,60,0.1); color: #e74c3c; }
-        .status-notified { background: rgba(46,204,113,0.1); color: #2ecc71; }
-        
-        .btn-action { padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: 0.2s; border: 1px solid #333; background: transparent; color: #fff; margin-right: 8px; }
-        .btn-action:hover { border-color: #888; background: rgba(255,255,255,0.05); }
-        .btn-delete { color: #e74c3c; border-color: rgba(231,76,60,0.3); }
-        .btn-delete:hover { background: rgba(231,76,60,0.1); border-color: #e74c3c; }
-
-        @media (max-width: 900px) {
-          .admin-dashboard { flex-direction: column; }
-          .sidebar { width: 100%; flex-direction: row; overflow-x: auto; padding: 10px 0; }
-          .nav-item { padding: 10px 20px; white-space: nowrap; border-left: none; border-bottom: 2px solid transparent; }
-          .nav-item.active { border-bottom-color: #f39c12; }
-        }
-      `}</style>
-
-      <aside className="sidebar">
-        <div style={{ padding: '0 30px 30px', borderBottom: '1px solid #222', marginBottom: '20px' }}>
+    <div className="app-container">
+      {/* SIDEBAR OVERLAY */}
+      <div 
+        className={`sidebar-overlay ${sidebarActive ? 'active' : ''}`} 
+        onClick={toggleSidebar}
+      />
+      
+      {/* SIDEBAR */}
+      <aside className={`sidebar ${sidebarActive ? 'active' : ''}`}>
+        <div className="sidebar-logo">
           <img src="/images/logo.webp" alt="Logo" style={{ height: '40px' }} />
         </div>
-        <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-          Dashboard
-        </div>
-        <div className={`nav-item ${activeTab === 'notifications' ? 'active' : ''}`} onClick={() => setActiveTab('notifications')}>
-          Restock Requests
-          {pendingCount > 0 && <span className="badge">{pendingCount}</span>}
-        </div>
-        <div style={{ marginTop: 'auto', padding: '20px' }}>
-          <button onClick={handleLogout} style={{ width: '100%', padding: '10px', background: 'transparent', border: '1px solid #e74c3c', color: '#e74c3c', borderRadius: '6px', cursor: 'pointer' }}>Logout</button>
+        <nav className="sidebar-nav">
+          <a 
+            className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('dashboard'); setSidebarActive(false); }}
+          >
+            Dashboard
+          </a>
+          <a 
+            className={`nav-item ${(activeTab === 'products' || activeTab === 'edit-product') ? 'active' : ''}`}
+            onClick={() => { setActiveTab('products'); setSidebarActive(false); }}
+          >
+            Products
+          </a>
+          <a 
+            className={`nav-item ${(activeTab === 'combos' || activeTab === 'edit-combo') ? 'active' : ''}`}
+            onClick={() => { setActiveTab('combos'); setSidebarActive(false); }}
+          >
+            Combos
+          </a>
+          <a 
+            className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('orders'); setSidebarActive(false); }}
+          >
+            Orders
+          </a>
+          <a 
+            className={`nav-item ${activeTab === 'notifications' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('notifications'); setSidebarActive(false); }}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          >
+            Restock Requests
+            {pendingCount > 0 && (
+              <span style={{ background: '#e74c3c', color: '#fff', borderRadius: '50%', padding: '2px 6px', fontSize: '10px' }}>
+                {pendingCount}
+              </span>
+            )}
+          </a>
+          <a 
+            className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('settings'); setSidebarActive(false); }}
+          >
+            Settings
+          </a>
+        </nav>
+        <div style={{ padding: '20px', borderTop: '1px solid var(--border)' }}>
+          <button 
+            className="action-btn"
+            style={{ width: '100%', justifyContent: 'center', border: '1px solid #e74c3c', background: 'transparent', color: '#e74c3c', display: 'flex', alignItems: 'center', padding: '10px 0', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
         </div>
       </aside>
 
-      <main className="main">
-        <header className="header">
-          <h2 className="title">{activeTab === 'dashboard' ? 'Business Insights' : 'Restock Alerts'}</h2>
-          <button onClick={() => fetchData(token)} className="btn-action">Refresh Data</button>
-        </header>
+      {/* MAIN CONTENT */}
+      <main className="main-content">
+        {/* MOBILE HEADER */}
+        <div className="mobile-header">
+          <h2 style={{ margin: 0, fontFamily: 'var(--font-heading)', fontSize: '22px', color: 'var(--accent)', textTransform: 'uppercase' }}>
+            Admin Portal
+          </h2>
+          <button className="hamburger-admin" onClick={toggleSidebar}>☰</button>
+        </div>
 
-        {activeTab === 'dashboard' && (
-          <>
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-label">Total Views</div>
-                <div className="stat-value">{metrics.views.toLocaleString()}</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-label">Total Sales</div>
-                <div className="stat-value">{metrics.sales.toLocaleString()}</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-label">Total Revenue</div>
-                <div className="stat-value">₹{metrics.revenue.toLocaleString()}</div>
-              </div>
-              <div className="stat-card" style={{ cursor: 'pointer', borderColor: pendingCount > 0 ? '#e74c3c' : '#222' }} onClick={() => setActiveTab('notifications')}>
-                <div className="stat-label" style={{ color: pendingCount > 0 ? '#e74c3c' : '#888' }}>Pending Alerts</div>
-                <div className="stat-value" style={{ color: pendingCount > 0 ? '#e74c3c' : '#fff' }}>{pendingCount}</div>
-              </div>
-            </div>
+        {/* 1. DASHBOARD VIEW */}
+        {activeTab === 'dashboard' && <Dashboard token={token} />}
 
-            <div className="panel" style={{ background: '#111', padding: '25px', borderRadius: '12px', border: '1px solid #222' }}>
-              <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '18px', textTransform: 'uppercase' }}>Top Performing Products</h3>
-              <div style={{ overflowX: 'auto' }}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th>Views</th>
-                      <th>Sales</th>
-                      <th>Conv. Rate</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {performance.slice(0, 5).map((p, i) => (
-                      <tr key={i}>
-                        <td style={{ fontWeight: 600 }}>{p.name}</td>
-                        <td>{p.viewCount}</td>
-                        <td>{p.confirmedSales}</td>
-                        <td style={{ color: '#f39c12' }}>{p.conversionRate}%</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </>
+        {/* 2. PRODUCTS VIEW */}
+        {activeTab === 'products' && (
+          <ProductsView 
+            token={token} 
+            onEdit={(slug) => { setEditingProductSlug(slug); setActiveTab('edit-product'); }}
+            onAdd={() => { setEditingProductSlug('new'); setActiveTab('edit-product'); }}
+          />
         )}
 
+        {/* 3. EDIT PRODUCT VIEW */}
+        {activeTab === 'edit-product' && (
+          <ProductEditor 
+            token={token} 
+            slugToEdit={editingProductSlug}
+            onCancel={() => setActiveTab('products')}
+            onSaved={() => { setActiveTab('products'); }}
+          />
+        )}
+
+        {/* 4. COMBOS VIEW */}
+        {activeTab === 'combos' && (
+          <CombosView 
+            token={token} 
+            onEdit={(slug) => { setEditingComboSlug(slug); setActiveTab('edit-combo'); }}
+            onAdd={() => { setEditingComboSlug('new'); setActiveTab('edit-combo'); }}
+          />
+        )}
+
+        {/* 5. EDIT COMBO VIEW */}
+        {activeTab === 'edit-combo' && (
+          <ComboEditor 
+            token={token} 
+            slugToEdit={editingComboSlug}
+            onCancel={() => setActiveTab('combos')}
+            onSaved={() => { setActiveTab('combos'); }}
+          />
+        )}
+
+        {/* 6. ORDERS VIEW */}
+        {activeTab === 'orders' && <OrderManager token={token} />}
+
+        {/* 7. RESTOCK ALERTS VIEW */}
         {activeTab === 'notifications' && (
-          <div className="panel">
-            <div style={{ overflowX: 'auto' }}>
+          <div className="page-view active">
+            <div className="header-title">
+              <span>Restock Requests</span>
+              <button className="btn-outline" onClick={() => fetchRestockAlerts(token)} style={{ fontSize: '13px' }}>⟳ Refresh List</button>
+            </div>
+            <div className="panel-card">
+              <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>Customer email list waiting for products to be restocked.</p>
+            </div>
+            <div className="table-responsive">
               <table>
                 <thead>
                   <tr>
                     <th>Date</th>
                     <th>Email</th>
+                    <th>Phone</th>
                     <th>Product</th>
                     <th>Variant</th>
                     <th>Status</th>
@@ -291,24 +265,35 @@ export default function AdminPage() {
                 </thead>
                 <tbody>
                   {notifications.length === 0 ? (
-                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#888' }}>No restock requests found.</td></tr>
+                    <tr>
+                      <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                        No pending requests.
+                      </td>
+                    </tr>
                   ) : (
-                    notifications.map((n, i) => (
-                      <tr key={i}>
-                        <td style={{ color: '#888' }}>{new Date(n.createdAt).toLocaleDateString()}</td>
-                        <td style={{ fontWeight: 600 }}>{n.email}</td>
-                        <td>{n.productId?.name || 'Deleted Product'}</td>
-                        <td style={{ color: '#888', fontSize: '12px' }}>{n.variantKey}</td>
+                    notifications.map((n) => (
+                      <tr key={n._id}>
+                        <td>{new Date(n.createdAt).toLocaleDateString()}</td>
+                        <td style={{ fontWeight: 'bold', color: 'var(--accent)' }}>{n.email}</td>
+                        <td style={{ color: '#fff' }}>{n.phoneNumber || 'N/A'}</td>
+                        <td>{n.productId?.name || n.productName || 'Unknown Product'}</td>
                         <td>
-                          <span className={`status-pill ${n.status === 'pending' ? 'status-pending' : 'status-notified'}`}>
+                          <span style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px', fontSize: '12px' }}>
+                            {n.variantKey}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ color: n.status === 'pending' ? '#f39c12' : '#2ecc71', fontWeight: 'bold', textTransform: 'uppercase' }}>
                             {n.status}
                           </span>
                         </td>
                         <td>
                           {n.status === 'pending' && (
-                            <button className="btn-action" onClick={() => handleUpdateStatus(n._id, 'notified')}>Mark Notified</button>
+                            <button className="action-btn btn-edit" onClick={() => handleMarkNotified(n._id)}>
+                              Mark Notified
+                            </button>
                           )}
-                          <button className="btn-action btn-delete" onClick={() => handleDelete(n._id)}>Delete</button>
+                          <button className="action-btn btn-delete" onClick={() => handleDeleteAlert(n._id)}>✕</button>
                         </td>
                       </tr>
                     ))
@@ -318,6 +303,9 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* 8. SETTINGS VIEW */}
+        {activeTab === 'settings' && <SettingsView token={token} />}
       </main>
     </div>
   );

@@ -2,27 +2,88 @@
 
 import { useState, useEffect } from 'react';
 
+function resolveAdminImage(src) {
+  if (!src) return '';
+  if (src.startsWith('http')) {
+    if (src.startsWith('http://res.cloudinary.com/')) {
+      return src.replace('http://', 'https://');
+    }
+    return src;
+  }
+  const filename = src.replace(/^\/?(?:images\/)?/, '');
+  return `/images/${filename}`.replace(/\.png$/i, '.webp');
+}
+
 export default function CombosView({ token, onEdit, onAdd }) {
   const [combos, setCombos] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCombos = async () => {
-      try {
-        const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-        const res = await fetch(`${API}/combos`);
-        const data = await res.json();
-        if (data.success) {
-          setCombos(data.data);
-        }
-      } catch (err) {
-        console.error('Failed to fetch combos', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchCombos();
   }, [token]);
+
+  const fetchCombos = async () => {
+    setLoading(true);
+    try {
+      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+      const res = await fetch(`${API}/combos`, { cache: 'no-store' });
+      const data = await res.json();
+      if (data.success) {
+        setCombos(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch combos', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCombo = async (id, name) => {
+    if (!confirm(`Are you sure you want to permanently delete "${name}"? This cannot be undone.`)) return;
+    try {
+      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+      const res = await fetch(`${API}/combos/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCombos(prev => prev.filter(c => c._id !== id));
+      } else {
+        alert(data.message || 'Failed to delete combo');
+      }
+    } catch (err) {
+      console.error('Failed to delete combo', err);
+      alert('Error connecting to backend');
+    }
+  };
+
+  const getItemsSummary = (combo) => {
+    const fixedCount = (combo.products || []).length;
+    const groupCount = (combo.comboGroups || []).length;
+    let parts = [];
+    if (fixedCount > 0) parts.push(`${fixedCount} fixed`);
+    if (groupCount > 0) parts.push(`${groupCount} group${groupCount > 1 ? 's' : ''}`);
+    if (parts.length === 0) return '0 items';
+    return parts.join(' + ');
+  };
+
+  const calcAutoMRP = (combo) => {
+    const fixedMRP = (combo.products || []).reduce((acc, curr) => {
+      const pPrice = curr.productId?.price || curr.customPrice || 0;
+      return acc + (pPrice * (curr.quantity || 1));
+    }, 0);
+    // Add first option price from each combo group
+    const groupsMRP = (combo.comboGroups || []).reduce((acc, group) => {
+      const firstOption = group.options?.[0];
+      if (firstOption) {
+        const optPrice = firstOption.customPrice || firstOption.productId?.price || 0;
+        return acc + optPrice;
+      }
+      return acc;
+    }, 0);
+    return fixedMRP + groupsMRP;
+  };
 
   return (
     <div className="page-view active">
@@ -48,36 +109,39 @@ export default function CombosView({ token, onEdit, onAdd }) {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="7" style={{ textAlign: 'center' }}>Loading combos...</td></tr>
+              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '30px' }}>Loading combos...</td></tr>
             ) : combos.length === 0 ? (
-              <tr><td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No combos found.</td></tr>
+              <tr><td colSpan="7" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>No combos found. Create your first combo!</td></tr>
             ) : (
               combos.map((c) => {
-                let img = c.images?.[0] || `/images/${c.comboSlug}.webp`;
-                if (img.startsWith('http://res.cloudinary.com/')) {
-                  img = img.replace('http://', 'https://');
-                }
-                const resolvedImg = img.startsWith('http') ? img : `/images/${img.replace(/^\/?(images\/)?/, '').replace(/\.png$/i, '.webp')}`;
-                const autoMRP = (c.products || []).reduce((acc, curr) => {
-                  const pPrice = curr.productId?.price || curr.customPrice || 0;
-                  return acc + (pPrice * curr.quantity);
-                }, 0);
-                
+                const img = resolveAdminImage(c.images?.[0] || `/images/${c.comboSlug}.webp`);
+                const autoMRP = calcAutoMRP(c);
+
                 return (
                   <tr key={c._id}>
                     <td>
-                      <img src={resolvedImg} alt={c.comboName} style={{ width: '40px', height: '40px', objectFit: 'contain', background: 'var(--bg-primary)', borderRadius: '4px' }} />
+                      <img src={img} alt={c.comboName} style={{ width: '44px', height: '44px', objectFit: 'contain', background: 'var(--bg-primary)', borderRadius: '4px' }} />
                     </td>
-                    <td style={{ fontWeight: 'bold' }}>{c.comboName}</td>
-                    <td><span style={{ background: 'rgba(155,89,182,0.15)', color: '#9b59b6', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>{(c.products || []).length} items</span></td>
-                    <td style={{ textDecoration: 'line-through', color: 'var(--text-muted)' }}>₹{autoMRP}</td>
-                    <td style={{ color: 'var(--accent)', fontWeight: 'bold' }}>₹{c.manualOverridePrice || 0}</td>
+                    <td style={{ fontWeight: 'bold' }}>
+                      <div>{c.comboName}</div>
+                      {c.comboSlug && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>/{c.comboSlug}</div>}
+                    </td>
                     <td>
-                      {c.isPublished !== false ? <span style={{ color: '#2ecc71' }}>Active</span> : <span style={{ color: 'var(--text-muted)' }}>Draft</span>}
+                      <span style={{ background: 'rgba(155,89,182,0.15)', color: '#9b59b6', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>
+                        {getItemsSummary(c)}
+                      </span>
+                    </td>
+                    <td style={{ textDecoration: 'line-through', color: 'var(--text-muted)' }}>₹{autoMRP.toLocaleString()}</td>
+                    <td style={{ color: 'var(--accent)', fontWeight: 'bold' }}>₹{(c.manualOverridePrice || 0).toLocaleString()}</td>
+                    <td>
+                      {c.isPublished !== false
+                        ? <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '11px', background: 'rgba(46,204,64,0.15)', color: '#2ecc71', fontWeight: 'bold' }}>ACTIVE</span>
+                        : <span style={{ padding: '4px 8px', borderRadius: '4px', fontSize: '11px', background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', fontWeight: 'bold' }}>DRAFT</span>
+                      }
                     </td>
                     <td>
                       <button className="action-btn btn-edit" onClick={() => onEdit(c.comboSlug)}>Edit</button>
-                      <button className="action-btn btn-delete">Delete</button>
+                      <button className="action-btn btn-delete" onClick={() => handleDeleteCombo(c._id, c.comboName)}>Delete</button>
                     </td>
                   </tr>
                 );
