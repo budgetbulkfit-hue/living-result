@@ -11,12 +11,15 @@ export async function generateMetadata({ params }) {
   if (!product) return { title: 'Product Not Found | Living Result' };
 
   const price = product.finalPrice || product.sizes?.[0]?.price || product.flavors?.[0]?.price || product.price || 0;
-  const image = product.flavors?.[0]?.image
+  let image = product.flavors?.[0]?.image
     ? (product.flavors[0].image.startsWith('http')
         ? product.flavors[0].image
         : `/images/${product.flavors[0].image.replace(/^\/?(images\/)?/, '')}`)
     : `/images/${product.slug}.webp`;
-  const optimizedImage = image.replace(/\.png$/i, '.webp');
+  if (image.startsWith('http://res.cloudinary.com/')) {
+    image = image.replace('http://', 'https://');
+  }
+  const optimizedImage = image.startsWith('http') ? image : image.replace(/\.png$/i, '.webp');
 
   return {
     title: `${product.name} | Living Result`,
@@ -121,7 +124,10 @@ export default async function ProductPage({ params }) {
           {(() => {
             // Build an absolute image URL (Google requires https://)
             const BASE_URL = 'https://www.getlivingresult.in';
-            const rawImage = product.flavors?.[0]?.image || `/images/${product.slug}.webp`;
+            let rawImage = product.flavors?.[0]?.image || `/images/${product.slug}.webp`;
+            if (rawImage.startsWith('http://res.cloudinary.com/')) {
+              rawImage = rawImage.replace('http://', 'https://');
+            }
             const absoluteImage = rawImage.startsWith('http') ? rawImage : `${BASE_URL}${rawImage.startsWith('/') ? '' : '/'}${rawImage.replace(/\.png$/i, '.webp')}`;
 
             // Determine real stock status

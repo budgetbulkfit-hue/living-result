@@ -78,8 +78,11 @@ export default function ProductsView({ token, onEdit, onAdd }) {
               <tr><td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No products found.</td></tr>
             ) : (
               filteredProducts.map((p) => {
-                const img = p.flavors?.[0]?.image?.replace(/\.png$/i, '.webp') || `/images/${p.slug}.webp`;
-                const resolvedImg = img.startsWith('http') ? img : `/images/${img.replace(/^\/?(images\/)?/, '')}`;
+                let img = p.flavors?.[0]?.image || `/images/${p.slug}.webp`;
+                if (img.startsWith('http://res.cloudinary.com/')) {
+                  img = img.replace('http://', 'https://');
+                }
+                const resolvedImg = img.startsWith('http') ? img : `/images/${img.replace(/^\/?(images\/)?/, '').replace(/\.png$/i, '.webp')}`;
                 return (
                   <tr key={p._id}>
                     <td>

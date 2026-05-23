@@ -10,10 +10,10 @@ export default function CombosView({ token, onEdit, onAdd }) {
     const fetchCombos = async () => {
       try {
         const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-        const res = await fetch(`${API}/products`);
+        const res = await fetch(`${API}/combos`);
         const data = await res.json();
         if (data.success) {
-          setCombos(data.data.filter(p => p.category === 'combos' || p.isCombo));
+          setCombos(data.data);
         }
       } catch (err) {
         console.error('Failed to fetch combos', err);
@@ -53,24 +53,30 @@ export default function CombosView({ token, onEdit, onAdd }) {
               <tr><td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No combos found.</td></tr>
             ) : (
               combos.map((c) => {
-                const img = c.images?.[0]?.replace(/\.png$/i, '.webp') || `/images/${c.slug}.webp`;
-                const resolvedImg = img.startsWith('http') ? img : `/images/${img.replace(/^\/?(images\/)?/, '')}`;
-                const autoMRP = (c.comboSelections || []).reduce((acc, curr) => acc + (curr.priceSnapshot * curr.quantity), 0);
+                let img = c.images?.[0] || `/images/${c.comboSlug}.webp`;
+                if (img.startsWith('http://res.cloudinary.com/')) {
+                  img = img.replace('http://', 'https://');
+                }
+                const resolvedImg = img.startsWith('http') ? img : `/images/${img.replace(/^\/?(images\/)?/, '').replace(/\.png$/i, '.webp')}`;
+                const autoMRP = (c.products || []).reduce((acc, curr) => {
+                  const pPrice = curr.productId?.price || curr.customPrice || 0;
+                  return acc + (pPrice * curr.quantity);
+                }, 0);
                 
                 return (
                   <tr key={c._id}>
                     <td>
-                      <img src={resolvedImg} alt={c.name} style={{ width: '40px', height: '40px', objectFit: 'contain', background: 'var(--bg-primary)', borderRadius: '4px' }} />
+                      <img src={resolvedImg} alt={c.comboName} style={{ width: '40px', height: '40px', objectFit: 'contain', background: 'var(--bg-primary)', borderRadius: '4px' }} />
                     </td>
-                    <td style={{ fontWeight: 'bold' }}>{c.name}</td>
-                    <td><span style={{ background: 'rgba(155,89,182,0.15)', color: '#9b59b6', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>{(c.comboSelections || []).length} items</span></td>
+                    <td style={{ fontWeight: 'bold' }}>{c.comboName}</td>
+                    <td><span style={{ background: 'rgba(155,89,182,0.15)', color: '#9b59b6', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>{(c.products || []).length} items</span></td>
                     <td style={{ textDecoration: 'line-through', color: 'var(--text-muted)' }}>₹{autoMRP}</td>
-                    <td style={{ color: 'var(--accent)', fontWeight: 'bold' }}>₹{c.price}</td>
+                    <td style={{ color: 'var(--accent)', fontWeight: 'bold' }}>₹{c.manualOverridePrice || 0}</td>
                     <td>
-                      {c.published !== false ? <span style={{ color: '#2ecc71' }}>Active</span> : <span style={{ color: 'var(--text-muted)' }}>Draft</span>}
+                      {c.isPublished !== false ? <span style={{ color: '#2ecc71' }}>Active</span> : <span style={{ color: 'var(--text-muted)' }}>Draft</span>}
                     </td>
                     <td>
-                      <button className="action-btn btn-edit" onClick={() => onEdit(c.slug)}>Edit</button>
+                      <button className="action-btn btn-edit" onClick={() => onEdit(c.comboSlug)}>Edit</button>
                       <button className="action-btn btn-delete">Delete</button>
                     </td>
                   </tr>

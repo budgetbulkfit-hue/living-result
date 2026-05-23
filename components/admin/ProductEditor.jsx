@@ -9,15 +9,15 @@ const INITIAL_FORM = {
   subCategory: '',
   description: '',
   ingredients: '',
-  nutritionFacts: [],
+  nutritionalFacts: [],
   discount: '',
-  stock: 0,
+  stockLeft: 0,
   scarcity: 0,
   showScarcity: false,
   bestSeller: false,
   glutenFree: false,
-  manualRating: 5,
-  manualReviewCount: 0,
+  rating: 5,
+  reviews: 0,
   sizes: [],
   flavors: [],
   images: []
@@ -64,10 +64,30 @@ export default function ProductEditor({ token, slugToEdit, onCancel, onSaved }) 
       const method = formData._id ? 'PUT' : 'POST';
       const url = formData._id ? `${API}/products/${formData._id}` : `${API}/products`;
       
+      let priceToSave = 0;
+      let oldPriceToSave = 0;
+      if (formData.sizes && formData.sizes.length > 0) {
+        priceToSave = formData.sizes[0].price || 0;
+        oldPriceToSave = formData.sizes[0].oldPrice || 0;
+      }
+      
+      const payload = {
+        ...formData,
+        price: priceToSave,
+        oldPrice: oldPriceToSave,
+        sizes: formData.sizes.map(s => ({
+          weight: s.weight,
+          price: s.price,
+          oldPrice: s.oldPrice,
+          allowedFlavors: s.allowedFlavors || [],
+          inStock: s.inStock
+        }))
+      };
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (data.success) {
@@ -85,7 +105,7 @@ export default function ProductEditor({ token, slugToEdit, onCancel, onSaved }) 
   };
 
   // Arrays Management
-  const addSize = () => setFormData(s => ({ ...s, sizes: [...s.sizes, { weight: '', price: 0, oldPrice: 0, flavorsAllowed: [], inStock: true }] }));
+  const addSize = () => setFormData(s => ({ ...s, sizes: [...s.sizes, { weight: '', price: 0, oldPrice: 0, allowedFlavors: [], inStock: true }] }));
   const updateSize = (idx, field, val) => {
     const newSizes = [...formData.sizes];
     newSizes[idx][field] = val;
@@ -118,7 +138,7 @@ export default function ProductEditor({ token, slugToEdit, onCancel, onSaved }) 
       <div className="panel-card">
         {/* Tabs */}
         <div className="editor-tabs" style={{ marginBottom: '20px', borderBottom: '1px solid var(--border)' }}>
-          {['basic', 'variants', 'flavors'].map(t => (
+          {['basic', 'variants', 'flavors', 'images'].map(t => (
             <div 
               key={t}
               className={`editor-tab ${activeTab === t ? 'active' : ''}`}
@@ -163,15 +183,25 @@ export default function ProductEditor({ token, slugToEdit, onCancel, onSaved }) 
                 <label>Description</label>
                 <textarea rows="3" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
               </div>
+              
+              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                <label>Ingredients</label>
+                <textarea rows="2" value={formData.ingredients} onChange={e => setFormData({...formData, ingredients: e.target.value})} />
+              </div>
+
+              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                <label>Nutritional Facts (One per line)</label>
+                <textarea rows="3" value={formData.nutritionalFacts.join('\n')} onChange={e => setFormData({...formData, nutritionalFacts: e.target.value.split('\n').filter(Boolean)})} placeholder="e.g. 24g Protein&#10;5g BCAA" />
+              </div>
             </div>
 
             <hr style={{ borderTop: '1px solid var(--border)', margin: '20px 0' }} />
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '20px' }}>
-              <div className="form-group"><label>Base Stock</label><input type="number" value={formData.stock} onChange={e => setFormData({...formData, stock: parseInt(e.target.value)})} /></div>
+              <div className="form-group"><label>Base Stock</label><input type="number" value={formData.stockLeft} onChange={e => setFormData({...formData, stockLeft: parseInt(e.target.value)})} /></div>
               <div className="form-group"><label>Scarcity (If left)</label><input type="number" value={formData.scarcity} onChange={e => setFormData({...formData, scarcity: parseInt(e.target.value)})} /></div>
               <div className="form-group"><label>Discount %</label><input type="number" value={formData.discount} onChange={e => setFormData({...formData, discount: e.target.value})} /></div>
-              <div className="form-group"><label>Rating (1-5)</label><input type="number" step="0.1" max="5" value={formData.manualRating} onChange={e => setFormData({...formData, manualRating: parseFloat(e.target.value)})} /></div>
+              <div className="form-group"><label>Rating (1-5)</label><input type="number" step="0.1" max="5" value={formData.rating} onChange={e => setFormData({...formData, rating: parseFloat(e.target.value)})} /></div>
               
               <div className="form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <label>Show Scarcity Badge</label>
@@ -247,13 +277,63 @@ export default function ProductEditor({ token, slugToEdit, onCancel, onSaved }) 
                         <td>
                           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                             <input type="text" value={f.image} onChange={e => updateFlavor(idx, 'image', e.target.value)} style={{ width: '300px', padding: '6px' }} placeholder="e.g. /images/hydra-whey.png" />
-                            {f.image && <img src={f.image.startsWith('http') ? f.image : `/images/${f.image.replace(/^[/]?(images\/)?/, '')}`} alt="preview" style={{ height: '30px', width: '30px', objectFit: 'contain', background: '#fff', borderRadius: '4px' }} />}
+                            {f.image && (() => {
+                              let img = f.image;
+                              if (img.startsWith('http://res.cloudinary.com/')) {
+                                img = img.replace('http://', 'https://');
+                              }
+                              const resolvedImg = img.startsWith('http') ? img : `/images/${img.replace(/^[/]?(images\/)?/, '').replace(/\.png$/i, '.webp')}`;
+                              return <img src={resolvedImg} alt="preview" style={{ height: '30px', width: '30px', objectFit: 'contain', background: '#fff', borderRadius: '4px' }} />;
+                            })()}
                           </div>
                         </td>
                         <td>
                           <label className="toggle-switch"><input type="checkbox" checked={f.inStock} onChange={e => updateFlavor(idx, 'inStock', e.target.checked)} /><span className="toggle-slider"></span></label>
                         </td>
                         <td><button onClick={() => removeFlavor(idx)} className="action-btn btn-delete">Remove</button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* IMAGES TAB */}
+        {activeTab === 'images' && (
+          <div style={{ animation: 'fadeIn 0.3s' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Manage product gallery images.</p>
+              <button className="btn-outline" onClick={() => setFormData(s => ({ ...s, images: [...s.images, ''] }))}>+ Add Image</button>
+            </div>
+            
+            {formData.images.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)', border: '1px dashed var(--border)', borderRadius: '8px' }}>No images added.</div>
+            ) : (
+              <div className="table-responsive">
+                <table>
+                  <thead>
+                    <tr><th>Image URL</th><th>Preview</th><th>Action</th></tr>
+                  </thead>
+                  <tbody>
+                    {formData.images.map((img, idx) => (
+                      <tr key={idx}>
+                        <td>
+                          <input type="text" value={img} onChange={e => {
+                            const newImages = [...formData.images];
+                            newImages[idx] = e.target.value;
+                            setFormData({ ...formData, images: newImages });
+                          }} style={{ width: '100%', padding: '6px' }} placeholder="/images/example.png" />
+                        </td>
+                        <td>
+                          {img && (
+                            <img src={img.startsWith('http') ? img.replace('http://', 'https://') : `/images/${img.replace(/^[/]?(images\/)?/, '').replace(/\.png$/i, '.webp')}`} alt="preview" style={{ height: '40px', width: '40px', objectFit: 'contain', background: '#fff', borderRadius: '4px' }} />
+                          )}
+                        </td>
+                        <td>
+                          <button onClick={() => setFormData(s => ({ ...s, images: s.images.filter((_, i) => i !== idx) }))} className="action-btn btn-delete">Remove</button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
