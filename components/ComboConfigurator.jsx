@@ -157,12 +157,16 @@ export default function ComboConfigurator({ products = [] }) {
         if (c) {
           const fIdx = c.flavors?.findIndex(f => f.name === res.data.recommendedCoreFlavor);
           const sIdx = c.sizes?.findIndex(s => s.weight === res.data.recommendedCoreSize);
-          setCoreSel({ product: c, sizeIdx: sIdx >= 0 ? sIdx : firstInStockSizeIdx(c), flavorIdx: fIdx >= 0 ? fIdx : firstInStockFlavorIdx(c) });
+          const finalFlavorIdx = (fIdx >= 0 && isFlavorInStock(c, fIdx)) ? fIdx : firstInStockFlavorIdx(c);
+          const finalSizeIdx = (sIdx >= 0 && isSizeInStock(c, sIdx)) ? sIdx : firstInStockSizeIdx(c);
+          setCoreSel({ product: c, sizeIdx: finalSizeIdx, flavorIdx: finalFlavorIdx });
         }
         if (b) {
           const fIdx = b.flavors?.findIndex(f => f.name === res.data.recommendedBoostFlavor);
           const sIdx = b.sizes?.findIndex(s => s.weight === res.data.recommendedBoostSize);
-          setBoostSel({ product: b, sizeIdx: sIdx >= 0 ? sIdx : firstInStockSizeIdx(b), flavorIdx: fIdx >= 0 ? fIdx : firstInStockFlavorIdx(b) });
+          const finalFlavorIdx = (fIdx >= 0 && isFlavorInStock(b, fIdx)) ? fIdx : firstInStockFlavorIdx(b);
+          const finalSizeIdx = (sIdx >= 0 && isSizeInStock(b, sIdx)) ? sIdx : firstInStockSizeIdx(b);
+          setBoostSel({ product: b, sizeIdx: finalSizeIdx, flavorIdx: finalFlavorIdx });
         }
         setTimeout(() => { document.getElementById('stack-config-area')?.scrollIntoView({ behavior: 'smooth' }); }, 300);
       } else {
@@ -208,8 +212,8 @@ export default function ComboConfigurator({ products = [] }) {
 
   // Auto-select on goal change — always pick first in-stock variant
   useEffect(() => {
-    const c = coreProducts[0] || null;
-    const b = boostProducts[0] || null;
+    const c = coreProducts.find(p => isAvailable(p)) || coreProducts[0] || null;
+    const b = boostProducts.find(p => isAvailable(p)) || boostProducts[0] || null;
     setCoreSel({ product: c, sizeIdx: firstInStockSizeIdx(c), flavorIdx: firstInStockFlavorIdx(c) });
     setBoostSel({ product: b, sizeIdx: firstInStockSizeIdx(b), flavorIdx: firstInStockFlavorIdx(b) });
     setShowNotify(false);
@@ -306,13 +310,32 @@ export default function ComboConfigurator({ products = [] }) {
                   onClick={() => setSel({ product: p, sizeIdx: firstInStockSizeIdx(p), flavorIdx: firstInStockFlavorIdx(p) })}
                   style={{
                     background: selected ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.02)',
-                    border, borderRadius: '12px', padding: '12px', cursor: 'pointer', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.55, transition: '0.2s'
+                    border, borderRadius: '12px', padding: '12px', cursor: 'pointer', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.6, transition: '0.2s'
                   }}
                 >
+                  {!avail && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '6px',
+                      right: '6px',
+                      background: 'linear-gradient(135deg, #e74c3c, #c0392b)',
+                      color: '#fff',
+                      fontSize: '8px',
+                      fontWeight: 900,
+                      padding: '3px 6px',
+                      borderRadius: '4px',
+                      letterSpacing: '0.5px',
+                      boxShadow: '0 2px 6px rgba(231,76,60,0.4)',
+                      textTransform: 'uppercase',
+                      zIndex: 2,
+                    }}>
+                      Out of Stock
+                    </div>
+                  )}
                   <div style={{ width: '100%', height: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
                     <img src={getImg(p)} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                   </div>
-                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff', textAlign: 'center', lineHeight: '1.3' }}>{p.name}</div>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff', textAlign: 'center', lineHeight: '1.3', textDecoration: avail ? 'none' : 'line-through' }}>{p.name}</div>
                 </div>
               );
             })}
@@ -350,7 +373,7 @@ export default function ComboConfigurator({ products = [] }) {
                 if (selected) { border = `2px solid ${accent}`; shadow = `0 0 18px ${glow}`; }
                 else if (isHighlight) { border = `2px solid ${highlight}`; shadow = `0 0 8px ${highlight}55`; }
 
-                return (
+                 return (
                   <motion.div
                     key={p._id}
                     whileHover={{ scale: 1.03, y: -3 }}
@@ -358,13 +381,32 @@ export default function ComboConfigurator({ products = [] }) {
                     onClick={() => setSel({ product: p, sizeIdx: firstInStockSizeIdx(p), flavorIdx: firstInStockFlavorIdx(p) })}
                     style={{
                       flex: '0 0 190px', scrollSnapAlign: 'start', background: selected ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.02)',
-                      border, borderRadius: '12px', padding: '15px', cursor: 'pointer', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.55
+                      border, borderRadius: '12px', padding: '15px', cursor: 'pointer', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.6
                     }}
                   >
+                    {!avail && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        background: 'linear-gradient(135deg, #e74c3c, #c0392b)',
+                        color: '#fff',
+                        fontSize: '9px',
+                        fontWeight: 900,
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        letterSpacing: '0.5px',
+                        boxShadow: '0 2px 6px rgba(231,76,60,0.4)',
+                        textTransform: 'uppercase',
+                        zIndex: 2,
+                      }}>
+                        Out of Stock
+                      </div>
+                    )}
                     <div style={{ width: '100%', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
                       <img src={getImg(p)} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#fff', textAlign: 'center', lineHeight: '1.3' }}>{p.name}</div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#fff', textAlign: 'center', lineHeight: '1.3', textDecoration: avail ? 'none' : 'line-through' }}>{p.name}</div>
                   </motion.div>
                 );
               })}
@@ -670,6 +712,31 @@ export default function ComboConfigurator({ products = [] }) {
                 ₹{finalPrice}
               </div>
 
+              {!inStock && (
+                <div style={{
+                  background: 'rgba(231,76,60,0.1)',
+                  border: '1px solid rgba(231,76,60,0.3)',
+                  color: '#e74c3c',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  marginBottom: '20px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  lineHeight: 1.4,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  justifyContent: 'center'
+                }}>
+                  <span>⚠️</span>
+                  <span>
+                    {!coreStock && !boostStock ? 'Both Fuel and Boost are Out of Stock' :
+                     !coreStock ? `Selected Fuel (${coreSel.product?.name}) is Out of Stock` :
+                     `Selected Boost (${boostSel.product?.name}) is Out of Stock`}
+                  </span>
+                </div>
+              )}
+
               {inStock ? (
                 <button
                   className="btn-primary"
@@ -685,7 +752,23 @@ export default function ComboConfigurator({ products = [] }) {
                 </button>
               ) : (
                 <div>
-                  <button className="btn-primary" onClick={() => setShowNotify(!showNotify)} style={{ width: '100%', background: '#333', justifyContent: 'center', padding: '18px' }}>NOTIFY ME</button>
+                  <button 
+                    className="btn-primary" 
+                    onClick={() => setShowNotify(!showNotify)} 
+                    style={{ 
+                      width: '100%', 
+                      background: '#333', 
+                      justifyContent: 'center', 
+                      padding: '18px',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      color: '#fff',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => e.target.style.background = '#444'}
+                    onMouseLeave={(e) => e.target.style.background = '#333'}
+                  >
+                    🔔 NOTIFY WHEN AVAILABLE
+                  </button>
                   {showNotify && !notifyOk && (
                     <form onSubmit={handleNotify} style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <input type="email" placeholder="Email Address" required value={notifyEmail} onChange={e => setNotifyEmail(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: '#000', border: '1px solid #222', color: '#fff', fontSize: '14px' }} />
