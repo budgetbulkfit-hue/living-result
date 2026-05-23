@@ -53,8 +53,11 @@ export default function CombosView({ token, onEdit, onAdd }) {
               <tr><td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No combos found.</td></tr>
             ) : (
               combos.map((c) => {
-                const img = c.images?.[0]?.replace(/\.png$/i, '.webp') || `/images/${c.slug}.webp`;
-                const resolvedImg = img.startsWith('http') ? img : `/images/${img.replace(/^\/?(images\/)?/, '')}`;
+                let img = c.images?.[0] || `/images/${c.slug}.webp`;
+                if (img.startsWith('http://res.cloudinary.com/')) {
+                  img = img.replace('http://', 'https://');
+                }
+                const resolvedImg = img.startsWith('http') ? img : `/images/${img.replace(/^\/?(images\/)?/, '').replace(/\.png$/i, '.webp')}`;
                 const autoMRP = (c.comboSelections || []).reduce((acc, curr) => acc + (curr.priceSnapshot * curr.quantity), 0);
                 
                 return (

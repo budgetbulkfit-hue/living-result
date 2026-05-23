@@ -1368,6 +1368,18 @@
 
         const generateSlug = (text) => (text || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
+        function resolveAdminImage(src) {
+            if (!src) return '';
+            if (src.startsWith('http')) {
+                if (src.startsWith('http://res.cloudinary.com/')) {
+                    return src.replace('http://', 'https://');
+                }
+                return src;
+            }
+            const filename = src.replace(/^\/?(images\/)?/, '');
+            return `images/${filename}`.replace(/\.png$/i, '.webp');
+        }
+
         // PRODUCT EDITOR STATE
         let epData = {};
         let editingVariantIndex = -1;
@@ -1643,7 +1655,7 @@
             document.getElementById('adminProductTable').innerHTML = filteredProducts.map(p => `
             <tr>
               <td style="font-weight: bold; color: var(--accent);">${p.id || '-'}</td>
-              <td><img src="${p.flavors?.[0]?.image || ''}" width="40" style="border-radius:4px; background:#fff;"></td>
+              <td><img src="${resolveAdminImage(p.flavors?.[0]?.image || '')}" width="40" style="border-radius:4px; background:#fff;"></td>
               <td style="font-weight: bold;">${p.name}</td>
               <td><span style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase;">${p.category}</span></td>
               <td style="color: var(--accent); font-weight: bold;">₹${Number(p.price || 0).toLocaleString()}</td>
@@ -1798,7 +1810,7 @@
             if (!allCombos.length) return setTableState('adminComboTable', 7, 'No combos found');
             tb.innerHTML = allCombos.map(c => `
                 <tr>
-                    <td><img src="${(c.flavors && c.flavors.length > 0) ? c.flavors[0].image : (c.images && c.images.length > 0 ? c.images[0] : (c.comboBanner || ''))}" width="50" style="border-radius:4px; background:#fff;"></td>
+                    <td><img src="${resolveAdminImage((c.flavors && c.flavors.length > 0) ? c.flavors[0].image : (c.images && c.images.length > 0 ? c.images[0] : (c.comboBanner || '')))}" width="50" style="border-radius:4px; background:#fff;"></td>
                     <td style="font-weight: bold; color: var(--accent);">${c.comboName}</td>
                     <td style="font-size: 12px; color: var(--text-secondary);">${(c.products || []).map(p => p.name).join(', ')}${(c.comboGroups && c.comboGroups.length > 0) ? ((c.products && c.products.length > 0 ? ', ' : '') + c.comboGroups.map(g => g.label).join(', ')) : ''}</td>
                     <td style="text-decoration: line-through; color: var(--text-muted);">₹${(c.autoCalculatedMrp || 0).toLocaleString()}</td>
@@ -1921,7 +1933,7 @@
                                 }
 
                                 const imgHtml = pEntry.image 
-                                    ? `<img src="${pEntry.image}" style="height:30px; border-radius:4px; vertical-align:middle;"> <button onclick="ecData.comboGroups[${groupIndex}].products[${pidIndex}].image=''; renderComboGroups()" style="background:none; border:none; color:#e74c3c; cursor:pointer;">✕</button>`
+                                    ? `<img src="${resolveAdminImage(pEntry.image)}" style="height:30px; border-radius:4px; vertical-align:middle;"> <button onclick="ecData.comboGroups[${groupIndex}].products[${pidIndex}].image=''; renderComboGroups()" style="background:none; border:none; color:#e74c3c; cursor:pointer;">✕</button>`
                                     : `<button class="btn-outline" style="padding:4px 8px; font-size:10px;" onclick="uploadGroupProdImage(${groupIndex}, ${pidIndex})">Upload</button>`;
 
                                 return `<tr>
@@ -1997,7 +2009,7 @@
         function renderComboImages() {
             const grid = document.getElementById('ec-images-grid');
             grid.innerHTML = (ecData.images || []).map((img, i) => `
-                <div class="img-card"><button class="img-del" onclick="ecData.images.splice(${i},1); renderComboImages()">✕</button><img src="${img}"></div>
+                <div class="img-card"><button class="img-del" onclick="ecData.images.splice(${i},1); renderComboImages()">✕</button><img src="${resolveAdminImage(img)}"></div>
             `).join('');
         }
 
@@ -2010,7 +2022,7 @@
             const tb = document.getElementById('ec-flavors-table');
             if (!ecData.flavors || !ecData.flavors.length) { tb.innerHTML = '<tr><td colspan="4" style="text-align:center;">No flavors added</td></tr>'; return; }
             tb.innerHTML = ecData.flavors.map((f, i) => `<tr>
-                <td>${f.name}</td><td><img src="${f.image}" style="height:30px; border-radius:4px; background:#fff;"></td>
+                <td>${f.name}</td><td><img src="${resolveAdminImage(f.image)}" style="height:30px; border-radius:4px; background:#fff;"></td>
                 <td><label class="toggle-switch"><input type="checkbox" ${f.inStock !== false ? 'checked' : ''} onchange="ecData.flavors[${i}].inStock = this.checked;"><span class="toggle-slider"></span></label></td>
                 <td>
                     <button class="action-btn btn-edit" onclick="openFlavorModal(${i})">Edit</button>
@@ -2312,7 +2324,7 @@
         function renderEpImages() {
             const grid = document.getElementById('ep-images-grid');
             grid.innerHTML = (epData.images || []).map((img, i) => `
-                <div class="img-card"><button class="img-del" onclick="epData.images.splice(${i},1); renderEpImages()">✕</button><img src="${img}"></div>
+                <div class="img-card"><button class="img-del" onclick="epData.images.splice(${i},1); renderEpImages()">✕</button><img src="${resolveAdminImage(img)}"></div>
             `).join('');
         }
 
@@ -2325,7 +2337,7 @@
             const tb = document.getElementById('ep-flavors-table');
             if (!epData.flavors || !epData.flavors.length) { tb.innerHTML = '<tr><td colspan="4" style="text-align:center;">No flavors added</td></tr>'; return; }
             tb.innerHTML = epData.flavors.map((f, i) => `<tr>
-                <td>${f.name}</td><td><img src="${f.image}" style="height:30px; border-radius:4px; background:#fff;"></td>
+                <td>${f.name}</td><td><img src="${resolveAdminImage(f.image)}" style="height:30px; border-radius:4px; background:#fff;"></td>
                 <td><label class="toggle-switch"><input type="checkbox" ${f.inStock ? 'checked' : ''} onchange="epData.flavors[${i}].inStock = this.checked;"><span class="toggle-slider"></span></label></td>
                 <td>
                     <button class="action-btn btn-edit" onclick="openFlavorModal(${i})">Edit</button>

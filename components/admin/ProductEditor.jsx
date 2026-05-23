@@ -247,7 +247,14 @@ export default function ProductEditor({ token, slugToEdit, onCancel, onSaved }) 
                         <td>
                           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                             <input type="text" value={f.image} onChange={e => updateFlavor(idx, 'image', e.target.value)} style={{ width: '300px', padding: '6px' }} placeholder="e.g. /images/hydra-whey.png" />
-                            {f.image && <img src={f.image.startsWith('http') ? f.image : `/images/${f.image.replace(/^[/]?(images\/)?/, '')}`} alt="preview" style={{ height: '30px', width: '30px', objectFit: 'contain', background: '#fff', borderRadius: '4px' }} />}
+                            {f.image && (() => {
+                              let img = f.image;
+                              if (img.startsWith('http://res.cloudinary.com/')) {
+                                img = img.replace('http://', 'https://');
+                              }
+                              const resolvedImg = img.startsWith('http') ? img : `/images/${img.replace(/^[/]?(images\/)?/, '').replace(/\.png$/i, '.webp')}`;
+                              return <img src={resolvedImg} alt="preview" style={{ height: '30px', width: '30px', objectFit: 'contain', background: '#fff', borderRadius: '4px' }} />;
+                            })()}
                           </div>
                         </td>
                         <td>
