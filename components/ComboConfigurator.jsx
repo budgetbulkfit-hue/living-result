@@ -57,8 +57,21 @@ function getImg(p, fIdx = 0) {
 function isAvailable(p) {
   if (!p) return false;
   if (p.variants?.length) return p.variants.some(v => v.availableStock > 0);
-  if (p.sizes?.length) return p.sizes.some(s => s.inStock !== false);
-  if (p.flavors?.length) return p.flavors.some(f => f.inStock !== false);
+  
+  let hasInStockSize = true;
+  if (p.sizes?.length) {
+    hasInStockSize = p.sizes.some(s => s.inStock !== false);
+  }
+  
+  let hasInStockFlavor = true;
+  if (p.flavors?.length) {
+    hasInStockFlavor = p.flavors.some(f => f.inStock); // matches script.js f.inStock truthy check
+  }
+  
+  if (p.sizes?.length || p.flavors?.length) {
+    return hasInStockSize && hasInStockFlavor;
+  }
+  
   return (p.stockLeft || 0) > 0;
 }
 
@@ -83,7 +96,7 @@ function isFlavorInStock(p, fIdx) {
     const matched = p.variants.filter(v => v.flavor === fl.name);
     if (matched.length) return matched.some(v => (v.availableStock || 0) > 0);
   }
-  return fl.inStock !== false;
+  return !!fl.inStock;
 }
 
 // Check if the specific selected variant (size + flavor combo) is in stock
@@ -102,8 +115,17 @@ function isSelectionInStock(p, sIdx, fIdx) {
       return p.variants.some(v => (v.availableStock || 0) > 0);
     }
   }
-  if (p.sizes?.[sIdx]) return p.sizes[sIdx].inStock !== false;
-  if (p.flavors?.[fIdx]) return p.flavors[fIdx].inStock !== false;
+  
+  let sizeOk = true;
+  if (p.sizes?.[sIdx]) sizeOk = p.sizes[sIdx].inStock !== false;
+  
+  let flavorOk = true;
+  if (p.flavors?.[fIdx]) flavorOk = !!p.flavors[fIdx].inStock;
+  
+  if (p.sizes?.[sIdx] || p.flavors?.[fIdx]) {
+    return sizeOk && flavorOk;
+  }
+
   return isAvailable(p);
 }
 
