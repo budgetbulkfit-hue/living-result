@@ -338,12 +338,11 @@ export default function ComboConfigurator({ products = [] }) {
                 <div
                   key={p._id}
                   onClick={() => {
-                    if (!avail) return;
                     setSel({ product: p, sizeIdx: firstInStockSizeIdx(p), flavorIdx: firstInStockFlavorIdx(p) });
                   }}
                   style={{
                     background: selected ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.02)',
-                    border, borderRadius: '12px', padding: '12px', cursor: avail ? 'pointer' : 'not-allowed', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.6, transition: '0.2s'
+                    border, borderRadius: '12px', padding: '12px', cursor: 'pointer', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.6, transition: '0.2s'
                   }}
                 >
                   {!avail && (
@@ -412,12 +411,11 @@ export default function ComboConfigurator({ products = [] }) {
                     whileHover={{ scale: 1.03, y: -3 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => {
-                      if (!avail) return;
                       setSel({ product: p, sizeIdx: firstInStockSizeIdx(p), flavorIdx: firstInStockFlavorIdx(p) });
                     }}
                     style={{
                       flex: '0 0 190px', scrollSnapAlign: 'start', background: selected ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.02)',
-                      border, borderRadius: '12px', padding: '15px', cursor: avail ? 'pointer' : 'not-allowed', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.6
+                      border, borderRadius: '12px', padding: '15px', cursor: 'pointer', position: 'relative', boxShadow: shadow, opacity: avail ? 1 : 0.6
                     }}
                   >
                     {!avail && (
@@ -483,7 +481,6 @@ export default function ComboConfigurator({ products = [] }) {
                   <button
                     key={i}
                     onClick={() => {
-                      if (!flInStock) return;
                       setSel({ ...sel, flavorIdx: i });
                     }}
                     title={flInStock ? fl.name : `${fl.name} — Out of Stock`}
@@ -492,7 +489,7 @@ export default function ComboConfigurator({ products = [] }) {
                       borderRadius: '20px',
                       fontSize: '11px',
                       fontWeight: 600,
-                      cursor: flInStock ? 'pointer' : 'not-allowed',
+                      cursor: 'pointer',
                       lineHeight: 1.4,
                       background: isActive
                         ? (flInStock ? 'rgba(255,255,255,0.12)' : 'rgba(231,76,60,0.15)')
@@ -519,7 +516,6 @@ export default function ComboConfigurator({ products = [] }) {
                   <button
                     key={i}
                     onClick={() => {
-                      if (!szInStock) return;
                       setSel({ ...sel, sizeIdx: i });
                     }}
                     title={szInStock ? sz.weight : `${sz.weight} — Out of Stock`}
@@ -528,7 +524,7 @@ export default function ComboConfigurator({ products = [] }) {
                       borderRadius: '20px',
                       fontSize: '11px',
                       fontWeight: 600,
-                      cursor: szInStock ? 'pointer' : 'not-allowed',
+                      cursor: 'pointer',
                       lineHeight: 1.4,
                       background: isActive
                         ? (szInStock ? 'rgba(255,255,255,0.12)' : 'rgba(231,76,60,0.15)')
