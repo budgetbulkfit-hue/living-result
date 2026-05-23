@@ -43,8 +43,15 @@ function getPrice(p, sIdx, fIdx) {
 
 function getImg(p, fIdx = 0) {
   if (!p) return '/images/logo.webp';
-  const img = p.flavors?.[fIdx]?.image || p.flavors?.[0]?.image || `/images/${p.slug}.webp`;
-  return img ? img.replace(/\.png$/i, '.webp') : img;
+  let img = p.flavors?.[fIdx]?.image || p.flavors?.[0]?.image || `/images/${p.slug}.webp`;
+  if (!img) return img;
+  if (img.startsWith('http')) {
+    if (img.startsWith('http://res.cloudinary.com/')) {
+      img = img.replace('http://', 'https://');
+    }
+    return img;
+  }
+  return img.replace(/\.png$/i, '.webp');
 }
 
 function isAvailable(p) {
