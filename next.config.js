@@ -12,15 +12,7 @@ const nextConfig = {
       },
     ],
   },
-  async redirects() {
-    return [
-      {
-        source: '/admin',
-        destination: '/admin.html',
-        permanent: false,
-      },
-    ];
-  },
+
   async headers() {
     return [
       {
