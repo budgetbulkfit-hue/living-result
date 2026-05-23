@@ -56,7 +56,6 @@ function getImg(p, fIdx = 0) {
 
 function isAvailable(p) {
   if (!p) return false;
-  if (p.variants?.length) return p.variants.some(v => v.availableStock > 0);
   
   let hasInStockSize = true;
   if (p.sizes?.length) {
@@ -69,8 +68,10 @@ function isAvailable(p) {
   }
   
   if (p.sizes?.length || p.flavors?.length) {
-    return hasInStockSize && hasInStockFlavor;
+    if (!(hasInStockSize && hasInStockFlavor)) return false;
   }
+  
+  if (p.variants?.length) return p.variants.some(v => v.availableStock > 0);
   
   return (p.stockLeft || 0) > 0;
 }
@@ -80,6 +81,9 @@ function isSizeInStock(p, sIdx) {
   if (!p) return false;
   const sz = p.sizes?.[sIdx];
   if (!sz) return isAvailable(p);
+  
+  if (sz.inStock === false) return false;
+  
   if (p.variants?.length) {
     const matched = p.variants.filter(v => v.weight === sz.weight);
     if (matched.length) return matched.some(v => (v.availableStock || 0) > 0);
@@ -92,6 +96,9 @@ function isFlavorInStock(p, fIdx) {
   if (!p) return false;
   const fl = p.flavors?.[fIdx];
   if (!fl) return isAvailable(p);
+  
+  if (!fl.inStock) return false;
+  
   if (p.variants?.length) {
     const matched = p.variants.filter(v => v.flavor === fl.name);
     if (matched.length) return matched.some(v => (v.availableStock || 0) > 0);
@@ -102,6 +109,17 @@ function isFlavorInStock(p, fIdx) {
 // Check if the specific selected variant (size + flavor combo) is in stock
 function isSelectionInStock(p, sIdx, fIdx) {
   if (!p) return false;
+  
+  let sizeOk = true;
+  if (p.sizes?.[sIdx]) sizeOk = p.sizes[sIdx].inStock !== false;
+  
+  let flavorOk = true;
+  if (p.flavors?.[fIdx]) flavorOk = !!p.flavors[fIdx].inStock;
+  
+  if (p.sizes?.[sIdx] || p.flavors?.[fIdx]) {
+    if (!(sizeOk && flavorOk)) return false;
+  }
+  
   if (p.variants?.length) {
     const flavorName = p.flavors?.[fIdx]?.name;
     const sizeName = p.sizes?.[sIdx]?.weight;
@@ -114,16 +132,6 @@ function isSelectionInStock(p, sIdx, fIdx) {
       // Couldn't find exact variant — fall back to any in-stock
       return p.variants.some(v => (v.availableStock || 0) > 0);
     }
-  }
-  
-  let sizeOk = true;
-  if (p.sizes?.[sIdx]) sizeOk = p.sizes[sIdx].inStock !== false;
-  
-  let flavorOk = true;
-  if (p.flavors?.[fIdx]) flavorOk = !!p.flavors[fIdx].inStock;
-  
-  if (p.sizes?.[sIdx] || p.flavors?.[fIdx]) {
-    return sizeOk && flavorOk;
   }
 
   return isAvailable(p);
