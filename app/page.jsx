@@ -2,7 +2,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Footer from '@/components/Footer';
 import ProductsSection from '@/components/ProductsSection';
+import AIRecommender from '@/components/AIRecommender';
 import { getProducts, getCombos } from '@/lib/api';
+
 
 export const metadata = {
   title: 'Living Result | #WEARETHELIVINGRESULT',
@@ -110,6 +112,9 @@ export default async function HomePage() {
         commonProducts={commonProducts}
         combos={combos}
       />
+
+      {/* AI PRODUCT ADVISOR */}
+      <AIRecommender />
 
       {/* WHY US DETAILED */}
       <section className="why-us-detailed">
