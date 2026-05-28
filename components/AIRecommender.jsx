@@ -300,9 +300,9 @@ export default function AIRecommender() {
                   <div className="ai-welcome-avatar">
                     <SparkleIcon size={24} />
                   </div>
-                  <div className="ai-welcome-title">Hey, I'm your AI supplement advisor!</div>
+                  <div className="ai-welcome-title">{"Hey, I'm your AI supplement advisor!"}</div>
                   <div className="ai-welcome-text">
-                    Tell me your fitness goal and I'll recommend the perfect products from our catalog, personalised for you.
+                    {"Tell me your fitness goal and I'll recommend the perfect products from our catalog, personalised for you."}
                   </div>
                   {/* Quick prompts */}
                   <div className="ai-quick-prompts">
