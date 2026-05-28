@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import ProductCard from './ProductCard';
 import ComboCard from './ComboCard';
@@ -16,6 +16,8 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
   const [activeTab, setActiveTab] = useState('unique');
   const [viewAll, setViewAll] = useState(false);
   const [activeSubCat, setActiveSubCat] = useState('All');
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
   const scrollRef = useRef(null);
 
   // Restore state from sessionStorage on mount
@@ -26,18 +28,59 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
     if (savedSubCat) setActiveSubCat(savedSubCat);
   }, []);
 
-  // Save state to sessionStorage on change
+  // Update scroll arrow visibility
+  const updateScrollState = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
+
+  // Attach scroll listener whenever scroll view is active
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // Initial check
+    updateScrollState();
+    el.addEventListener('scroll', updateScrollState, { passive: true });
+    return () => el.removeEventListener('scroll', updateScrollState);
+  });
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setViewAll(false);
     setActiveSubCat('All');
+    setCanScrollLeft(false);
+    setCanScrollRight(true);
+    if (scrollRef.current) scrollRef.current.scrollLeft = 0;
     sessionStorage.setItem('lr_activeTab', tab);
     sessionStorage.setItem('lr_activeSubCat', 'All');
   };
 
   const handleSubCatChange = (cat) => {
     setActiveSubCat(cat);
+    setCanScrollLeft(false);
+    setCanScrollRight(true);
+    if (scrollRef.current) scrollRef.current.scrollLeft = 0;
     sessionStorage.setItem('lr_activeSubCat', cat);
+  };
+
+  const handleViewAll = () => {
+    setViewAll((v) => {
+      const next = !v;
+      if (next) {
+        // Scroll to products section so user can see all products
+        setTimeout(() => {
+          document.getElementById('products')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+      }
+      return next;
+    });
+  };
+
+  const scroll = (dir) => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollBy({ left: dir * 320, behavior: 'smooth' });
   };
 
   let baseProducts = [];
@@ -55,11 +98,6 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
       ? baseProducts
       : baseProducts.filter((p) => p.subCategory === activeSubCat);
   }
-
-  const scroll = (dir) => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollBy({ left: dir * 320, behavior: 'smooth' });
-  };
 
   const tabStyle = (tab) => ({
     padding: '12px 24px',
@@ -88,7 +126,7 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
           </div>
           <button
             className="btn-outline"
-            onClick={() => setViewAll((v) => !v)}
+            onClick={handleViewAll}
           >
             {viewAll ? 'Scroll View' : 'View All'}
           </button>
@@ -185,7 +223,7 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
                 </div>
               ) : (
                 <div className="products-scroll-wrapper">
-                  {combos.length > 1 && (
+                  {combos.length > 1 && canScrollLeft && (
                     <button className="scroll-arrow scroll-left" onClick={() => scroll(-1)} aria-label="Scroll left">‹</button>
                   )}
                   <div className="products-scroll" ref={scrollRef}>
@@ -196,7 +234,7 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
                       <p style={{ color: 'var(--text-muted)', padding: '60px 0' }}>No combos available yet.</p>
                     )}
                   </div>
-                  {combos.length > 1 && (
+                  {combos.length > 1 && canScrollRight && (
                     <button className="scroll-arrow scroll-right" onClick={() => scroll(1)} aria-label="Scroll right">›</button>
                   )}
                 </div>
@@ -266,7 +304,7 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
         {/* ── Products: Scroll View ── */}
         {activeTab !== 'combos' && activeTab !== 'stacklab' && !viewAll && (
           <div className="products-scroll-wrapper">
-            {displayProducts.length > 1 && (
+            {displayProducts.length > 1 && canScrollLeft && (
               <button className="scroll-arrow scroll-left" onClick={() => scroll(-1)} aria-label="Scroll left">‹</button>
             )}
             <div className="products-scroll" ref={scrollRef}>
@@ -277,7 +315,7 @@ export default function ProductsSection({ uniqueProducts = [], commonProducts = 
                 <p style={{ color: 'var(--text-muted)', padding: '60px 0' }}>No products in this category.</p>
               )}
             </div>
-            {displayProducts.length > 1 && (
+            {displayProducts.length > 1 && canScrollRight && (
               <button className="scroll-arrow scroll-right" onClick={() => scroll(1)} aria-label="Scroll right">›</button>
             )}
           </div>

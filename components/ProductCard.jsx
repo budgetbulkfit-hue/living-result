@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 // Random viewer count between 3 and 27 — client-only, set on mount to avoid hydration mismatch
 function useViewerCount() {
@@ -52,6 +52,7 @@ function getSavingsPercent(price, oldPrice) {
 
 export default function ProductCard({ product }) {
   const router = useRouter();
+  const pathname = usePathname();
   const viewers = useViewerCount();
   const reviewCount = useReviewCount(product.reviewCount ?? product.reviews?.length ?? null);
 
@@ -71,7 +72,12 @@ export default function ProductCard({ product }) {
 
 
   const handleCardClick = () => {
-    router.push(`/product/${product.slug}`);
+    const targetPath = `/product/${product.slug}`;
+    if (pathname === targetPath) {
+      window.location.href = targetPath;
+    } else {
+      router.push(targetPath);
+    }
   };
 
   return (

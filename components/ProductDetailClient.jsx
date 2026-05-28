@@ -21,6 +21,7 @@ function resolveImage(src) {
 export default function ProductDetailClient({ product }) {
   const router = useRouter();
   const addItem = useCart((s) => s.addItem);
+  const cartSidebarOpen = useCart((s) => s.cartSidebarOpen);
 
   const [selectedFlavor, setSelectedFlavor] = useState(0);
   const [selectedSize, setSelectedSize] = useState(0);
@@ -610,8 +611,8 @@ export default function ProductDetailClient({ product }) {
           )}
         </div>
 
-        {/* MOBILE STICKY BOTTOM BAR */}
-        <div className="mobile-sticky-buy-bar">
+        {/* MOBILE STICKY BOTTOM BAR — hidden when cart drawer is open */}
+        <div className="mobile-sticky-buy-bar" style={{ display: cartSidebarOpen ? 'none' : undefined }}>
           <div className="sticky-price-info">
             <span className="sticky-price">₹{finalPrice.toLocaleString()}</span>
             <span className="sticky-variant">{isComboItem ? 'Combo Stack' : (currentFlavor?.name || currentSize?.weight || '')}</span>

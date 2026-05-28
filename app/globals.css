@@ -1917,11 +1917,12 @@ section {
   background: var(--bg-secondary);
   border-top: 1px solid var(--border);
   padding: 12px 20px;
-  z-index: 9999;
+  z-index: 1999;
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
   backdrop-filter: blur(10px);
+  /* Stays below cart sidebar (z-index 2001) so cart can show on top */
 }
 
 .sticky-price-info {
@@ -2343,7 +2344,7 @@ section {
   inset: 0;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
-  z-index: 9999;
+  z-index: 10001;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2591,7 +2592,7 @@ section {
   }
   
   .cart-sidebar-body {
-    padding: 0 20px 80px !important;
+    padding: 0 20px 20px !important;
   }
 }
 

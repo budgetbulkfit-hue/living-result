@@ -3,8 +3,10 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 
 export default function Navbar({ cartCount = 0, onSearchOpen, onCartOpen }) {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [noticeHeight, setNoticeHeight] = useState(0);
@@ -53,7 +55,17 @@ export default function Navbar({ cartCount = 0, onSearchOpen, onCartOpen }) {
       <nav className="navbar" id="navbar" style={navStyle} ref={navRef}>
         <div className="container">
           {/* Logo */}
-          <Link href="/" className="nav-logo" onClick={closeMenu}>
+          <a
+            href="/"
+            className="nav-logo"
+            onClick={(e) => {
+              closeMenu();
+              if (pathname === '/') {
+                e.preventDefault();
+                window.location.href = '/';
+              }
+            }}
+          >
             <Image
               src="/images/logo.webp"
               alt="Living Result"
@@ -63,11 +75,11 @@ export default function Navbar({ cartCount = 0, onSearchOpen, onCartOpen }) {
               priority
               style={{ height: '70px', width: 'auto', objectFit: 'contain' }}
             />
-          </Link>
+          </a>
 
           {/* Desktop Nav Links */}
           <ul className={`nav-menu${mobileOpen ? ' active' : ''}`} id="navMenu">
-            <li><Link href="/" className="active" onClick={closeMenu}>Home</Link></li>
+            <li><a href="/" className="active" onClick={(e) => { closeMenu(); if (pathname === '/') { e.preventDefault(); window.location.href = '/'; } }}>Home</a></li>
             <li><Link href="/#products" onClick={closeMenu}>Shop</Link></li>
             <li><Link href="/#products" onClick={closeMenu}>Categories</Link></li>
             <li><Link href="/#why-choose" onClick={closeMenu}>About</Link></li>
