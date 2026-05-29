@@ -81,7 +81,7 @@ export default function Dashboard({ token }) {
   };
 
   const syncToGoogleSheets = async () => {
-    const GOOGLE_WEB_APP_URL = process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL;
+    const GOOGLE_WEB_APP_URL = process.env.NEXT_PUBLIC_GOOGLE_SHEET_URL || 'https://script.google.com/macros/s/AKfycbwWTolkQqA0LXgLwTYj8vnWMoEHQeonlhCc7-8RDEXgnGzZG6C22wK_RInl6Gkh0t3o8A/exec';
     if (!GOOGLE_WEB_APP_URL) {
       return showToast('Google Web App URL not configured', 'error');
     }
