@@ -14,7 +14,7 @@ export default function AdminLogin({ onLoginSuccess }) {
     setError('');
 
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
       const res = await fetch(`${API}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

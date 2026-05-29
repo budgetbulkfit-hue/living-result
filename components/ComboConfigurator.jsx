@@ -294,9 +294,17 @@ export default function ComboConfigurator({ products = [] }) {
       const bad = !coreStock ? coreSel.product : boostSel.product;
       const f = !coreStock ? coreSel.product.flavors?.[coreSel.flavorIdx] : boostSel.product.flavors?.[boostSel.flavorIdx];
       const s = !coreStock ? coreSel.product.sizes?.[coreSel.sizeIdx] : boostSel.product.sizes?.[boostSel.sizeIdx];
-      await sub({ email: notifyEmail, phoneNumber: notifyPhone, productId: bad._id, variantKey: `${f?.name || 'Regular'}-${s?.weight || 'Default'}` });
+      const res = await sub({ email: notifyEmail, phoneNumber: notifyPhone, productId: bad._id, variantKey: `${f?.name || 'Regular'}-${s?.weight || 'Default'}` });
+      if (res.success) {
+        setNotifyOk(true);
+        setNotifyEmail('');
+        setNotifyPhone('');
+      } else {
+        alert(res.message || 'Failed to submit restock request');
+      }
+    } catch (err) {
       setNotifyOk(true);
-    } catch { setNotifyOk(true); }
+    }
   };
 
   const renderProductList = (items, sel, setSel, scrollRef, label, stepNum, viewAll, setViewAll) => {
@@ -810,6 +818,7 @@ export default function ComboConfigurator({ products = [] }) {
                   {showNotify && !notifyOk && (
                     <form onSubmit={handleNotify} style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                       <input type="email" placeholder="Email Address" required value={notifyEmail} onChange={e => setNotifyEmail(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: '#000', border: '1px solid #222', color: '#fff', fontSize: '14px' }} />
+                      <input type="tel" placeholder="Phone Number" required value={notifyPhone} onChange={e => setNotifyPhone(e.target.value)} style={{ padding: '12px', borderRadius: '8px', background: '#000', border: '1px solid #222', color: '#fff', fontSize: '14px' }} />
                       <button type="submit" className="btn-primary" style={{ justifyContent: 'center' }}>Send</button>
                     </form>
                   )}
