@@ -1552,8 +1552,17 @@
             };
 
             try {
-                await fetch(GOOGLE_WEB_APP_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                showToast('Synced to Google Sheets!', 'success');
+                const res = await authFetch(`${API_URL}/settings/sync-sheets`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ googleWebAppUrl: GOOGLE_WEB_APP_URL, payload })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Synced to Google Sheets!', 'success');
+                } else {
+                    throw new Error(data.message || 'Backend sync failed');
+                }
             } catch (err) {
                 console.error("Sheet sync failed:", err);
                 showToast('Failed to sync to Sheets', 'error');

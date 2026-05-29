@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getProducts, getNotifications } from '@/lib/api';
+import { getProducts, getNotifications, syncGoogleSheets } from '@/lib/api';
 
 export default function Dashboard({ token }) {
   const [loading, setLoading] = useState(true);
@@ -99,13 +99,12 @@ export default function Dashboard({ token }) {
         }))
       };
 
-      await fetch(GOOGLE_WEB_APP_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      showToast('Synced to Google Sheets!', 'success');
+      const res = await syncGoogleSheets(GOOGLE_WEB_APP_URL, payload, token);
+      if (res.success) {
+        showToast('Synced to Google Sheets!', 'success');
+      } else {
+        throw new Error(res.message || 'Backend sync failed');
+      }
     } catch (err) {
       console.error("Sheet sync failed:", err);
       showToast('Failed to sync to Sheets', 'error');
