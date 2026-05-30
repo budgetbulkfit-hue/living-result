@@ -43,6 +43,24 @@ export default function CheckoutModal({ isOpen, onClose, fomoSettings = {} }) {
     return () => clearInterval(timerRef.current);
   }, [isOpen, fomoSettings?.timerDuration]);
 
+  // Track begin_checkout when modal opens
+  useEffect(() => {
+    if (isOpen && items.length > 0) {
+      if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+        window.gtag("event", "begin_checkout", {
+          currency: "INR",
+          value: total,
+          items: items.map(i => ({
+            item_id: i.productId || i.comboId || i.id,
+            item_name: i.name,
+            price: i.price,
+            quantity: i.qty
+          }))
+        });
+      }
+    }
+  }, [isOpen, items, total]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting || items.length === 0) return;
@@ -66,6 +84,22 @@ export default function CheckoutModal({ isOpen, onClose, fomoSettings = {} }) {
       });
       if (!orderData.success) throw new Error(orderData.message || 'Order failed');
       const orderId = orderData.data.orderId;
+
+      // Trigger GA4 purchase event (conversion)
+      if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+        window.gtag("event", "purchase", {
+          transaction_id: orderId,
+          value: total,
+          currency: "INR",
+          coupon: coupon || undefined,
+          items: items.map(i => ({
+            item_id: i.productId || i.comboId || i.id,
+            item_name: i.name,
+            price: i.price,
+            quantity: i.qty
+          }))
+        });
+      }
 
       // Build WhatsApp message
       let msg = `🛒 *NEW ORDER — Living Result*\n🔖 *Order ID:* ${orderId}\n\n📦 *Items:*\n`;

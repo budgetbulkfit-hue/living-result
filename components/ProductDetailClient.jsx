@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import useCart from '@/lib/cartStore';
 import ImageGallery from './ImageGallery';
-import { subscribeToRestock } from '@/lib/api';
+import { subscribeToRestock, trackProductView } from '@/lib/api';
 
 function resolveImage(src) {
   if (!src) return null;
@@ -116,6 +116,55 @@ export default function ProductDetailClient({ product }) {
       });
     }
   }, [isComboItem, comboGroups]);
+
+  // View/click tracking for database and GA4
+  useEffect(() => {
+    if (!product) return;
+    const safeId = product._id || product.id;
+    if (!safeId) return;
+
+    const displayPrice = product.sizes?.[0]?.price || product.flavors?.[0]?.price || product.price || 0;
+    
+    let source = 'product_page';
+    let trackId = safeId;
+    let name = product.name || 'Unknown Product';
+    let trackPrice = displayPrice;
+
+    // Check if there was a deferred view tracking from sessionStorage
+    const pendingViewStr = sessionStorage.getItem('lr_pending_view_event');
+    if (pendingViewStr) {
+      try {
+        const pendingView = JSON.parse(pendingViewStr);
+        if (pendingView.productId === safeId) {
+          source = pendingView.source || source;
+          trackId = pendingView.productId;
+          name = pendingView.productName || name;
+          trackPrice = pendingView.price || trackPrice;
+        }
+      } catch (_) {}
+      sessionStorage.removeItem('lr_pending_view_event');
+    }
+
+    // Call the backend API (only if it is a standard MongoDB 24-character hex ID, since combos don't support backend views)
+    const isMongoId = /^[0-9a-fA-F]{24}$/.test(trackId);
+    if (isMongoId && !product.isCombo) {
+      trackProductView(trackId, source);
+    }
+
+    // Call GA4 event
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      window.gtag("event", "view_item", {
+        currency: "INR",
+        value: trackPrice,
+        items: [{
+          item_id: trackId,
+          item_name: name,
+          price: trackPrice,
+          quantity: 1
+        }]
+      });
+    }
+  }, [product]);
 
   const groupImages = [];
   if (isComboItem && comboGroups.length > 0) {
@@ -255,6 +304,20 @@ export default function ProductDetailClient({ product }) {
     addItem(itemData);
     setAddedFeedback(true);
     setTimeout(() => setAddedFeedback(false), 2000);
+
+    // Call GA4 event
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+      window.gtag("event", "add_to_cart", {
+        currency: "INR",
+        value: finalPrice * qty,
+        items: [{
+          item_id: safeId,
+          item_name: product.name || product.comboName || 'Premium Stack',
+          price: finalPrice,
+          quantity: qty
+        }]
+      });
+    }
   };
 
   const handleSubmitReview = async (e) => {

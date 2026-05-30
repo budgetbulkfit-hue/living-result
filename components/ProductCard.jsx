@@ -73,6 +73,18 @@ export default function ProductCard({ product }) {
 
   const handleCardClick = () => {
     const targetPath = `/product/${product.slug}`;
+    
+    // Defer tracking view event to target page load to avoid cancelation
+    if (typeof window !== 'undefined') {
+      const price = getProductPrice(product);
+      sessionStorage.setItem('lr_pending_view_event', JSON.stringify({
+        productId: product._id || product.id,
+        productName: product.name,
+        source: 'card_click',
+        price
+      }));
+    }
+
     if (pathname === targetPath) {
       window.location.href = targetPath;
     } else {
