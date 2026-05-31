@@ -4,7 +4,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'living-result-backend.onrender.com',
+        hostname: 'living-result-backend-production.up.railway.app',
       },
       {
         protocol: 'https',
