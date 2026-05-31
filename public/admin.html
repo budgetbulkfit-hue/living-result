@@ -1357,7 +1357,7 @@
     <script src="config.js"></script>
     <script>
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const API_URL = (window.APP_CONFIG && window.APP_CONFIG.apiUrl) || (isLocal ? 'http://localhost:5000/api' : 'https://living-result-backend-production.up.railway.app/api');
+        const API_URL = (window.APP_CONFIG && window.APP_CONFIG.apiUrl) || (isLocal ? 'http://localhost:5000/api' : '/api');
         let products = [];
         let filteredProducts = [];
         let adminToken = localStorage.getItem('adminToken') || '';

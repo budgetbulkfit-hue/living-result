@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { API_BASE } from '@/lib/api';
 
 export default function OrderManager({ token }) {
   const [orders, setOrders] = useState([]);
@@ -14,7 +15,7 @@ export default function OrderManager({ token }) {
   const [detailsModalActive, setDetailsModalActive] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
+  const API = API_BASE;
 
   useEffect(() => {
     fetchOrders();

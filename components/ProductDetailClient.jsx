@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import useCart from '@/lib/cartStore';
 import ImageGallery from './ImageGallery';
-import { subscribeToRestock, trackProductView } from '@/lib/api';
+import { subscribeToRestock, trackProductView, API_BASE } from '@/lib/api';
 
 function resolveImage(src) {
   if (!src) return null;
@@ -69,7 +69,7 @@ export default function ProductDetailClient({ product }) {
     if (!isComboItem) return;
     if (product.comboGroups && product.comboGroups.length > 0) return; // already have data from SSR
 
-    const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
+    const API = API_BASE;
     fetch(`${API}/combos/slug/${product.slug}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(data => {
@@ -323,7 +323,7 @@ export default function ProductDetailClient({ product }) {
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
+      const API = API_BASE;
       await fetch(`${API}/products/${product._id}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { API_BASE } from '@/lib/api';
 
 const INITIAL_FORM = {
   comboName: '',
@@ -71,7 +72,7 @@ export default function ComboEditor({ token, slugToEdit, onCancel, onSaved }) {
 
   const flavorFileRef = useRef(null);
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
+  const API = API_BASE;
 
   useEffect(() => {
     fetchAllProducts();

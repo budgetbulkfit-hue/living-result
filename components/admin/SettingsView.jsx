@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { API_BASE } from '@/lib/api';
 
 export default function SettingsView({ token }) {
   const [settings, setSettings] = useState({
@@ -13,7 +14,7 @@ export default function SettingsView({ token }) {
   const [message, setMessage] = useState('');
   const [dangerLoading, setDangerLoading] = useState('');
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
+  const API = API_BASE;
 
   const showMsg = (text, isError = false) => {
     setMessage({ text, isError });

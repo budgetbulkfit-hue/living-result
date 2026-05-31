@@ -10,7 +10,7 @@ import CombosView from '@/components/admin/CombosView';
 import ComboEditor from '@/components/admin/ComboEditor';
 import OrderManager from '@/components/admin/OrderManager';
 import SettingsView from '@/components/admin/SettingsView';
-import { getNotifications, updateNotificationStatus, deleteNotification } from '@/lib/api';
+import { getNotifications, updateNotificationStatus, deleteNotification, API_BASE } from '@/lib/api';
 
 export default function AdminPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -59,7 +59,7 @@ export default function AdminPage() {
   };
 
   const handleLogout = async () => {
-    const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
+    const API = API_BASE;
     try {
       await fetch(`${API}/auth/logout`, {
         method: 'POST',
