@@ -31,7 +31,7 @@ export default function ProductsView({ token, onEdit, onAdd }) {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
       const res = await fetch(`${API}/products`, { cache: 'no-store' });
       const data = await res.json();
       if (data.success) {
@@ -97,7 +97,7 @@ export default function ProductsView({ token, onEdit, onAdd }) {
   const handleDeleteProduct = async (id) => {
     if (!confirm('Are you sure you want to permanently delete this product?')) return;
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
       const res = await fetch(`${API}/products/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -129,7 +129,7 @@ export default function ProductsView({ token, onEdit, onAdd }) {
   const handleDeleteReview = async (reviewId) => {
     if (!confirm('Are you sure you want to permanently delete this review?')) return;
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
       const res = await fetch(`${API}/products/${selectedProduct._id}/reviews/${reviewId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }

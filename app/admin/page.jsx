@@ -59,7 +59,7 @@ export default function AdminPage() {
   };
 
   const handleLogout = async () => {
-    const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+    const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
     try {
       await fetch(`${API}/auth/logout`, {
         method: 'POST',

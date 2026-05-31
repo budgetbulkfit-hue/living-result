@@ -14,7 +14,7 @@ export default function OrderManager({ token }) {
   const [detailsModalActive, setDetailsModalActive] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+  const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
 
   useEffect(() => {
     fetchOrders();

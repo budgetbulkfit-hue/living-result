@@ -25,7 +25,7 @@ export default function CombosView({ token, onEdit, onAdd }) {
   const fetchCombos = async () => {
     setLoading(true);
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
       const res = await fetch(`${API}/combos`, { cache: 'no-store' });
       const data = await res.json();
       if (data.success) {
@@ -41,7 +41,7 @@ export default function CombosView({ token, onEdit, onAdd }) {
   const handleDeleteCombo = async (id, name) => {
     if (!confirm(`Are you sure you want to permanently delete "${name}"? This cannot be undone.`)) return;
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
       const res = await fetch(`${API}/combos/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }

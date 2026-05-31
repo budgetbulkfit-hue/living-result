@@ -1,7 +1,7 @@
 export default async function sitemap() {
   // Replace with your actual live domain, or use the environment variable
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.getlivingresult.in';
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
 
   let products = [];
   let combos = [];

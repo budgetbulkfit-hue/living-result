@@ -73,7 +73,7 @@ export default function ProductEditor({ token, slugToEdit, onCancel, onSaved }) 
 
   const fetchProduct = async (slug) => {
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
       const res = await fetch(`${API}/products/${slug}`, { cache: 'no-store' });
       const data = await res.json();
       if (data.success) {
@@ -115,7 +115,7 @@ export default function ProductEditor({ token, slugToEdit, onCancel, onSaved }) 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+      const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
       const method = formData._id ? 'PUT' : 'POST';
       const url = formData._id ? `${API}/products/${formData._id}` : `${API}/products`;
 
@@ -182,7 +182,7 @@ export default function ProductEditor({ token, slugToEdit, onCancel, onSaved }) 
   const handleCloudinaryUpload = async (file) => {
     if (!file) return null;
     setUploading(true);
-    const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+    const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
     const fd = new FormData();
     fd.append('image', file);
 

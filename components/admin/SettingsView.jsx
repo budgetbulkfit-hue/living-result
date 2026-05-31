@@ -13,7 +13,7 @@ export default function SettingsView({ token }) {
   const [message, setMessage] = useState('');
   const [dangerLoading, setDangerLoading] = useState('');
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+  const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
 
   const showMsg = (text, isError = false) => {
     setMessage({ text, isError });

@@ -71,7 +71,7 @@ export default function ComboEditor({ token, slugToEdit, onCancel, onSaved }) {
 
   const flavorFileRef = useRef(null);
 
-  const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend.onrender.com/api';
+  const API = process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api';
 
   useEffect(() => {
     fetchAllProducts();
