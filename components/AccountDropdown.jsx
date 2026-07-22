@@ -29,6 +29,7 @@ export default function AccountDropdown({ onAuthOpen }) {
 
   const firstName = user?.name?.split(' ')[0] || 'Account';
 
+  if (!isLoggedIn) {
     return (
       <button 
         className="nav-login-btn" 
