@@ -4,8 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import AccountDropdown from './AccountDropdown';
 
-export default function Navbar({ cartCount = 0, onSearchOpen, onCartOpen }) {
+export default function Navbar({ cartCount = 0, onSearchOpen, onCartOpen, onAuthOpen }) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -99,6 +100,9 @@ export default function Navbar({ cartCount = 0, onSearchOpen, onCartOpen }) {
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
             </button>
+
+            {/* Account */}
+            <AccountDropdown onAuthOpen={onAuthOpen} />
 
             {/* Cart */}
             <button aria-label="Cart" id="cartBtn" onClick={onCartOpen} style={{ position: 'relative' }}>

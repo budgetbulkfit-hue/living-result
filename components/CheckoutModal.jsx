@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import useCart from '@/lib/cartStore';
+import useAuthStore from '@/lib/authStore';
 import { createOrder } from '@/lib/api';
 import { orderOnWhatsApp } from '@/lib/whatsapp';
 import PrivacyModal from './PrivacyModal';
@@ -13,6 +14,8 @@ export default function CheckoutModal({ isOpen, onClose, fomoSettings = {} }) {
   const items = useCart((s) => s.items);
   const clearCart = useCart((s) => s.clearCart);
   const getTotal = useCart((s) => s.getTotal);
+  const authUser = useAuthStore((s) => s.user);
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const [timerDisplay, setTimerDisplay] = useState('10:00');
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -183,17 +186,22 @@ export default function CheckoutModal({ isOpen, onClose, fomoSettings = {} }) {
           </div>
 
           <form onSubmit={handleSubmit}>
+            {isLoggedIn && authUser && (
+              <div style={{ marginBottom: '15px', padding: '10px 14px', background: 'rgba(255,106,0,0.08)', border: '1px solid rgba(255,106,0,0.2)', borderRadius: '6px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                ✅ Logged in as <strong style={{ color: 'var(--accent)' }}>{authUser.name}</strong> — details pre-filled below (you can edit)
+              </div>
+            )}
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '5px' }}>Full Name</label>
-              <input name="checkoutName" type="text" required style={inputStyle} />
+              <input name="checkoutName" type="text" required style={inputStyle} defaultValue={authUser?.name || ''} />
             </div>
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '5px' }}>Phone Number</label>
-              <input name="checkoutPhone" type="tel" required pattern="[0-9]{10}" title="Please enter a valid 10-digit phone number" style={inputStyle} />
+              <input name="checkoutPhone" type="tel" required pattern="[0-9]{10}" title="Please enter a valid 10-digit phone number" style={inputStyle} defaultValue={authUser?.phone || ''} />
             </div>
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '5px' }}>Email Address</label>
-              <input name="checkoutEmail" type="email" required style={inputStyle} />
+              <input name="checkoutEmail" type="email" required style={inputStyle} defaultValue={authUser?.email || ''} />
             </div>
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '5px' }}>Delivery Address</label>

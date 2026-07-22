@@ -10,13 +10,16 @@ import SocialProofPopup from './SocialProofPopup';
 import ExitIntentWrapper from './ExitIntentWrapper';
 import MobileTrustRow from './MobileTrustRow';
 import WhatsAppQuickBuy from './WhatsAppQuickBuy';
+import AuthModal from './AuthModal';
 import useCart from '@/lib/cartStore';
 import useSettings from '@/lib/useSettings';
+import useAuthStore from '@/lib/authStore';
 
 export default function AppShell({ children }) {
   const [mounted, setMounted] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
 
   const getTotalItems = useCart((s) => s.getTotalItems);
   const migrateLegacyCart = useCart((s) => s.migrateLegacyCart);
@@ -24,12 +27,20 @@ export default function AppShell({ children }) {
   const openCart = useCart((s) => s.openCart);
   const closeCart = useCart((s) => s.closeCart);
   const { noticeStrip, isLaunched, fomoSettings } = useSettings();
+  const fetchMe = useAuthStore((s) => s.fetchMe);
   const pathname = usePathname();
 
   useEffect(() => {
     setMounted(true);
     migrateLegacyCart();
-  }, [migrateLegacyCart]);
+    // Hydrate auth session from httpOnly cookie on mount
+    fetchMe();
+
+    // Listen for custom open-auth event
+    const handleOpenAuth = () => setAuthOpen(true);
+    window.addEventListener('open-auth', handleOpenAuth);
+    return () => window.removeEventListener('open-auth', handleOpenAuth);
+  }, [migrateLegacyCart, fetchMe]);
 
   const totalItems = mounted ? getTotalItems() : 0;
 
@@ -76,6 +87,7 @@ export default function AppShell({ children }) {
         cartCount={totalItems}
         onSearchOpen={() => setSearchOpen(true)}
         onCartOpen={openCart}
+        onAuthOpen={() => setAuthOpen(true)}
       />
 
       {/* WHATSAPP QUICK BUY (Mobile Only) */}
@@ -137,6 +149,15 @@ export default function AppShell({ children }) {
           View Cart
           <span className="floating-cart-count">{totalItems}</span>
         </button>
+      )}
+
+      {/* AUTH MODAL */}
+      {mounted && (
+        <AuthModal
+          isOpen={authOpen}
+          onClose={() => setAuthOpen(false)}
+          onSuccess={() => setAuthOpen(false)}
+        />
       )}
 
       {/* PAGE CONTENT */}

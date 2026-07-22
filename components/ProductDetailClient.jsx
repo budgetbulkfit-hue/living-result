@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import useCart from '@/lib/cartStore';
 import ImageGallery from './ImageGallery';
+import WishlistButton from './WishlistButton';
 import { subscribeToRestock, trackProductView, API_BASE } from '@/lib/api';
 
 function resolveImage(src) {
@@ -410,24 +411,27 @@ export default function ProductDetailClient({ product }) {
           <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', textTransform: 'uppercase', lineHeight: 1.15, margin: 0 }}>
             {product.name}
           </h1>
-          <button
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({ title: product.name, url: window.location.href }).catch(() => { });
-              } else {
-                navigator.clipboard.writeText(window.location.href);
-                alert('Link copied to clipboard!');
-              }
-            }}
-            className="react-share-btn"
-            title="Share Product"
-            aria-label="Share"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-            </svg>
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <WishlistButton productId={product._id || product.id} style={{ width: '40px', height: '40px' }} />
+            <button
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({ title: product.name, url: window.location.href }).catch(() => { });
+                } else {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert('Link copied to clipboard!');
+                }
+              }}
+              className="react-share-btn"
+              title="Share Product"
+              aria-label="Share"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Rating */}
