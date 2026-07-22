@@ -181,7 +181,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
           <div className="auth-step">
             <button className="auth-back-btn" onClick={() => { setStep('gate'); setError(''); }}>← Back</button>
             <h2 className="auth-step-title">Enter Your {authType === 'email' ? 'Email' : 'Phone'}</h2>
-            <p className="auth-step-subtitle">We'll send a 6-digit verification code.</p>
+            <p className="auth-step-subtitle">We&apos;ll send a 6-digit verification code.</p>
 
             {/* Tab switch */}
             <div className="auth-tab-switch">

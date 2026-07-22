@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import useAuthStore from '@/lib/authStore';
@@ -164,7 +164,7 @@ function AddressForm({ initial, onSave, onCancel }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export default function AccountPage() {
+function AccountPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuthStore((s) => s.user);
@@ -437,7 +437,7 @@ export default function AccountPage() {
         <div className="rewards-trophy">🏆</div>
         <h3 className="rewards-title">Living Result Rewards</h3>
         <div className="rewards-coming-label">Coming Soon</div>
-        <p className="rewards-desc">We're building an exciting loyalty program.<br />Every genuine purchase will soon earn <strong style={{ color: 'var(--accent)' }}>Living Result Points</strong>.</p>
+        <p className="rewards-desc">We&apos;re building an exciting loyalty program.<br />Every genuine purchase will soon earn <strong style={{ color: 'var(--accent)' }}>Living Result Points</strong>.</p>
         <div className="rewards-points-preview">
           <div className="rewards-points-value">{user.rewardPoints || 0}</div>
           <div className="rewards-points-label">Points Balance</div>
@@ -563,5 +563,13 @@ export default function AccountPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={<div className="account-page"><div className="account-loading">Loading account...</div></div>}>
+      <AccountPageContent />
+    </Suspense>
   );
 }
