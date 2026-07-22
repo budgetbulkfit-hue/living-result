@@ -29,30 +29,35 @@ export default function AccountDropdown({ onAuthOpen }) {
 
   const firstName = user?.name?.split(' ')[0] || 'Account';
 
-  if (!isLoggedIn) {
     return (
-      <button className="nav-login-btn" onClick={onAuthOpen} aria-label="Login or Create Account">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <button 
+        className="nav-login-btn" 
+        onClick={onAuthOpen} 
+        aria-label="Login or Create Account"
+        style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '6px 14px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-secondary)' }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
           <circle cx="12" cy="7" r="4" />
         </svg>
-        Login
+        <span className="hide-on-mobile">Login</span>
       </button>
     );
   }
 
   return (
-    <div className="account-dropdown" ref={dropdownRef}>
+    <div className="account-dropdown" ref={dropdownRef} style={{ position: 'relative' }}>
       <button
         className={`account-dropdown-trigger ${open ? 'open' : ''}`}
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="true"
         aria-expanded={open}
+        style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '4px 12px 4px 4px', cursor: 'pointer' }}
       >
         <span className="account-avatar">
           {firstName[0]?.toUpperCase()}
         </span>
-        <span className="account-name">Hi, {firstName}</span>
+        <span className="account-name hide-on-mobile" style={{ fontSize: '13px' }}>Hi, {firstName}</span>
         <svg
           width="12"
           height="12"
@@ -60,7 +65,7 @@ export default function AccountDropdown({ onAuthOpen }) {
           fill="none"
           stroke="currentColor"
           strokeWidth="2.5"
-          className={`account-chevron ${open ? 'rotated' : ''}`}
+          className={`account-chevron ${open ? 'rotated' : ''} hide-on-mobile`}
         >
           <polyline points="6 9 12 15 18 9" />
         </svg>

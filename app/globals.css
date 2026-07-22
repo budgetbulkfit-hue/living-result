@@ -3492,8 +3492,10 @@ section {
 .account-dropdown-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 16px; background: transparent; border: none; color: var(--text-secondary); font-size: 13px; font-family: var(--font-body); cursor: pointer; text-decoration: none; transition: background 0.15s, color 0.15s; }
 .account-dropdown-item:hover { background: rgba(255,255,255,0.04); color: var(--text-primary); }
 .account-dropdown-logout { color: #e74c3c !important; }
-.account-dropdown-logout:hover { background: rgba(231,76,60,0.08) !important; }
 
+@media (max-width: 768px) {
+  .hide-on-mobile { display: none !important; }
+}
 /* ── Wishlist Button ───────────────────────────────────────────────────────── */
 .wishlist-btn { background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(4px); }
 .wishlist-btn:hover { color: #e74c3c; border-color: rgba(231,76,60,0.4); background: rgba(231,76,60,0.1); transform: scale(1.1); }
