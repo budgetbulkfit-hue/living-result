@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import useCart from '@/lib/cartStore';
-import { createOrder } from '@/lib/api';
+import useAuthStore from '@/lib/authStore';
+import { createOrder, getAddresses } from '@/lib/api';
 import { orderOnWhatsApp } from '@/lib/whatsapp';
 import PrivacyModal from './PrivacyModal';
 
@@ -20,6 +21,28 @@ export default function CheckoutModal({ isOpen, onClose, fomoSettings = {} }) {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const timerRef = useRef(null);
   const total = getTotal();
+  const user = useAuthStore((s) => s.user);
+
+  const [formData, setFormData] = useState({ name: '', phone: '', email: '', address: '' });
+
+  // Pre-fill form if user is logged in
+  useEffect(() => {
+    if (isOpen && user) {
+      setFormData(prev => ({ ...prev, name: user.name || '', phone: user.phone || '', email: user.email || '' }));
+      getAddresses().then(res => {
+        if (res.success && res.data?.length > 0) {
+          const def = res.data.find(a => a.isDefault) || res.data[0];
+          let addrStr = `${def.house}`;
+          if (def.street) addrStr += `, ${def.street}`;
+          addrStr += `, ${def.city}, ${def.state} - ${def.pin}`;
+          if (def.landmark) addrStr += `\nLandmark: ${def.landmark}`;
+          setFormData(prev => ({ ...prev, address: addrStr }));
+        }
+      }).catch(() => {});
+    } else if (!isOpen) {
+      setFormData({ name: '', phone: '', email: '', address: '' });
+    }
+  }, [isOpen, user]);
 
   // FOMO countdown timer — persists in localStorage
   useEffect(() => {
@@ -185,19 +208,19 @@ export default function CheckoutModal({ isOpen, onClose, fomoSettings = {} }) {
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '5px' }}>Full Name</label>
-              <input name="checkoutName" type="text" required style={inputStyle} />
+              <input name="checkoutName" type="text" required style={inputStyle} value={formData.name} onChange={e => setFormData(f => ({...f, name: e.target.value}))} />
             </div>
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '5px' }}>Phone Number</label>
-              <input name="checkoutPhone" type="tel" required pattern="[0-9]{10}" title="Please enter a valid 10-digit phone number" style={inputStyle} />
+              <input name="checkoutPhone" type="tel" required pattern="[0-9]{10}" title="Please enter a valid 10-digit phone number" style={inputStyle} value={formData.phone} onChange={e => setFormData(f => ({...f, phone: e.target.value}))} />
             </div>
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '5px' }}>Email Address</label>
-              <input name="checkoutEmail" type="email" required style={inputStyle} />
+              <input name="checkoutEmail" type="email" required style={inputStyle} value={formData.email} onChange={e => setFormData(f => ({...f, email: e.target.value}))} />
             </div>
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '5px' }}>Delivery Address</label>
-              <textarea name="checkoutAddress" required rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
+              <textarea name="checkoutAddress" required rows={3} style={{ ...inputStyle, resize: 'vertical' }} value={formData.address} onChange={e => setFormData(f => ({...f, address: e.target.value}))} />
             </div>
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '5px' }}>Coupon Code (Optional)</label>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import WishlistButton from './WishlistButton';
 
 // Random viewer count between 3 and 27 — client-only, set on mount to avoid hydration mismatch
 function useViewerCount() {
@@ -106,6 +107,12 @@ export default function ProductCard({ product }) {
           alt={product.name}
           onError={(e) => { e.target.src = `/images/${product.slug}.webp`; e.target.onerror = null; }}
           style={{ maxHeight: '180px', objectFit: 'contain', transition: '0.3s ease' }}
+        />
+
+        {/* Wishlist Button */}
+        <WishlistButton
+          productId={product._id || product.id}
+          className="wishlist-btn-card"
         />
 
         {/* Badges & Quick Tags */}
