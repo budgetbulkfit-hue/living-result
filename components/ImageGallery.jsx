@@ -1,0 +1,193 @@
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+
+// Resolve image src — handles relative paths (from DB) and full URLs
+function resolveImage(src) {
+  if (!src) return null;
+  if (src.startsWith('http')) {
+    if (src.startsWith('http://res.cloudinary.com/')) {
+      return src.replace('http://', 'https://');
+    }
+    return src;
+  }
+  // Strip leading slash or "images/" prefix and map to /public/images/
+  const filename = src.replace(/^\/?(images\/)?/, '');
+  return `/images/${filename}`;
+}
+
+export default function ImageGallery({ images = [], flavors = [], selectedFlavorIndex = 0, productName = '' }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const touchStartX = useRef(null);
+  const mainRef = useRef(null);
+
+  // Magnifier & Lightbox state
+  const [showMagnifier, setShowMagnifier] = useState(false);
+  const [magnifierStyle, setMagnifierStyle] = useState({});
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+  // Build image list: base images + currently selected flavor image
+  const baseImages = images.map(resolveImage).filter(Boolean);
+  const selectedFlavorImg = resolveImage(flavors[selectedFlavorIndex]?.image);
+  
+  // Combine base images with the selected flavor image
+  const allImages = [...baseImages];
+  if (selectedFlavorImg && !allImages.includes(selectedFlavorImg)) {
+    allImages.unshift(selectedFlavorImg); // Put flavor image first!
+  }
+
+  // When flavor changes, reset to the first image
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [selectedFlavorIndex]);
+
+  const total = allImages.length;
+  const displayImages = total > 0 ? allImages.map(img => img ? img.replace(/\.png$/i, '.webp') : img) : ['/images/logo.webp'];
+  const displayTotal = displayImages.length;
+
+  const goTo = (idx) => setActiveIndex((idx + displayTotal) % displayTotal);
+
+  // Touch swipe
+  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) { goTo(diff > 0 ? activeIndex + 1 : activeIndex - 1); }
+    touchStartX.current = null;
+  };
+
+  // Magnifying Glass Handlers
+  const handleMouseMove = (e) => {
+    if (!mainRef.current || window.innerWidth <= 900) return; // Disable on mobile
+    const { left, top, width, height } = mainRef.current.getBoundingClientRect();
+    const x = e.clientX - left;
+    const y = e.clientY - top;
+    
+    const xPercent = (x / width) * 100;
+    const yPercent = (y / height) * 100;
+
+    setMagnifierStyle({
+      display: 'block',
+      backgroundImage: `url(${displayImages[activeIndex]})`,
+      backgroundPosition: `${xPercent}% ${yPercent}%`,
+      backgroundSize: '250%',
+      left: `${x - 125}px`,
+      top: `${y - 125}px`,
+    });
+  };
+
+  const handleMouseEnter = () => window.innerWidth > 900 && setShowMagnifier(true);
+  const handleMouseLeave = () => setShowMagnifier(false);
+
+  return (
+    <div className="modal-image-col" style={{ gap: '16px', position: 'relative' }}>
+      {/* Main image */}
+      <div
+        className="main-image-wrapper"
+        ref={mainRef}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        style={{ width: '100%', position: 'relative', minHeight: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '8px', background: 'rgba(255,255,255,0.02)' }}
+      >
+        {/* Magnifying Glass */}
+        {showMagnifier && (
+          <div
+            style={{
+              position: 'absolute',
+              width: '250px',
+              height: '250px',
+              border: '2px solid var(--accent)',
+              borderRadius: '50%',
+              pointerEvents: 'none',
+              zIndex: 10,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+              ...magnifierStyle
+            }}
+          />
+        )}
+        {displayTotal > 1 && (
+          <button
+            className="gallery-arrow left"
+            onClick={(e) => { e.stopPropagation(); goTo(activeIndex - 1); }}
+            aria-label="Previous image"
+            style={{ position: 'absolute', left: '10px', zIndex: 15 }}
+          >‹</button>
+        )}
+
+        <img
+          key={displayImages[activeIndex]}
+          src={displayImages[activeIndex]}
+          alt={`${productName} — image ${activeIndex + 1}`}
+          onMouseMove={handleMouseMove}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onClick={() => setIsLightboxOpen(true)}
+          style={{ maxHeight: '550px', maxWidth: '100%', objectFit: 'contain', transition: 'opacity 0.2s ease', cursor: 'zoom-in', zIndex: 1 }}
+          onError={(e) => { e.target.src = '/images/hydra-whey-protein.webp'; e.target.onerror = null; }}
+        />
+
+        {displayTotal > 1 && (
+          <button
+            className="gallery-arrow right"
+            onClick={(e) => { e.stopPropagation(); goTo(activeIndex + 1); }}
+            aria-label="Next image"
+            style={{ position: 'absolute', right: '10px', zIndex: 15 }}
+          >›</button>
+        )}
+      </div>
+
+      {/* Thumbnail strip */}
+      {displayTotal > 1 && (
+        <div className="thumbnail-gallery" style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '10px 0', marginTop: '10px' }}>
+          {displayImages.map((src, idx) => (
+            <button
+              key={idx}
+              className="thumbnail-img"
+              onClick={() => goTo(idx)}
+              style={{
+                width: '60px',
+                height: '60px',
+                padding: '4px',
+                background: '#0e0e0e',
+                border: `2px solid ${idx === activeIndex ? 'var(--accent)' : 'var(--border)'}`,
+                borderRadius: '6px',
+                cursor: 'pointer',
+                flexShrink: 0,
+                overflow: 'hidden',
+                transition: 'border-color 0.2s',
+              }}
+            >
+              <img
+                src={src}
+                alt={`Thumbnail ${idx + 1}`}
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Full Screen Lightbox Overlay */}
+      {isLightboxOpen && (
+        <div 
+          className="modal-overlay active" 
+          onClick={() => setIsLightboxOpen(false)}
+          style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 100000, background: 'rgba(0,0,0,0.95)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+        >
+          <button className="modal-close" onClick={() => setIsLightboxOpen(false)} style={{ position: 'absolute', color: '#fff', fontSize: '40px', zIndex: 100001, right: '20px', top: '20px', cursor: 'pointer', border: 'none', background: 'none' }}>&times;</button>
+          <img 
+            src={displayImages[activeIndex]} 
+            alt="Zoomed Product"
+            style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain', cursor: 'zoom-out' }}
+            onClick={(e) => { e.stopPropagation(); setIsLightboxOpen(false); }}
+          />
+        </div>
+      )}
+
+      {/* Image disclaimer */}
+      <p className="image-disclaimer">
+        *Images are for representation purposes only. Actual product may slightly vary.
+      </p>
+    </div>
+  );
+}
