@@ -102,15 +102,32 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
 
   // OTP input handlers
   const handleOtpChange = (idx, val) => {
-    const digit = val.replace(/[^0-9]/g, '').slice(-1);
+    const cleanVal = val.replace(/[^0-9]/g, '');
+    
+    // Handle iOS Safari OTP autofill (which dumps all 6 digits into the first box)
+    if (cleanVal.length > 1) {
+      const next = Array(OTP_LENGTH).fill('');
+      cleanVal.slice(0, OTP_LENGTH).split('').forEach((d, i) => { next[i] = d; });
+      setOtpDigits(next);
+      const focusIdx = Math.min(cleanVal.length, OTP_LENGTH - 1);
+      inputRefs.current[focusIdx]?.focus();
+      
+      if (cleanVal.length === OTP_LENGTH) {
+        setTimeout(() => handleVerifyOtpAuto(cleanVal), 100);
+      }
+      return;
+    }
+
+    // Normal single-digit typing
+    const digit = cleanVal.slice(-1);
     const next = [...otpDigits];
     next[idx] = digit;
     setOtpDigits(next);
+    
     if (digit && idx < OTP_LENGTH - 1) inputRefs.current[idx + 1]?.focus();
     if (next.every(Boolean)) {
-      // auto-submit when all digits filled
       const otp = next.join('');
-      if (otp.length === OTP_LENGTH) setTimeout(() => handleVerifyOtpAuto(next.join('')), 100);
+      if (otp.length === OTP_LENGTH) setTimeout(() => handleVerifyOtpAuto(otp), 100);
     }
   };
 
@@ -243,6 +260,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
                       ref={(el) => (inputRefs.current[idx] = el)}
                       type="text"
                       inputMode="numeric"
+                      autoComplete="one-time-code"
                       maxLength={1}
                       className={`otp-box ${digit ? 'filled' : ''}`}
                       value={digit}
