@@ -51,7 +51,7 @@ function getSavingsPercent(price, oldPrice) {
   return Math.round(((oldPrice - price) / oldPrice) * 100);
 }
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, onAuthOpen }) {
   const router = useRouter();
   const pathname = usePathname();
   const viewers = useViewerCount();
@@ -101,12 +101,18 @@ export default function ProductCard({ product }) {
       style={{ cursor: 'pointer' }}
     >
       {/* ── Image Section ── */}
-      <div className="product-image">
+      <div className="product-image" style={{ position: 'relative' }}>
         <img
           src={getProductImage(product, 0)}
           alt={product.name}
           onError={(e) => { e.target.src = `/images/${product.slug}.webp`; e.target.onerror = null; }}
           style={{ maxHeight: '180px', objectFit: 'contain', transition: '0.3s ease' }}
+        />
+        {/* Wishlist Button overlay */}
+        <WishlistButton
+          productId={product._id || product.id}
+          onAuthRequired={onAuthOpen}
+          className="product-card-wishlist"
         />
 
         {/* Wishlist Button */}

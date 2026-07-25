@@ -1952,7 +1952,7 @@ section {
 }
 
 .accordion-item[open] .accordion-header::after {
-  content: '−';
+  content: 'âˆ’';
 }
 
 .accordion-content {
@@ -2572,7 +2572,7 @@ section {
 
 /* ===== AI PRODUCT ADVISOR ===== */
 
-/* ── CTA Section ── */
+/* â”€â”€ CTA Section â”€â”€ */
 .ai-recommender-section {
   padding: 90px 0;
   position: relative;
@@ -2707,7 +2707,7 @@ section {
   letter-spacing: 0.5px;
 }
 
-/* ── Modal Backdrop ── */
+/* â”€â”€ Modal Backdrop â”€â”€ */
 .ai-chat-backdrop {
   position: fixed;
   inset: 0;
@@ -2722,7 +2722,7 @@ section {
   to { opacity: 1; }
 }
 
-/* ── Chat Panel ── */
+/* â”€â”€ Chat Panel â”€â”€ */
 .ai-chat-panel {
   position: fixed;
   bottom: 0;
@@ -2747,7 +2747,7 @@ section {
   to { transform: translateX(-50%) translateY(0); opacity: 1; }
 }
 
-/* ── Chat Header ── */
+/* â”€â”€ Chat Header â”€â”€ */
 .ai-chat-header {
   display: flex;
   align-items: center;
@@ -2812,7 +2812,7 @@ section {
   color: var(--accent);
 }
 
-/* ── Messages Area ── */
+/* â”€â”€ Messages Area â”€â”€ */
 .ai-chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -2832,7 +2832,7 @@ section {
   border-radius: 4px;
 }
 
-/* ── Welcome Screen ── */
+/* â”€â”€ Welcome Screen â”€â”€ */
 .ai-chat-welcome {
   text-align: center;
   padding: 10px 0 20px;
@@ -2872,7 +2872,7 @@ section {
   margin-right: auto;
 }
 
-/* ── Quick Prompts ── */
+/* â”€â”€ Quick Prompts â”€â”€ */
 .ai-quick-prompts,
 .ai-followup-prompts {
   display: flex;
@@ -2911,7 +2911,7 @@ section {
   cursor: not-allowed;
 }
 
-/* ── User Message ── */
+/* â”€â”€ User Message â”€â”€ */
 .ai-msg-user {
   display: flex;
   justify-content: flex-end;
@@ -2928,7 +2928,7 @@ section {
   box-shadow: 0 2px 8px rgba(255, 106, 0, 0.3);
 }
 
-/* ── AI Message ── */
+/* â”€â”€ AI Message â”€â”€ */
 .ai-msg-ai {
   display: flex;
   gap: 10px;
@@ -2983,7 +2983,7 @@ section {
   50% { opacity: 0; }
 }
 
-/* ── Error Message ── */
+/* â”€â”€ Error Message â”€â”€ */
 .ai-msg-error {
   display: flex;
   align-items: center;
@@ -2996,7 +2996,7 @@ section {
   font-size: 13px;
 }
 
-/* ── Product Recommendations ── */
+/* â”€â”€ Product Recommendations â”€â”€ */
 .ai-recommendations {
   margin-top: 4px;
   animation: ai-msg-in 0.4s ease 0.1s both;
@@ -3160,7 +3160,7 @@ section {
   background: linear-gradient(135deg, #27ae60, #2ecc71);
 }
 
-/* ── Stack Lab Banner ── */
+/* â”€â”€ Stack Lab Banner â”€â”€ */
 .ai-stacklab-banner {
   display: flex;
   align-items: center;
@@ -3213,7 +3213,7 @@ section {
   transform: translateX(4px);
 }
 
-/* ── Typing Indicator ── */
+/* â”€â”€ Typing Indicator â”€â”€ */
 .ai-typing-indicator {
   display: flex;
   align-items: center;
@@ -3259,7 +3259,7 @@ section {
   40% { transform: scale(1); opacity: 1; }
 }
 
-/* ── Input Area ── */
+/* â”€â”€ Input Area â”€â”€ */
 .ai-chat-input-area {
   display: flex;
   gap: 10px;
@@ -3337,7 +3337,7 @@ section {
   to { transform: rotate(360deg); }
 }
 
-/* ── Mobile Responsive ── */
+/* â”€â”€ Mobile Responsive â”€â”€ */
 @media (max-width: 640px) {
   .ai-recommender-section {
     padding: 60px 0;
