@@ -10,7 +10,6 @@ import SocialProofPopup from './SocialProofPopup';
 import ExitIntentWrapper from './ExitIntentWrapper';
 import MobileTrustRow from './MobileTrustRow';
 import WhatsAppQuickBuy from './WhatsAppQuickBuy';
-import AuthModal from './AuthModal';
 import useCart from '@/lib/cartStore';
 import useSettings from '@/lib/useSettings';
 import useAuthStore from '@/lib/authStore';
