@@ -14,7 +14,11 @@ export default function AccountDropdown({ onAuthOpen }) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const logout = useAuthStore((s) => s.logout);
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Only show auth state after client hydration to avoid SSR mismatch
+  useEffect(() => { setMounted(true); }, []);
 
   // Close on outside click
   useEffect(() => {
@@ -28,6 +32,23 @@ export default function AccountDropdown({ onAuthOpen }) {
   }, []);
 
   const firstName = user?.name?.split(' ')[0] || 'Account';
+
+  // During SSR or before hydration, show a neutral placeholder
+  if (!mounted) {
+    return (
+      <button
+        className="nav-login-btn"
+        aria-label="Login or Create Account"
+        style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '6px 14px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-secondary)', opacity: 0 }}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        <span className="hide-on-mobile">Login</span>
+      </button>
+    );
+  }
 
   if (!isLoggedIn) {
     return (
@@ -45,6 +66,7 @@ export default function AccountDropdown({ onAuthOpen }) {
       </button>
     );
   }
+
 
   return (
     <div className="account-dropdown" ref={dropdownRef} style={{ position: 'relative' }}>

@@ -180,49 +180,21 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
         {step === 'identifier' && (
           <div className="auth-step">
             <button className="auth-back-btn" onClick={() => { setStep('gate'); setError(''); }}>← Back</button>
-            <h2 className="auth-step-title">Enter Your {authType === 'email' ? 'Email' : 'Phone'}</h2>
+            <h2 className="auth-step-title">Enter Your Email</h2>
             <p className="auth-step-subtitle">We&apos;ll send a 6-digit verification code.</p>
 
-            {/* Tab switch */}
-            <div className="auth-tab-switch">
-              <button
-                className={`auth-tab ${authType === 'email' ? 'active' : ''}`}
-                onClick={() => { setAuthType('email'); setIdentifier(''); setError(''); }}
-              >📧 Email</button>
-              <button
-                className={`auth-tab ${authType === 'phone' ? 'active' : ''}`}
-                onClick={() => { setAuthType('phone'); setIdentifier(''); setError(''); }}
-              >📱 Phone</button>
-            </div>
 
             <form onSubmit={handleSendOtp} className="auth-form">
-              {authType === 'email' ? (
-                <input
-                  type="email"
-                  className="auth-input"
-                  placeholder="you@example.com"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  required
-                  autoFocus
-                  autoComplete="email"
-                />
-              ) : (
-                <div className="auth-phone-wrap">
-                  <span className="auth-phone-prefix">+91</span>
-                  <input
-                    type="tel"
-                    className="auth-input auth-input-phone"
-                    placeholder="10-digit mobile number"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
-                    required
-                    autoFocus
-                    autoComplete="tel"
-                    pattern="[0-9]{10}"
-                  />
-                </div>
-              )}
+              <input
+                type="email"
+                className="auth-input"
+                placeholder="you@example.com"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                required
+                autoFocus
+                autoComplete="email"
+              />
 
               <input
                 type="text"
@@ -250,10 +222,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
         {step === 'otp' && (
           <div className="auth-step">
             <button className="auth-back-btn" onClick={() => { setStep('identifier'); setError(''); setOtpDigits(Array(OTP_LENGTH).fill('')); clearInterval(timerRef.current); }}>← Back</button>
-            <h2 className="auth-step-title">Check Your {authType === 'email' ? 'Inbox' : 'Messages'}</h2>
+            <h2 className="auth-step-title">Check Your Inbox</h2>
             <p className="auth-step-subtitle">
               We sent a 6-digit code to<br />
-              <strong style={{ color: 'var(--accent)' }}>{authType === 'phone' ? `+91 ${identifier}` : identifier}</strong>
+              <strong style={{ color: 'var(--accent)' }}>{identifier}</strong>
             </p>
 
             {successMsg ? (
