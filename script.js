@@ -204,7 +204,7 @@ function switchProductCategory(category) {
   sessionStorage.setItem('lr_currentCategory', category);
 
   // Update tabs
-  ['unique', 'common', 'combos', 'fatburner'].forEach(cat => {
+  ['unique', 'common', 'combos'].forEach(cat => {
     const tab = document.getElementById(`tab-${cat}`);
     if (tab) {
       tab.classList.remove("active");
