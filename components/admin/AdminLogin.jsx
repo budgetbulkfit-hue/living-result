@@ -7,6 +7,7 @@ import { API_BASE } from '@/lib/api';
 export default function AdminLogin({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -64,15 +65,24 @@ export default function AdminLogin({ onLoginSuccess }) {
               style={{ width: '100%', padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'white', borderRadius: '6px' }}
             />
           </div>
-          <div className="form-group" style={{ marginBottom: '18px' }}>
+          <div className="form-group" style={{ marginBottom: '18px', position: 'relative' }}>
             <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: '600' }}>Password</label>
-            <input 
-              type="password" 
-              required 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'white', borderRadius: '6px' }}
-            />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input 
+                type={showPassword ? "text" : "password"} 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{ width: '100%', padding: '12px', paddingRight: '40px', background: 'var(--bg-primary)', border: '1px solid var(--border)', color: 'white', borderRadius: '6px' }}
+              />
+              <button 
+                type="button" 
+                onClick={() => setShowPassword(!showPassword)} 
+                style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '16px' }}
+              >
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </div>
           </div>
           <button 
             type="submit" 
