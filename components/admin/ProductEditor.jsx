@@ -408,6 +408,7 @@ export default function ProductEditor({ token, slugToEdit, onCancel, onSaved }) 
                     <option value="Creatine">Creatine</option>
                     <option value="Mass Gainer">Mass Gainer</option>
                     <option value="Whey Protein">Whey Protein</option>
+                    <option value="Fat Burner">🔥 Inferno Shredders (Fat Burner)</option>
                   </select>
                 </div>
               )}
