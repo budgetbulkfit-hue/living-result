@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { API_BASE } from '@/lib/api';
 
 const INITIAL_FORM = {
@@ -62,6 +62,7 @@ export default function ProductEditor({ token, slugToEdit, onCancel, onSaved }) 
   const [fmName, setFmName] = useState('');
   const [fmImageUrl, setFmImageUrl] = useState('');
   const [fmStock, setFmStock] = useState(true);
+  const flavorFileRef = useRef(null);
 
   useEffect(() => {
     if (slugToEdit && slugToEdit !== 'new') {
@@ -299,10 +300,10 @@ export default function ProductEditor({ token, slugToEdit, onCancel, onSaved }) 
     setFlavorModalActive(true);
   };
 
-  const saveFlavor = async (fileInput) => {
+  const saveFlavor = async () => {
     let imgUrl = fmImageUrl;
-    if (!imgUrl && fileInput?.files[0]) {
-      imgUrl = await handleCloudinaryUpload(fileInput.files[0]);
+    if (!imgUrl && flavorFileRef.current?.files[0]) {
+      imgUrl = await handleCloudinaryUpload(flavorFileRef.current.files[0]);
     }
     if (!imgUrl) {
       return alert('Please upload a flavor image or paste a URL');
@@ -707,7 +708,7 @@ export default function ProductEditor({ token, slugToEdit, onCancel, onSaved }) 
           </div>
           <div className="form-group">
             <label>Image Upload</label>
-            <input type="file" id="fm-file-input" accept="image/*" style={{ padding: '8px' }} />
+            <input type="file" ref={flavorFileRef} accept="image/*" style={{ padding: '8px' }} />
             <div style={{ textHtml: 'center', margin: '10px 0', color: 'var(--text-muted)', textAlign: 'center' }}>OR</div>
             <label>Image URL</label>
             <input type="text" value={fmImageUrl} onChange={e => setFmImageUrl(e.target.value)} placeholder="https://..." />
@@ -722,7 +723,7 @@ export default function ProductEditor({ token, slugToEdit, onCancel, onSaved }) 
           <button 
             className="btn-primary" 
             style={{ width: '100%', justifyContent: 'center' }} 
-            onClick={() => saveFlavor(document.getElementById('fm-file-input'))}
+            onClick={saveFlavor}
             disabled={uploading}
           >
             {uploading ? 'Uploading...' : 'Save Flavor'}
