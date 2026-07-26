@@ -1,6 +1,6 @@
 import './globals.css';
 import AppShell from '@/components/AppShell';
-import Script from 'next/script';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 const SITE_URL = 'https://www.getlivingresult.in';
 
@@ -51,21 +51,8 @@ export default function RootLayout({ children }) {
         <link rel="preload" href="/images/hero-athlete.webp" as="image" />
       </head>
       <body>
-        {/* Google Analytics — Script component ensures tracking fires on every page, including SPA navigations */}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
-              page_path: window.location.pathname,
-            });
-          `}
-        </Script>
+        {/* Google Analytics component ensures tracking fires on every page, including SPA navigations */}
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || 'G-2QMDJG0N8S'} />
         {/*
           AppShell is the client-side wrapper that provides:
           - Navbar with live cart count (Zustand)
