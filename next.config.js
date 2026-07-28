@@ -12,7 +12,8 @@ const nextConfig = {
       },
     ],
   },
-
+  poweredByHeader: false,
+  
   async rewrites() {
     return [
       {
@@ -23,7 +24,19 @@ const nextConfig = {
   },
 
   async headers() {
+    const securityHeaders = [
+      { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+      { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' }
+    ];
+
     return [
+      {
+        // Apply security headers to all routes
+        source: '/(.*)',
+        headers: securityHeaders,
+      },
       {
         // Cache static images in the public folder for 1 year
         source: '/images/:all*(svg|jpg|png|webp|ico)',
