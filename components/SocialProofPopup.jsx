@@ -27,18 +27,25 @@ export default function SocialProofPopup({ enabled = true, interval = 35 }) {
       let msg;
       if (orders.length > 0) {
         const order = orders[indexRef.current % orders.length];
-        const productName = order.products?.[0]?.name || FALLBACK_PRODUCTS[Math.floor(Math.random() * FALLBACK_PRODUCTS.length)];
+        
+        if (typeof order === 'string') {
+          msg = order;
+        } else {
+          // Legacy object parsing
+          const productName = order.products?.[0]?.name || FALLBACK_PRODUCTS[Math.floor(Math.random() * FALLBACK_PRODUCTS.length)];
 
-        // Extract city/location from order, fallback to a random Kolkata location
-        let location = order.customerDetails?.address?.split(',').pop()?.trim() || '';
-        if (!location || location.toLowerCase() === 'india' || location.toLowerCase() === 'in') {
-          location = KOLKATA_LOCATIONS[Math.floor(Math.random() * KOLKATA_LOCATIONS.length)];
+          // Extract city/location from order, fallback to a random Kolkata location
+          let location = order.customerDetails?.address?.split(',').pop()?.trim() || '';
+          if (!location || location.toLowerCase() === 'india' || location.toLowerCase() === 'in') {
+            location = KOLKATA_LOCATIONS[Math.floor(Math.random() * KOLKATA_LOCATIONS.length)];
+          }
+
+          // Use a random name instead of 'Someone'
+          const randomName = NAMES[Math.floor(Math.random() * NAMES.length)];
+
+          msg = `${randomName} just ordered ${productName} from ${location}!`;
         }
-
-        // Use a random name instead of 'Someone'
-        const randomName = NAMES[Math.floor(Math.random() * NAMES.length)];
-
-        msg = `${randomName} just ordered ${productName} from ${location}!`;
+        
         indexRef.current++;
       } else {
         const name = NAMES[Math.floor(Math.random() * NAMES.length)];
