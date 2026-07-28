@@ -24,7 +24,9 @@ export default function SettingsView({ token }) {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch(`${API}/settings`);
+        const res = await fetch(`${API}/settings`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         const data = await res.json();
         if (data.success && data.data) {
           setSettings({
