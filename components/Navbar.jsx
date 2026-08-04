@@ -44,6 +44,13 @@ export default function Navbar({ cartCount = 0, onSearchOpen, onCartOpen, onAuth
     boxShadow: scrolled ? '0 2px 20px rgba(0,0,0,0.5)' : 'none',
   };
 
+  // Premium: transparent navbar on hero page, glassmorphism on scroll
+  const isHomepage = pathname === '/';
+  const navClassName = isHomepage
+    ? `navbar lr-navbar${scrolled ? ' lr-navbar--scrolled' : ' lr-navbar--transparent'}`
+    : 'navbar';
+  const navInlineStyle = isHomepage ? {} : navStyle;
+
   return (
     <>
       {/* MOBILE OVERLAY */}
@@ -53,7 +60,7 @@ export default function Navbar({ cartCount = 0, onSearchOpen, onCartOpen, onAuth
       />
 
       {/* NAVBAR */}
-      <nav className="navbar" id="navbar" style={navStyle} ref={navRef}>
+      <nav className={navClassName} id="navbar" style={navInlineStyle} ref={navRef}>
         <div className="container">
           {/* Logo */}
           <a
@@ -80,11 +87,12 @@ export default function Navbar({ cartCount = 0, onSearchOpen, onCartOpen, onAuth
 
           {/* Desktop Nav Links */}
           <ul className={`nav-menu${mobileOpen ? ' active' : ''}`} id="navMenu">
-            <li><a href="/" className="active" onClick={(e) => { closeMenu(); if (pathname === '/') { e.preventDefault(); window.location.href = '/'; } }}>Home</a></li>
-            <li><Link href="/#products" onClick={closeMenu}>Shop</Link></li>
-            <li><Link href="/#products" onClick={closeMenu}>Categories</Link></li>
-            <li><Link href="/#why-choose" onClick={closeMenu}>About</Link></li>
-            <li><Link href="/#contact" onClick={closeMenu}>Contact</Link></li>
+            <li><Link href="/" className="active" onClick={closeMenu}>Home</Link></li>
+            <li><Link href="/#products" onClick={closeMenu}>The Arsenal</Link></li>
+            <li><Link href="/#advisor" onClick={closeMenu}>AI Advisor</Link></li>
+            <li><Link href="/#philosophy" onClick={closeMenu}>Authenticity</Link></li>
+            <li><Link href="/#movement" onClick={closeMenu}>Reviews</Link></li>
+            <li><Link href="/#action" onClick={closeMenu}>Concierge</Link></li>
           </ul>
 
           {/* Nav Icons */}
