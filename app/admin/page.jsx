@@ -10,6 +10,7 @@ import CombosView from '@/components/admin/CombosView';
 import ComboEditor from '@/components/admin/ComboEditor';
 import OrderManager from '@/components/admin/OrderManager';
 import SettingsView from '@/components/admin/SettingsView';
+import SubscribersView from '@/components/admin/SubscribersView';
 import { getNotifications, updateNotificationStatus, deleteNotification, API_BASE } from '@/lib/api';
 
 export default function AdminPage() {
@@ -157,6 +158,12 @@ export default function AdminPage() {
             Orders
           </a>
           <a 
+            className={`nav-item ${activeTab === 'subscribers' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('subscribers'); setSidebarActive(false); }}
+          >
+            Email Leads
+          </a>
+          <a 
             className={`nav-item ${activeTab === 'notifications' ? 'active' : ''}`}
             onClick={() => { setActiveTab('notifications'); setSidebarActive(false); }}
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
@@ -240,7 +247,10 @@ export default function AdminPage() {
         {/* 6. ORDERS VIEW */}
         {activeTab === 'orders' && <OrderManager token={token} />}
 
-        {/* 7. RESTOCK ALERTS VIEW */}
+        {/* 7. SUBSCRIBERS VIEW */}
+        {activeTab === 'subscribers' && <SubscribersView />}
+
+        {/* 8. RESTOCK ALERTS VIEW */}
         {activeTab === 'notifications' && (
           <div className="page-view active">
             <div className="header-title">
@@ -304,7 +314,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* 8. SETTINGS VIEW */}
+        {/* 9. SETTINGS VIEW */}
         {activeTab === 'settings' && <SettingsView token={token} />}
       </main>
     </div>

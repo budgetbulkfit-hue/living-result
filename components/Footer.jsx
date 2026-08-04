@@ -8,13 +8,34 @@ export default function Footer() {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterSent, setNewsletterSent] = useState(false);
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterError, setNewsletterError] = useState('');
 
   const handleOpenPrivacy = (e) => { e.preventDefault(); setIsPrivacyOpen(true); };
 
-  const handleNewsletter = (e) => {
+  const handleNewsletter = async (e) => {
     e.preventDefault();
-    if (newsletterEmail.trim()) {
-      setNewsletterSent(true);
+    if (!newsletterEmail.trim()) return;
+    
+    setNewsletterLoading(true);
+    setNewsletterError('');
+
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newsletterEmail.trim(), source: 'footer_newsletter' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setNewsletterSent(true);
+      } else {
+        setNewsletterError(data.message || 'Subscription failed. Please try again.');
+      }
+    } catch (err) {
+      setNewsletterError('Connection error. Please check your internet and retry.');
+    } finally {
+      setNewsletterLoading(false);
     }
   };
 
@@ -30,10 +51,10 @@ export default function Footer() {
           <div className="lr-footer__status-bar">
             <div className="lr-footer__status-indicator">
               <span className="lr-footer__status-pulse" />
-              <span>All Systems Operational · Same-Day Dispatch Active Across India</span>
+              <span>Fresh Direct-Importer Batches In Stock · 2–5 Business Days Insured Pan-India Delivery</span>
             </div>
             <div className="lr-footer__status-cert">
-              <span>100% Genuine Importer Sealed · Official Authentic Sourcing</span>
+              <span>100% Scratch-Code Guaranteed · Tamper-Proof Sealed Packaging</span>
             </div>
           </div>
 
@@ -53,7 +74,7 @@ export default function Footer() {
               </div>
               <p className="lr-footer__brand-tagline">
                 &ldquo;Living Result was built to make elite fitness supplements affordable
-                and accessible. Honest pricing, honest products, real results.&rdquo;
+                and accessible. 100% genuine sealed sourcing, direct importer prices, real results.&rdquo;
               </p>
               <div className="lr-footer__socials">
                 <a
@@ -117,9 +138,11 @@ export default function Footer() {
                 Get new batch drop notifications, secret promo codes, and verified workout programming.
               </p>
               {newsletterSent ? (
-                <p style={{ color: '#2ecc71', fontSize: '14px', fontWeight: 600 }}>
-                  ✓ You&apos;re in! Welcome to the collective.
-                </p>
+                <div style={{ background: 'rgba(46, 204, 113, 0.1)', border: '1px solid rgba(46, 204, 113, 0.3)', padding: '12px 16px', borderRadius: '4px' }}>
+                  <p style={{ color: '#2ecc71', fontSize: '13px', fontWeight: 600, margin: 0 }}>
+                    ✓ VIP Access Confirmed! You&apos;re in for batch drop notifications & secret discounts.
+                  </p>
+                </div>
               ) : (
                 <form
                   className="lr-footer__newsletter-form"
@@ -134,15 +157,22 @@ export default function Footer() {
                     onChange={(e) => setNewsletterEmail(e.target.value)}
                     aria-label="Email address"
                     required
+                    disabled={newsletterLoading}
                   />
                   <button
                     type="submit"
                     className="lr-footer__newsletter-btn"
                     aria-label="Subscribe to newsletter"
+                    disabled={newsletterLoading}
                   >
-                    Join
+                    {newsletterLoading ? '...' : 'Join'}
                   </button>
                 </form>
+              )}
+              {newsletterError && (
+                <p style={{ color: '#e74c3c', fontSize: '12px', marginTop: '6px' }}>
+                  {newsletterError}
+                </p>
               )}
             </div>
           </div>
@@ -156,7 +186,7 @@ export default function Footer() {
               and genetics. These products are not medicines and are not intended to diagnose,
               treat, cure, or prevent any disease. Please consult a healthcare professional
               before use if you have any medical condition, allergies, or are under medication.
-              <strong> * Note: Delivery charges will apply accordingly.</strong>
+              <strong> * Orders are securely dispatched with tamper-proof packaging (typical delivery 2–5 business days across India). Standard shipping charges apply.</strong>
             </p>
             <div className="lr-footer__copy-row">
               <span className="lr-footer__copyright">
