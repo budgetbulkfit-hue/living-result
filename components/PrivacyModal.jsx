@@ -33,6 +33,9 @@ export default function PrivacyModal({ isOpen, onClose }) {
 
           <h4 style={{ color: 'var(--text-primary)', marginBottom: '10px' }}>6. Disclaimers</h4>
           <p style={{ marginBottom: '20px' }}>Living Result products are dietary supplements and are not intended to diagnose, treat, cure, or prevent any disease. Results may vary from person to person. Please consult a healthcare professional before use.</p>
+
+          <h4 style={{ color: 'var(--text-primary)', marginBottom: '10px' }}>7. Return & Exchange Policy</h4>
+          <p style={{ marginBottom: '20px' }}>We strive to provide the best products and services. Please note that returns or exchanges are only possible if a complete, unedited unboxing video of the parcel is provided. The video must clearly show the sealed package from all sides before opening, and the entire opening process without any cuts. This helps us ensure transparency and resolve any issues promptly.</p>
         </div>
       </div>
     </div>
