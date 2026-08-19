@@ -3,11 +3,11 @@
   "rewrites": [
     {
       "source": "/sitemap.xml",
-      "destination": "https://living-result-backend-production.up.railway.app/sitemap.xml"
+      "destination": "https://eu5jhynr6qbtno3njh5qky5nju0sltok.lambda-url.ap-south-1.on.aws/sitemap.xml"
     },
     {
       "source": "/api/:path*",
-      "destination": "https://living-result-backend-production.up.railway.app/api/:path*"
+      "destination": "https://eu5jhynr6qbtno3njh5qky5nju0sltok.lambda-url.ap-south-1.on.aws/api/:path*"
     }
   ]
 }

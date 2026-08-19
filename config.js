@@ -2,7 +2,7 @@
   const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   const defaults = {
-    apiUrl: isLocal ? 'http://localhost:5000/api' : 'https://living-result-backend-production.up.railway.app/api',
+    apiUrl: isLocal ? 'http://localhost:5000/api' : 'https://eu5jhynr6qbtno3njh5qky5nju0sltok.lambda-url.ap-south-1.on.aws/api',
     googleWebAppUrl: 'https://script.google.com/macros/s/AKfycbwWTolkQqA0LXgLwTYj8vnWMoEHQeonlhCc7-8RDEXgnGzZG6C22wK_RInl6Gkh0t3o8A/exec', // <-- PASTE YOUR URL HERE
   };
 

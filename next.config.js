@@ -18,7 +18,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'https://living-result-backend-production.up.railway.app/api'}/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_API_URL || 'https://eu5jhynr6qbtno3njh5qky5nju0sltok.lambda-url.ap-south-1.on.aws/api'}/:path*`,
       },
     ];
   },
